@@ -16,5 +16,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="slick-util.jar"/>
+	<classpathentry kind="lib" path="jply-0.2.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
