@@ -177,6 +177,7 @@ public class ObjOrPlyModel {
                 IntBuffer indexBuffer = glMapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB, null).asIntBuffer();
                 //indexes_forPlyFiles = BufferUtils.createIntBuffer(triangleCount_forPlyFiles*3);
                 
+                
                 // read PLY data into the buffers
                 ElementReader reader = plyReader.nextElementReader();
                 while (reader != null) {
