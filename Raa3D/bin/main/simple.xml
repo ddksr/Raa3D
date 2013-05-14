@@ -955,4 +955,29 @@
             <action name="prevTab">CTRL SHIFT TAB</action>
         </inputMapDef></param>
     </theme>
+    
+    <theme name="msgbox-title" ref="-defaults" allowWildcard="true">
+        <param name=""><image>button.*</image></param>
+        <param name="border"><border>background.border</border></param>
+        <param name="textAlignment"><enum type="alignment">center</enum></param>
+        <param name="fonts"><map>
+            <param name="default"><font>normal</font></param>
+        </map></param>
+        <param name="images"><map>
+        </map></param>
+        <param name="classes"><map>
+        </map></param>
+    </theme>    
+    <theme name="msgbox-content" ref="-defaults" allowWildcard="true">
+        <param name=""><image>button.*</image></param>
+        <param name="border"><border>background.border</border></param>
+        <param name="textAlignment"><enum type="alignment">center</enum></param>
+        <param name="fonts"><map>
+            <param name="default"><font>normal</font></param>
+        </map></param>
+        <param name="images"><map>
+        </map></param>
+        <param name="classes"><map>
+        </map></param>
+    </theme>
 </themes>

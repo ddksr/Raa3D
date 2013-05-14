@@ -122,19 +122,30 @@ import raa.pin.PinPanel;
 import tools.Quaternion;
 import tools.Vector;
 import de.matthiasmann.twl.Button;
+import de.matthiasmann.twl.Container;
+import de.matthiasmann.twl.DialogLayout;
 import de.matthiasmann.twl.FileSelector;
 import de.matthiasmann.twl.FileSelector.Callback;
 import de.matthiasmann.twl.GUI;
+import de.matthiasmann.twl.InfoWindow;
+import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.ListBox;
+import de.matthiasmann.twl.PopupWindow;
+import de.matthiasmann.twl.ResizableFrame;
 import de.matthiasmann.twl.ScrollPane;
 import de.matthiasmann.twl.Scrollbar;
+import de.matthiasmann.twl.SimpleDialog;
 import de.matthiasmann.twl.TextArea;
+import de.matthiasmann.twl.TextWidget;
 import de.matthiasmann.twl.ToggleButton;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.model.JavaFileSystemModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.textarea.SimpleTextAreaModel;
+import de.matthiasmann.twl.textarea.Style;
+import de.matthiasmann.twl.textarea.StyleAttribute;
+import de.matthiasmann.twl.textarea.StyleSheet;
 import de.matthiasmann.twl.theme.ThemeManager;
 
 /**
@@ -208,6 +219,12 @@ public class MainFrame extends Widget{
     private ListBox displayModeListBox;
     private de.matthiasmann.twl.ToggleButton fullscreenToggle;
 
+    private TextArea msgBoxContent;
+    private TextArea msgBoxTitle;
+    private Button msgBoxOkButton;
+    private Button msgBoxCloseButton;
+    private Button msgBoxCancelButton;
+    
     private static boolean dialogOpened;
     private static boolean menuOpened = false;
 	//parameters
@@ -251,7 +268,6 @@ public class MainFrame extends Widget{
 	// PinPanel related variables
 	private static boolean loadingPinPanel;
 	private static PinPanel pinPanel;
-	private boolean isPinPanelButtonClicked = false;
 	
 	/**
      * @since 0.4
@@ -306,7 +322,7 @@ public class MainFrame extends Widget{
                boolean enabled = pinToggleButton.isActive();
                menuOpened = enabled;
                setPinButtonsVisible(enabled);
-               initPinButtonsEnabled();
+               //initPinButtonsEnabled();
            }
         });
         add(pinToggleButton);
@@ -339,7 +355,7 @@ public class MainFrame extends Widget{
         savePinButton.addCallback(new Runnable(){
            @Override
         public void run(){
-               
+               savePinPanel();
            }
         });
         add(savePinButton);
@@ -350,7 +366,7 @@ public class MainFrame extends Widget{
         saveAsPinButton.addCallback(new Runnable(){
            @Override
         public void run(){
-               
+               saveAsPinPanel();
            }
         });
         add(saveAsPinButton);
@@ -775,7 +791,7 @@ public class MainFrame extends Widget{
      */
     protected void savePinPanel() {
         // TODO Auto-generated method stub
-        
+        confirmBox("test", "test", null, null);
     }
     
     /**
@@ -783,7 +799,7 @@ public class MainFrame extends Widget{
      */
     protected void saveAsPinPanel() {
         // TODO Auto-generated method stub
-        
+        msgBoxDestroy();
     }
     
 	/**
@@ -1770,4 +1786,134 @@ public class MainFrame extends Widget{
 		mainLoop();
 		exitProgram(0);
 	}
+	
+	// User messaging section
+	
+	public void infoBox(String title, String message) {
+	    
+	    msgBoxContent = new TextArea();
+	    msgBoxTitle = new TextArea();
+	    
+	    SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+	    SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
+	    
+	    
+	    msgBoxContent.setModel(stmMsg);
+	    msgBoxTitle.setModel(stmTit);
+	    
+	    StyleSheet css = new StyleSheet();
+	    try {
+            css.parse("p,div { text-align: center; }");
+            msgBoxTitle.setStyleClassResolver(css);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+	    
+	    
+	    msgBoxContent.adjustSize();
+	    msgBoxTitle.adjustSize();
+	    
+	    msgBoxTitle.setTheme("msgbox-title");
+	    msgBoxContent.setTheme("msgbox-content");
+	    
+	    msgBoxTitle.setSize(200, 20);
+	    msgBoxContent.setSize(200, 20);
+        
+	    msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+	    msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
+        
+	    
+	    add(msgBoxTitle);
+	    add(msgBoxContent);
+	}
+	
+	
+	public void alertBox(String title, String message) {
+	    msgBoxContent = new TextArea();
+        msgBoxTitle = new TextArea();
+        
+        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+        SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
+        
+        
+        msgBoxContent.setModel(stmMsg);
+        msgBoxTitle.setModel(stmTit);
+        
+        StyleSheet css = new StyleSheet();
+        try {
+            css.parse("p,div { text-align: center; }");
+            msgBoxTitle.setStyleClassResolver(css);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+        msgBoxContent.adjustSize();
+        msgBoxTitle.adjustSize();
+        
+        msgBoxTitle.setTheme("msgbox-title");
+        msgBoxContent.setTheme("msgbox-content");
+        
+        msgBoxTitle.setSize(200, 20);
+        msgBoxContent.setSize(200, 20);
+        
+        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
+        
+        
+        add(msgBoxTitle);
+        add(msgBoxContent);
+	}
+	
+	public void confirmBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
+	    msgBoxContent = new TextArea();
+        msgBoxTitle = new TextArea();
+        
+        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+        SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
+        
+        
+        msgBoxContent.setModel(stmMsg);
+        msgBoxTitle.setModel(stmTit);
+        
+        StyleSheet css = new StyleSheet();
+        try {
+            css.parse("p,div { text-align: center; }");
+            msgBoxTitle.setStyleClassResolver(css);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+        msgBoxContent.adjustSize();
+        msgBoxTitle.adjustSize();
+        
+        msgBoxTitle.setTheme("msgbox-title");
+        msgBoxContent.setTheme("msgbox-content");
+        
+        msgBoxTitle.setSize(200, 20);
+        msgBoxContent.setSize(200, 20);
+        
+        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 40);
+        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+        
+        msgBoxCloseButton = new Button("Close");
+        msgBoxCloseButton.setPosition(settings.resWidth/2 - 50, settings.resHeight/2);
+        msgBoxCloseButton.setSize(100, 40);
+        
+        add(msgBoxCloseButton);
+        add(msgBoxTitle);
+        add(msgBoxContent);
+	}
+	
+	public void msgBoxDestroy() {
+        if (msgBoxContent != null) {
+            removeChild(msgBoxContent);
+            msgBoxContent.destroy();
+            msgBoxContent = null;
+        }
+    }
 }
