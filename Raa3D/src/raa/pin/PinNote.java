@@ -1,4 +1,4 @@
-package io;
+package raa.pin;
 
 public class PinNote {
 	public static final int DEFAULT_TYPE = 0;
