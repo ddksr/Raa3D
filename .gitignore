@@ -1,4 +1,11 @@
+# Bin #
 *.class
+Raa3D/bin/*
+
+# Conf #
+.metadata/*
+.directory
+
 
 # Package Files #
 *.jar

@@ -78,7 +78,8 @@ public class PinNote {
 		return ret.split("\\.").length > 1 ? ret : (ret + ".0");
 	}
 	
-	public String toString() {
+	@Override
+    public String toString() {
 		return String.format("%s %s %s %s \"%s\"", PinNote.type2typeVal(type), dbl2str(x), dbl2str(y), dbl2str(z), value);
 	}
 	
