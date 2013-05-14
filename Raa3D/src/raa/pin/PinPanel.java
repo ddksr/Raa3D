@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -16,8 +15,11 @@ public class PinPanel {
 	public static String tmpLoc = "tmp";
 	private String fileLoc = null;
 	private String id;
+	private boolean hasChanges;
 	
 	public PinPanelIndex index;
+	
+	
 	
 	public PinPanel() { // used for new
 		id = PinPanel.generate_id();
@@ -28,11 +30,21 @@ public class PinPanel {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		hasChanges = false;
 	}
 	
 	public PinPanel(String nid) {
 		id = nid;
 		refresh();
+		hasChanges = false;
+	}
+	
+	public boolean hasChanges() {
+	    return hasChanges;
+	}
+	
+	public void setFileLocation(String loc) {
+	    fileLoc = loc;
 	}
 	
 	private void refresh() {
