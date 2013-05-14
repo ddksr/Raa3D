@@ -103,6 +103,7 @@ import java.io.Serializable;
 import java.nio.FloatBuffer;
 
 import models.VeinsModel;
+import models.ObjOrPlyModel;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
@@ -215,7 +216,7 @@ public class MainFrame extends Widget{
 	static String[]displayModeStrings;
 	static int selectedResolution=-1;
 	//veins model and shaders
-	static VeinsModel veinsModel;
+	static ObjOrPlyModel openedModel;
 	static Quaternion currentModelOrientation, addedModelOrientation;
 	static int[] shaderPrograms, vertexShaders, fragmentShaders;
 	static int numberOfShaderPrograms=8, activeShaderProgram=4;
@@ -802,19 +803,22 @@ public class MainFrame extends Widget{
      * @version 0.4
      */
 	private static void loadModel(String fileName){
-	    veinsModel = new VeinsModel(fileName);
+	    openedModel = null;
+	    System.gc();
+	    openedModel = new ObjOrPlyModel(fileName);
+	    System.gc();
 	    //Calculate the appropriate camera distance:
 	    //The following code takes the most extreme values on each coordinate
 	    //of all the specified vertices in the .obj file.
 	    //It uses the bigger distance (of two) from the average location on each axis
 	    //to calculate the radius of a circle that would surely enclose every vertex,
 	    //although allowing the radius to be slightly bigger than necessary.
-	    double d1=veinsModel.minX-veinsModel.centerx;
-	    double d2=veinsModel.maxX-veinsModel.centerx;
-	    double d3=veinsModel.minY-veinsModel.centery;
-	    double d4=veinsModel.maxY-veinsModel.centery;
-	    double d5=veinsModel.minZ-veinsModel.centerz;
-	    double d6=veinsModel.maxZ-veinsModel.centerz;
+	    double d1=openedModel.minX-openedModel.centerx;
+	    double d2=openedModel.maxX-openedModel.centerx;
+	    double d3=openedModel.minY-openedModel.centery;
+	    double d4=openedModel.maxY-openedModel.centery;
+	    double d5=openedModel.minZ-openedModel.centerz;
+	    double d6=openedModel.maxZ-openedModel.centerz;
 	    d1*=d1;d2*=d2;d3*=d3;d4*=d4;d5*=d5;d6*=d6;
 	    d1=Math.max(d1, d2);
 	    d2=Math.max(d3, d4);
@@ -1115,7 +1119,7 @@ public class MainFrame extends Widget{
     }
 	
 	private static void renderVeins(){
-	    if(veinsModel!=null){
+	    if(openedModel!=null){
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             Quaternion compositeOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
@@ -1136,7 +1140,7 @@ public class MainFrame extends Widget{
             glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 1}));
             glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.66f, 0.66f, 0.66f, 1f}));
             glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{100f, 256.0f, 256.0f, 256.0f}));
-            veinsModel.render();
+            openedModel.render();
             GL20.glUseProgram(0);
             glPopMatrix();
         }
@@ -1239,10 +1243,10 @@ public class MainFrame extends Widget{
                     if(!(wireframe=!wireframe))GL11.glPolygonMode(GL11.GL_FRONT, GL11.GL_FILL);
                     else GL11.glPolygonMode(GL11.GL_FRONT, GL11.GL_LINE);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_ADD){
-                    veinsModel.increaseSubdivisionDepth();
+                    openedModel.increaseSubdivisionDepth();
                 }
                 else if(Keyboard.getEventKey()==Keyboard.KEY_SUBTRACT){
-                    veinsModel.decreaseSubdivisionDepth();
+                    openedModel.decreaseSubdivisionDepth();
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_9){
                     isAAEnabled=!isAAEnabled;
                 }
@@ -1331,7 +1335,7 @@ public class MainFrame extends Widget{
             cameraZ+=(float)v[2];
         }
 		
-		if(veinsModel!=null){
+		if(openedModel!=null){
 		    if(Mouse.isButtonDown(0)){
 		        //figure out if clicked on the HUD first
 		        float w=settings.resWidth;
@@ -1458,7 +1462,7 @@ public class MainFrame extends Widget{
 			fps=0;
 			timePastFps=time;
 			cameraOrientation=Quaternion.quaternionNormalization(cameraOrientation);
-			if(veinsModel!=null){
+			if(openedModel!=null){
 			    addedModelOrientation=Quaternion.quaternionNormalization(addedModelOrientation);
 			    currentModelOrientation=Quaternion.quaternionNormalization(currentModelOrientation);
 			}
