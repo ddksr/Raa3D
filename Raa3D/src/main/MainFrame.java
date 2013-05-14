@@ -1,4 +1,4 @@
-/* Author of this file: Simon Žagar, 2012, Ljubljana
+/* Author of this file: Simon ï¿½agar, 2012, Ljubljana
  * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/
  * or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
@@ -13,7 +13,7 @@
  */
 package main;
 /**
- *@author Simon Žagar, 63090355
+ *@author Simon ï¿½agar, 63090355
 */
 
 import static org.lwjgl.opengl.GL11.GL_AMBIENT;
@@ -150,7 +150,7 @@ import de.matthiasmann.twl.textarea.StyleSheet;
 import de.matthiasmann.twl.theme.ThemeManager;
 
 /**
- * @author Simon Žagar, 63090355
+ * @author Simon ï¿½agar, 63090355
  *@version 0.4
  *@since 0.1
  */
@@ -1440,7 +1440,7 @@ public class MainFrame extends Widget{
 		}
 		
 		
-		if(!dialogOpened || !menuOpened )return;
+		if(!dialogOpened || menuOpened )return;
 		int z=Mouse.getDWheel();
         if(z>0){
             cameraX*=0.8;
