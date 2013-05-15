@@ -310,6 +310,15 @@ public class ObjOrPlyModel {
             GL20.glEnableVertexAttribArray(myAttributeLocationForColors);
             org.lwjgl.opengl.ARBBufferObject.glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBufferName_forPlyFiles);
             GL20.glVertexAttribPointer(myAttributeLocationForColors, 4, GL11.GL_FLOAT, true, 10*4, 6*4);
+            // add locations
+            int myAttributeLocationForLocations = GL20.glGetAttribLocation(program, "perVertexLocation");
+            GL20.glEnableVertexAttribArray(myAttributeLocationForLocations);
+            org.lwjgl.opengl.ARBBufferObject.glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBufferName_forPlyFiles);
+            GL20.glVertexAttribPointer(myAttributeLocationForLocations, 3, GL11.GL_FLOAT, true, 10*4, 0);
+            
+            // add min and max z
+            int attributeLocationForMinMaxZ = GL20.glGetUniformLocation(program, "minMaxZ");
+            GL20.glUniform2f(attributeLocationForMinMaxZ, (float)minZ, (float)maxZ);
 		    
 		    //GL11.glEnable(GL31.GL_PRIMITIVE_RESTART);
 		    GL11.glEnable(GL15.GL_ARRAY_BUFFER_BINDING);

@@ -13,7 +13,7 @@ void main(){
 	vec3 l=normalize(vec3(gl_LightSource[0].position));
 	float intensity = max(dot(l, n), 0.0);
 	
-	vec4 diffuse = perVertexColorVar * vec4(1.0, 1.0, 1.0, 1.0);
+	vec4 diffuse = perVertexColorVar;
 	
 	gl_FragColor = intensity * diffuse;
 }

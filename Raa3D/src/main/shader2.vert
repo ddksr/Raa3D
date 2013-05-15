@@ -3,16 +3,12 @@
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/
  * or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
  */
-varying vec3 normal;
-varying vec4 position;
-varying vec4 perVertexColorVar;
-
-attribute vec4 perVertexColor;
+ 
+varying float zValue;
+attribute vec3 perVertexLocation;
 
 
 void main(){
-	normal = gl_NormalMatrix * gl_Normal;
-	position = ftransform();
-	gl_Position = position;
-	perVertexColorVar=perVertexColor;
+	zValue = perVertexLocation.z;
+	gl_Position = ftransform();
 }

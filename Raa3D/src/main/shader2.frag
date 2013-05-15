@@ -3,19 +3,16 @@
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/
  * or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
  */
-uniform vec3 lightDir;
-varying vec3 normal;
-varying vec4 position;
-varying vec4 perVertexColorVar;
+
+
+
+varying float zValue;
+uniform vec2 minMaxZ;
 
 void main(){
-	vec3 n=normalize(normal);
-	vec3 l=normalize(vec3(gl_LightSource[0].position));
-	float intensity = max(dot(l, n), 0.0);
+	float relativeHeight = (2.0 * (zValue-minMaxZ[0]) ) /minMaxZ[1];
 	
-	vec4 diffuse = vec4(0.8, 0.06667, 0.0, 1.0) * vec4(1.0, 1.0, 1.0, 1.0);
-	
-	gl_FragColor = intensity * diffuse;
+	gl_FragColor = vec4((2.0-relativeHeight), relativeHeight, 0.0, 1.0);
 }
 
 
