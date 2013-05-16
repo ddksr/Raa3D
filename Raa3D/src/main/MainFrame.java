@@ -121,9 +121,9 @@ import raa.pin.PinPanel;
 import tools.Quaternion;
 import tools.Vector;
 import de.matthiasmann.twl.Button;
+import de.matthiasmann.twl.EditField;
 import de.matthiasmann.twl.FileSelector;
 import de.matthiasmann.twl.FileSelector.Callback;
-import de.matthiasmann.twl.FileSelectorSave;
 import de.matthiasmann.twl.FolderBrowser;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.ListBox;
@@ -132,6 +132,8 @@ import de.matthiasmann.twl.Scrollbar;
 import de.matthiasmann.twl.TextArea;
 import de.matthiasmann.twl.ToggleButton;
 import de.matthiasmann.twl.Widget;
+import de.matthiasmann.twl.model.DefaultEditFieldModel;
+import de.matthiasmann.twl.model.EditFieldModel;
 import de.matthiasmann.twl.model.JavaFileSystemModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
@@ -215,7 +217,7 @@ public class MainFrame extends Widget{
 
     private TextArea msgBoxContent;
     private TextArea msgBoxTitle;
-    private TextArea msgBoxInput;
+    private EditField msgBoxInput;
     private Button msgBoxOkButton;
     private Button msgBoxCloseButton;
     private Button msgBoxCancelButton;
@@ -265,8 +267,14 @@ public class MainFrame extends Widget{
 	private static boolean loadingPinPanel;
 	private static PinPanel pinPanel;
 	
-	private static TextArea keyboardInputText = null;
 	
+	//private static TextArea keyboardInputText = null;
+	//private static String inputContent = null;
+	private static boolean inputTextMode = false;
+	
+	// String containing default path of the model
+	private static String defaultPath = null;
+	private static String modelName = null;
 	/**
      * @since 0.4
      * @version 0.4
@@ -288,7 +296,12 @@ public class MainFrame extends Widget{
                     loadPinPanel(file.getAbsolutePath());
                     loadingPinPanel = false;
                 }
-                else loadModel(file.getAbsolutePath());
+                else {
+                    defaultPath = file.getPath().substring(0, java.io.File.pathSeparatorChar);
+                    modelName = file.getName();
+                    System.out.println(defaultPath);
+                    loadModel(file.getAbsolutePath());
+                }
             }
             @Override
             public void canceled() {
@@ -718,6 +731,7 @@ public class MainFrame extends Widget{
         public void run(){
                newPinPanel();
                setPinButtonsVisible(false);
+               pinToggleButton.setActive(false);
            }
         });
         add(newPinButton);
@@ -730,6 +744,7 @@ public class MainFrame extends Widget{
         public void run(){
                savePinPanel();
                setPinButtonsVisible(false);
+               pinToggleButton.setActive(false);
            }
         });
         add(savePinButton);
@@ -742,9 +757,10 @@ public class MainFrame extends Widget{
            public void run(){
                saveAsPinPanel();
                setPinButtonsVisible(false);
+               pinToggleButton.setActive(false);
            }
         });
-        saveAsPinButton.setEnabled(false);
+        //saveAsPinButton.setEnabled(false);
         add(saveAsPinButton);
         
         // File selectors
@@ -765,11 +781,7 @@ public class MainFrame extends Widget{
                 fsAddImg.setVisible(false);
                 File file= (File)files[0];
                 System.out.println("\nOpening file: "+file.getAbsolutePath());
-                if (loadingPinPanel) {
-                    loadPinPanel(file.getAbsolutePath());
-                    loadingPinPanel = false;
-                }
-                else loadModel(file.getAbsolutePath());
+                
             }
             @Override
             public void canceled() {
@@ -829,7 +841,17 @@ public class MainFrame extends Widget{
      */
     protected void newPinPanel() {
         // TODO Auto-generated method stub
-        
+        Runnable callback = new Runnable() {
+            public void run() {
+                pinPanel = new PinPanel();
+            }
+        };
+        if (pinPanel == null || pinPanel.hasChanges()) {
+            callback.run();
+        }
+        else {
+            confirmBox("New pin panel", "Are you sure? All unsaved changes will be lost.", callback, null);
+        }
     }
 	
     /**
@@ -837,7 +859,14 @@ public class MainFrame extends Widget{
      */
     protected void savePinPanel() {
         // TODO Auto-generated method stub
-        confirmBox("test", "test", null, null);
+       if (pinPanel != null && pinPanel.hasChanges()) {
+           try {
+               pinPanel.save();
+           } catch(Exception e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+           }
+       }
     }
     
     /**
@@ -845,8 +874,22 @@ public class MainFrame extends Widget{
      */
     protected void saveAsPinPanel() {
         // TODO Auto-generated method stub
-        msgBoxDestroy();
-        inputBox("a", "b", null, null);
+        if (pinPanel != null) {
+            inputBox("Save as ... ", "Insert filename: ", new Runnable() {
+                public void run() {
+                    String fname = msgBoxInput.getText();
+                    if(fname.length() > 0) {
+                        pinPanel.setFileLocation(defaultPath + File.pathSeparator + fname);
+                        try {
+                            pinPanel.save();
+                        } catch(Exception e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }, null);
+        }
     }
     
 	/**
@@ -1016,7 +1059,7 @@ public class MainFrame extends Widget{
 		fpsToDisplay=0;
 		while(!Display.isCloseRequested() && isRunning){
 			resetView();
-			pollInput();
+			if (!inputTextMode) pollInput();
 			render();
 			gui.update();
 			Display.update();
@@ -1079,8 +1122,7 @@ public class MainFrame extends Widget{
 	    addedModelOrientation = new Quaternion();
 	    
 	}
-	
-	private static void loadPinPanel(String filePath) {
+    private static void loadPinPanel(String filePath) {
 	    try {
             pinPanel = PinPanel.open(filePath);
         } catch(IOException e) {
@@ -1444,6 +1486,19 @@ public class MainFrame extends Widget{
 	 * @version 0.4
 	 */
 	private static void pollInput(){
+//	    if (keyboardInputText != null) {
+//	        while(Keyboard.next()){
+//	            if(Keyboard.getEventKeyState()){
+//	                int key = Keyboard.getEventKey();
+//	                
+//	                TextAreaModel tam = keyboardInputText.getModel();
+//	                
+//	            }
+//	        }
+//	        return;
+//	    }
+	    
+	    if(inputTextMode) return;
 	    
 		while(Keyboard.next()){
 			if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
@@ -1872,6 +1927,8 @@ public class MainFrame extends Widget{
 	    
 	    add(msgBoxTitle);
 	    add(msgBoxContent);
+	    
+	    inputTextMode = true;
 	}
 	
 	
@@ -1933,16 +1990,6 @@ public class MainFrame extends Widget{
         msgBoxContent.setModel(stmMsg);
         msgBoxTitle.setModel(stmTit);
         
-        StyleSheet css = new StyleSheet();
-        try {
-            css.parse("p,div { text-align: center; }");
-            msgBoxTitle.setStyleClassResolver(css);
-        } catch(IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        
         msgBoxContent.adjustSize();
         msgBoxTitle.adjustSize();
         
@@ -1963,16 +2010,24 @@ public class MainFrame extends Widget{
         msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2);
         msgBoxOkButton.setSize(100, 40);
         
-        msgBoxOkButton.addCallback(okFunction != null ? okFunction : new Runnable() {
+        msgBoxOkButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
+                inputTextMode = false;
             }
         });
-        msgBoxCancelButton.addCallback(cancelFunction != null ? cancelFunction : new Runnable() {
+        if (okFunction != null) {
+            msgBoxOkButton.addCallback(okFunction);
+        }
+        msgBoxCancelButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
+                inputTextMode = false;
             }
         });
+        if (cancelFunction != null) {
+            msgBoxOkButton.addCallback(cancelFunction);
+        }
         
         add(msgBoxCancelButton);
         add(msgBoxOkButton);
@@ -1981,29 +2036,22 @@ public class MainFrame extends Widget{
 	}
 	
 	public void inputBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
-        msgBoxContent = new TextArea();
-        msgBoxTitle = new TextArea();
-        msgBoxInput = new TextArea();
-        
-        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+	    SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
         
-        SimpleTextAreaModel stmInput = new SimpleTextAreaModel("");
+        EditFieldModel stmInput = new DefaultEditFieldModel();
+        msgBoxContent = new TextArea();
+        msgBoxTitle = new TextArea();
+        msgBoxInput = new EditField(null, stmInput);
+        
         
         
         msgBoxContent.setModel(stmMsg);
         msgBoxTitle.setModel(stmTit);
-        msgBoxInput.setModel(stmInput);
+        //msgBoxInput.setModel(stmInput);
         
-        StyleSheet css = new StyleSheet();
-        try {
-            css.parse("p,div { text-align: center; }");
-            msgBoxTitle.setStyleClassResolver(css);
-        } catch(IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
+        msgBoxInput.setEnabled(true);
+        msgBoxInput.setMultiLine(true);
         
         msgBoxContent.adjustSize();
         msgBoxTitle.adjustSize();
@@ -2011,7 +2059,6 @@ public class MainFrame extends Widget{
         
         msgBoxTitle.setTheme("msgbox-title");
         msgBoxContent.setTheme("msgbox-content");
-        msgBoxInput.setTheme("textarea");
         
         msgBoxTitle.setSize(200, 20);
         msgBoxContent.setSize(200, 20);
@@ -2019,7 +2066,6 @@ public class MainFrame extends Widget{
         
         msgBoxInput.setEnabled(true);
         msgBoxInput.setCanAcceptKeyboardFocus(true);
-        
         
         msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 40);
         msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
@@ -2033,22 +2079,34 @@ public class MainFrame extends Widget{
         msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 20);
         msgBoxOkButton.setSize(100, 40);
         
-        msgBoxOkButton.addCallback(okFunction != null ? okFunction : new Runnable() {
+        msgBoxOkButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
+                inputTextMode = false;
             }
         });
-        msgBoxCancelButton.addCallback(cancelFunction != null ? cancelFunction : new Runnable() {
+        if (okFunction != null) {
+            msgBoxOkButton.addCallback(okFunction);
+        }
+        msgBoxCancelButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
+                inputTextMode = false;
             }
         });
+        if (cancelFunction != null) {
+            msgBoxOkButton.addCallback(cancelFunction);
+        }
         
         add(msgBoxCancelButton);
         add(msgBoxOkButton);
         add(msgBoxTitle);
         add(msgBoxInput);
         add(msgBoxContent);
+        inputTextMode = true;
+        
+        //inputContent = new String();
+        //keyboardInputText = msgBoxInput;
     }
 	
 	public void msgBoxDestroy() {
@@ -2082,6 +2140,5 @@ public class MainFrame extends Widget{
             msgBoxCancelButton.destroy();
             msgBoxCancelButton = null;
         }
-        //this.layout();
     }
 }
