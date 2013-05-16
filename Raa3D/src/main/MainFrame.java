@@ -123,7 +123,6 @@ import tools.Vector;
 import de.matthiasmann.twl.Button;
 import de.matthiasmann.twl.FileSelector;
 import de.matthiasmann.twl.FileSelector.Callback;
-import de.matthiasmann.twl.FileSelectorSave;
 import de.matthiasmann.twl.FolderBrowser;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.ListBox;
