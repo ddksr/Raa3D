@@ -21,7 +21,7 @@ void main(){
 		vec3 R= (2.0*dot(l, n)*n)-l;
 		float cosAngle=dot(normalize(R), eye);
 		if(cosAngle>0.0){
-			specular = (vec4(0.30, 0.30, 0.30, 1.0) * gl_LightSource[0].specular) * pow(cosAngle, 2.0);
+			specular = (vec4(0.20, 0.20, 0.20, 1.0) * gl_LightSource[0].specular) * pow(cosAngle, 100.0);
 		}
 	}
 	
@@ -31,4 +31,4 @@ void main(){
 
 
 //Phong lighting model
-//7 - diffuse + env  + spec!
+//8 - diffuse + env  + spec  + shinny

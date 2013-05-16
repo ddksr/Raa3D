@@ -18,11 +18,15 @@ import java.util.StringTokenizer;
 import static org.lwjgl.opengl.ARBBufferObject.*;
 import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL20.glGetUniformLocation;
+import static org.lwjgl.opengl.GL20.glUniform4f;
+import static tools.Tools.allocFloats;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
 import org.smurn.jply.ElementReader;
 import org.smurn.jply.PlyReader;
 import org.smurn.jply.PlyReaderFile;
@@ -60,11 +64,14 @@ public class ObjOrPlyModel {
 	ArrayList<Float> vertices;
 	
 	//     used for .ply files
-	int indexBufferName_forPlyFiles;
-	int vertexBufferName_forPlyFiles;
+	private int indexBufferName_forPlyFiles;
+	private int vertexBufferName_forPlyFiles;
 	int triangleCount_forPlyFiles;
+	private int vertexSize_forPlyFiles;
+	int triangleSize_forPlyFiles;
 	//FloatBuffer verticesNormals_forPlyFiles;
 	//IntBuffer indexes_forPlyFiles;
+	
 	
 	public ObjOrPlyModel(String filepath){
 	    vertices = new ArrayList<Float>();
@@ -162,18 +169,18 @@ public class ObjOrPlyModel {
                 plyReader = new NormalizingPlyReader(plyReader, TesselationMode.TRIANGLES, NormalMode.ADD_NORMALS_CCW, TextureMode.PASS_THROUGH);
                 int vertexCount = plyReader.getElementCount("vertex");
                 triangleCount_forPlyFiles = plyReader.getElementCount("face");
-                int vertexSize = 3 * 4 + 3 * 4;// 32 bit float per each location coordinate and normal coordinates
-                int triangleSize = 3 * 4;// indexes to vertices as 32 bit integers
+                vertexSize_forPlyFiles = 3*4 + 3*4 + 4*4;// 32 bit float per each: location coordinate, normal coordinates and color component
+                triangleSize_forPlyFiles = 3*4;// indexes to vertices as 32 bit integers
                 
                 vertexBufferName_forPlyFiles = glGenBuffersARB(); // return a new buffer object name
                 glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBufferName_forPlyFiles); // bind buffer to say it is the one the following operations apply to
-                glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertexCount * vertexSize, GL_STATIC_DRAW_ARB); // creates a new buffer to the bounded buffer with specified space and hints it's usage
+                glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertexCount * vertexSize_forPlyFiles, GL_STATIC_DRAW_ARB); // creates a new buffer to the bounded buffer with specified space and hints it's usage
                 FloatBuffer vertexBuffer = glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB, null).asFloatBuffer();
                 //verticesNormals_forPlyFiles = BufferUtils.createFloatBuffer(vertexCount*2*3);
                 
                 indexBufferName_forPlyFiles = glGenBuffersARB(); // agan, return a new buffer object name
                 glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indexBufferName_forPlyFiles);
-                glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, triangleCount_forPlyFiles * triangleSize, GL_STATIC_DRAW_ARB);
+                glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, triangleCount_forPlyFiles * triangleSize_forPlyFiles, GL_STATIC_DRAW_ARB);
                 IntBuffer indexBuffer = glMapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB, null).asIntBuffer();
                 //indexes_forPlyFiles = BufferUtils.createIntBuffer(triangleCount_forPlyFiles*3);
                 
@@ -190,12 +197,12 @@ public class ObjOrPlyModel {
                             double nx = vertex.getDouble("nx");
                             double ny = vertex.getDouble("ny");
                             double nz = vertex.getDouble("nz");
-                            /*
-                            int r = vertex.getInt("red");
-                            int g = vertex.getInt("green");
-                            int b = vertex.getInt("blue");
-                            int a = vertex.getInt("alpha");
-                            */
+                            double r = vertex.getDouble("red")/255d;
+                            double g = vertex.getDouble("green")/255d;
+                            double b = vertex.getDouble("blue")/255d;
+                            double a = vertex.getDouble("alpha")/255d;
+                            
+                            //System.out.println(r+", "+g+", "+b+", "+a);
                             /*
                             verticesNormals_forPlyFiles.put((float)x);
                             verticesNormals_forPlyFiles.put((float)y);
@@ -210,6 +217,10 @@ public class ObjOrPlyModel {
                             vertexBuffer.put((float)nx);
                             vertexBuffer.put((float)ny);
                             vertexBuffer.put((float)nz);
+                            vertexBuffer.put((float)r);
+                            vertexBuffer.put((float)g);
+                            vertexBuffer.put((float)b);
+                            vertexBuffer.put((float)a);
                             /*
                             vertices.add((float)x);//TODO: remove if not necessary
                             vertices.add((float)y);//TODO: remove if not necessary
@@ -274,7 +285,17 @@ public class ObjOrPlyModel {
      * @since 0.2
      * @version 0.4
      */
-	public void render(){
+	public void render(int program){
+	    
+	    if(program==-1){
+            GL20.glUseProgram(0);
+        }else{
+            GL20.glUseProgram(program);
+            int myUniformLocation = glGetUniformLocation(program, "bloodColor");
+            glUniform4f(myUniformLocation, 0.8f, 0.06667f, 0.0f, 1);
+        }
+	    
+	    
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
@@ -284,19 +305,35 @@ public class ObjOrPlyModel {
 		        vbo.render(numberOfSubdivisions);
 		    }
 		}else if(fileFormat==FILE_FORMAT_PLY){
+		    // add if for if the colors are present
+            int myAttributeLocationForColors = GL20.glGetAttribLocation(program, "perVertexColor");
+            GL20.glEnableVertexAttribArray(myAttributeLocationForColors);
+            org.lwjgl.opengl.ARBBufferObject.glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBufferName_forPlyFiles);
+            GL20.glVertexAttribPointer(myAttributeLocationForColors, 4, GL11.GL_FLOAT, true, 10*4, 6*4);
+            // add locations
+            int myAttributeLocationForLocations = GL20.glGetAttribLocation(program, "perVertexLocation");
+            GL20.glEnableVertexAttribArray(myAttributeLocationForLocations);
+            org.lwjgl.opengl.ARBBufferObject.glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBufferName_forPlyFiles);
+            GL20.glVertexAttribPointer(myAttributeLocationForLocations, 3, GL11.GL_FLOAT, true, 10*4, 0);
+            
+            // add min and max z
+            int attributeLocationForMinMaxZ = GL20.glGetUniformLocation(program, "minMaxZ");
+            GL20.glUniform2f(attributeLocationForMinMaxZ, (float)minZ, (float)maxZ);
+		    
 		    //GL11.glEnable(GL31.GL_PRIMITIVE_RESTART);
 		    GL11.glEnable(GL15.GL_ARRAY_BUFFER_BINDING);
 		    GL11.glEnable(GL15.GL_ELEMENT_ARRAY_BUFFER_BINDING);
-		    //GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
             
 		    glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBufferName_forPlyFiles);
 		    glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indexBufferName_forPlyFiles);
 		    GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-		    glVertexPointer(3, GL11.GL_FLOAT, 24, 0);
+		    glVertexPointer(3, GL11.GL_FLOAT, vertexSize_forPlyFiles, 0);
 		    
 		    GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
-		    glNormalPointer(GL11.GL_FLOAT, 24, 12);
+		    glNormalPointer(GL11.GL_FLOAT, vertexSize_forPlyFiles, 12);
 		    
+		    GL11.glEnableClientState(GL11.GL_COLOR_ARRAY);
+		    glColorPointer(4, GL11.GL_FLOAT, vertexSize_forPlyFiles, 24);
 		    
 		    //org.lwjgl.opengl.Util.checkGLError();
 		    glDrawElements(GL_TRIANGLES, triangleCount_forPlyFiles * 3, GL_UNSIGNED_INT, 0);

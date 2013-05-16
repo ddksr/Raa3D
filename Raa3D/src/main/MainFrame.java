@@ -88,6 +88,7 @@ import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glUniform4f;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
+import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 import static tools.Tools.allocFloats;
 
 import java.io.BufferedReader;
@@ -102,7 +103,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.FloatBuffer;
 
-import models.VeinsModel;
 import models.ObjOrPlyModel;
 
 import org.lwjgl.LWJGLException;
@@ -123,29 +123,19 @@ import raa.pin.PinPanel;
 import tools.Quaternion;
 import tools.Vector;
 import de.matthiasmann.twl.Button;
-import de.matthiasmann.twl.Container;
-import de.matthiasmann.twl.DialogLayout;
 import de.matthiasmann.twl.FileSelector;
 import de.matthiasmann.twl.FileSelector.Callback;
 import de.matthiasmann.twl.GUI;
-import de.matthiasmann.twl.InfoWindow;
-import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.ListBox;
-import de.matthiasmann.twl.PopupWindow;
-import de.matthiasmann.twl.ResizableFrame;
 import de.matthiasmann.twl.ScrollPane;
 import de.matthiasmann.twl.Scrollbar;
-import de.matthiasmann.twl.SimpleDialog;
 import de.matthiasmann.twl.TextArea;
-import de.matthiasmann.twl.TextWidget;
 import de.matthiasmann.twl.ToggleButton;
 import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.model.JavaFileSystemModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.textarea.SimpleTextAreaModel;
-import de.matthiasmann.twl.textarea.Style;
-import de.matthiasmann.twl.textarea.StyleAttribute;
 import de.matthiasmann.twl.textarea.StyleSheet;
 import de.matthiasmann.twl.theme.ThemeManager;
 
@@ -230,7 +220,7 @@ public class MainFrame extends Widget{
     private static boolean menuOpened = false;
 	//parameters
 	static float fovy=45;
-	static float zNear=10;
+	static float zNear=1;
 	static float zFar=10000;
 	static String title="Raa3D";
 	////global variables
@@ -245,7 +235,8 @@ public class MainFrame extends Widget{
 	static ObjOrPlyModel openedModel;
 	static Quaternion currentModelOrientation, addedModelOrientation;
 	static int[] shaderPrograms, vertexShaders, fragmentShaders;
-	static int numberOfShaderPrograms=8, activeShaderProgram=4;
+	static final int NUMBER_OF_SHADER_PROGRAMS=9;
+	static int activeShaderProgram=6;
 	//HUD
 	static Texture rotationCircle, circleGlow, movementCircle, rotationElipse, movementElipse, ellipseGlow;
 	//window variables
@@ -1311,21 +1302,13 @@ public class MainFrame extends Widget{
             FloatBuffer fb= compositeOrientation.getRotationMatrix(false);
             GL11.glMultMatrix(fb);
             
-            if(activeShaderProgram==-1){
-                GL20.glUseProgram(0);
-            }else{
-                GL20.glUseProgram(shaderPrograms[activeShaderProgram]);
-                int myUniformLocation = glGetUniformLocation(shaderPrograms[activeShaderProgram], "bloodColor");
-                glUniform4f(myUniformLocation, 0.8f, 0.06667f, 0.0f, 1);
-            }
-            
             glEnable(GL_LIGHTING);
             glColor4f(0.8f, 0.06667f, 0.0f, 1);
             glMaterial(GL_FRONT,GL_AMBIENT, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 1}));
             glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 1}));
-            glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.66f, 0.66f, 0.66f, 1f}));
-            glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{100f, 256.0f, 256.0f, 256.0f}));
-            openedModel.render();
+            glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 1f}));
+            glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
+            openedModel.render(shaderPrograms[activeShaderProgram-1]);
             GL20.glUseProgram(0);
             glPopMatrix();
         }
@@ -1408,24 +1391,24 @@ public class MainFrame extends Widget{
 				if(Keyboard.getEventKey()==Keyboard.KEY_TAB){
 					if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
 				}else if(Keyboard.getEventKey()==Keyboard.KEY_1){
-                    activeShaderProgram=0;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_2){
                     activeShaderProgram=1;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_3){
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_2){
                     activeShaderProgram=2;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_4){
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_3){
                     activeShaderProgram=3;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_5){
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_4){
                     activeShaderProgram=4;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_6){
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_5){
                     activeShaderProgram=5;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_7){
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_6){
                     activeShaderProgram=6;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_8){
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_7){
                     activeShaderProgram=7;
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_0){
-                    activeShaderProgram=-1;
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_8){
+                    activeShaderProgram=8;
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_9){
+                    activeShaderProgram=9;
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_0){
                     if(!(wireframe=!wireframe))GL11.glPolygonMode(GL11.GL_FRONT, GL11.GL_FILL);
                     else GL11.glPolygonMode(GL11.GL_FRONT, GL11.GL_LINE);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_ADD){
@@ -1658,7 +1641,7 @@ public class MainFrame extends Widget{
 	}
 	public static void exitProgram(int n){
 	    saveSettings();
-	    for(int i=0;i<numberOfShaderPrograms;i++){
+	    for(int i=0;i<NUMBER_OF_SHADER_PROGRAMS;i++){
 	        glDetachShader(shaderPrograms[i], vertexShaders[i]);
 	        glDeleteShader(vertexShaders[i]);
 	        glDetachShader(shaderPrograms[i], fragmentShaders[i]);
@@ -1671,14 +1654,14 @@ public class MainFrame extends Widget{
 	    System.exit(n);
 	}
 	public static void prepareShaders(){
-	    shaderPrograms= new int[numberOfShaderPrograms];
-	    vertexShaders= new int[numberOfShaderPrograms];
-	    fragmentShaders= new int[numberOfShaderPrograms];
+	    shaderPrograms= new int[NUMBER_OF_SHADER_PROGRAMS];
+	    vertexShaders= new int[NUMBER_OF_SHADER_PROGRAMS];
+	    fragmentShaders= new int[NUMBER_OF_SHADER_PROGRAMS];
 	    String path="/main/";
-	    for(int i=0;i<numberOfShaderPrograms;i++){
-	        shaderPrograms[i] = GL20.glCreateProgram();
-	        vertexShaders[i] = glCreateShader(GL_VERTEX_SHADER);
-	        fragmentShaders[i] = glCreateShader(GL_FRAGMENT_SHADER);
+	    for(int i=1;i<=NUMBER_OF_SHADER_PROGRAMS;i++){
+	        shaderPrograms[i-1] = GL20.glCreateProgram();
+	        vertexShaders[i-1] = glCreateShader(GL_VERTEX_SHADER);
+	        fragmentShaders[i-1] = glCreateShader(GL_FRAGMENT_SHADER);
 	        StringBuilder vertexShaderSource = new StringBuilder();
 	        StringBuilder fragmentShaderSource= new StringBuilder();
 	        try{
@@ -1703,26 +1686,26 @@ public class MainFrame extends Widget{
 	            System.err.println("Fragment shader"+i+" wasn't loaded properly.");
 	            exitProgram(1);
 	        }
-	        glShaderSource(vertexShaders[i], vertexShaderSource);
-	        glCompileShader(vertexShaders[i]);
-	        if(glGetShader(vertexShaders[i], GL_COMPILE_STATUS)==GL_FALSE){
+	        glShaderSource(vertexShaders[i-1], vertexShaderSource);
+	        glCompileShader(vertexShaders[i-1]);
+	        if(glGetShader(vertexShaders[i-1], GL_COMPILE_STATUS)==GL_FALSE){
 	            System.err.println("Vertex shader"+i+" not compiled correctly");
 	        }
 	        
-	        glShaderSource(fragmentShaders[i], fragmentShaderSource);
-	        glCompileShader(fragmentShaders[i]);
-	        if(glGetShader(fragmentShaders[i], GL_COMPILE_STATUS)==GL_FALSE){
+	        glShaderSource(fragmentShaders[i-1], fragmentShaderSource);
+	        glCompileShader(fragmentShaders[i-1]);
+	        if(glGetShader(fragmentShaders[i-1], GL_COMPILE_STATUS)==GL_FALSE){
 	            System.err.println("Fragment shader"+i+" not compiled correctly");
 	        }
 	        
-	        glAttachShader(shaderPrograms[i], vertexShaders[i]);
-	        glAttachShader(shaderPrograms[i], fragmentShaders[i]);
-	        glLinkProgram(shaderPrograms[i]);
-	        glValidateProgram(shaderPrograms[i]);
+	        glAttachShader(shaderPrograms[i-1], vertexShaders[i-1]);
+	        glAttachShader(shaderPrograms[i-1], fragmentShaders[i-1]);
+	        glLinkProgram(shaderPrograms[i-1]);
+	        glValidateProgram(shaderPrograms[i-1]);
 	        
-	        System.out.println("Vertex shader"+i+" info: "+glGetShaderInfoLog(vertexShaders[i], 999));
-	        System.out.println("Fragment shader"+i+" info: "+glGetShaderInfoLog(fragmentShaders[i], 999));
-	        System.out.println("Shader program"+i+" info: "+glGetShaderInfoLog(shaderPrograms[i], 999));
+	        System.out.println("Vertex shader"+i+" info: "+glGetShaderInfoLog(vertexShaders[i-1], 999));
+	        System.out.println("Fragment shader"+i+" info: "+glGetShaderInfoLog(fragmentShaders[i-1], 999));
+	        System.out.println("Shader program"+i+" info: "+glGetShaderInfoLog(shaderPrograms[i-1], 999));
 	    }
 	}
 	
