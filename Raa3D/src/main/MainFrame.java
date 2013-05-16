@@ -1919,5 +1919,26 @@ public class MainFrame extends Widget{
             msgBoxContent.destroy();
             msgBoxContent = null;
         }
+        if (msgBoxTitle != null) {
+            removeChild(msgBoxTitle);
+            msgBoxTitle.destroy();
+            msgBoxTitle = null;
+        }
+        if (msgBoxCloseButton != null) {
+            removeChild(msgBoxCloseButton);
+            msgBoxCloseButton.destroy();
+            msgBoxCloseButton = null;
+        }
+        if (msgBoxOkButton != null) {
+            removeChild(msgBoxOkButton);
+            msgBoxOkButton.destroy();
+            msgBoxOkButton = null;
+        }
+        if (msgBoxCancelButton != null) {
+            removeChild(msgBoxCancelButton);
+            msgBoxCancelButton.destroy();
+            msgBoxCancelButton = null;
+        }
+        //this.layout();
     }
 }
