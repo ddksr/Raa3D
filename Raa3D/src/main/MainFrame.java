@@ -1846,10 +1846,19 @@ public class MainFrame extends Widget{
         msgBoxTitle.setSize(200, 20);
         msgBoxContent.setSize(200, 20);
         
-        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
-        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
+        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 40);
+        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
         
+        msgBoxCloseButton = new Button("Close");
+        msgBoxCloseButton.setPosition(settings.resWidth/2 - 50, settings.resHeight/2);
+        msgBoxCloseButton.setSize(100, 40);
+        msgBoxCloseButton.addCallback(new Runnable() {
+            public void run() {
+                msgBoxDestroy();
+            }
+        });
         
+        add(msgBoxCloseButton);
         add(msgBoxTitle);
         add(msgBoxContent);
 	}
@@ -1887,11 +1896,27 @@ public class MainFrame extends Widget{
         msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 40);
         msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
         
-        msgBoxCloseButton = new Button("Close");
-        msgBoxCloseButton.setPosition(settings.resWidth/2 - 50, settings.resHeight/2);
-        msgBoxCloseButton.setSize(100, 40);
+        msgBoxCancelButton = new Button("OK");
+        msgBoxCancelButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
+        msgBoxCancelButton.setSize(100, 40);       
         
-        add(msgBoxCloseButton);
+        msgBoxOkButton = new Button("Cancel");
+        msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2);
+        msgBoxOkButton.setSize(100, 40);
+        
+        msgBoxOkButton.addCallback(okFunction != null ? okFunction : new Runnable() {
+            public void run() {
+                msgBoxDestroy();
+            }
+        });
+        msgBoxCancelButton.addCallback(cancelFunction != null ? cancelFunction : new Runnable() {
+            public void run() {
+                msgBoxDestroy();
+            }
+        });
+        
+        add(msgBoxCancelButton);
+        add(msgBoxOkButton);
         add(msgBoxTitle);
         add(msgBoxContent);
 	}
