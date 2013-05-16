@@ -189,6 +189,7 @@ public class MainFrame extends Widget{
             return true;
         }
     }
+    
     private static NeckVeinsSettings settings;
     
     //Widgets
