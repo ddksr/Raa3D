@@ -83,10 +83,8 @@ import static org.lwjgl.opengl.GL20.glDeleteShader;
 import static org.lwjgl.opengl.GL20.glDetachShader;
 import static org.lwjgl.opengl.GL20.glGetShader;
 import static org.lwjgl.opengl.GL20.glGetShaderInfoLog;
-import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
-import static org.lwjgl.opengl.GL20.glUniform4f;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
 import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 import static tools.Tools.allocFloats;
@@ -125,6 +123,8 @@ import tools.Vector;
 import de.matthiasmann.twl.Button;
 import de.matthiasmann.twl.FileSelector;
 import de.matthiasmann.twl.FileSelector.Callback;
+import de.matthiasmann.twl.FileSelectorSave;
+import de.matthiasmann.twl.FolderBrowser;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.ListBox;
 import de.matthiasmann.twl.ScrollPane;
@@ -137,6 +137,7 @@ import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.textarea.SimpleTextAreaModel;
 import de.matthiasmann.twl.textarea.StyleSheet;
+import de.matthiasmann.twl.textarea.TextAreaModel;
 import de.matthiasmann.twl.theme.ThemeManager;
 
 /**
@@ -207,11 +208,14 @@ public class MainFrame extends Widget{
     private TextArea helpTextArea;
     private SimpleTextAreaModel stamHelp, stamCredits;
     private FileSelector fileSelector;
+    private FileSelector fsAddImg;
+    
     private ListBox displayModeListBox;
     private de.matthiasmann.twl.ToggleButton fullscreenToggle;
 
     private TextArea msgBoxContent;
     private TextArea msgBoxTitle;
+    private TextArea msgBoxInput;
     private Button msgBoxOkButton;
     private Button msgBoxCloseButton;
     private Button msgBoxCancelButton;
@@ -261,6 +265,8 @@ public class MainFrame extends Widget{
 	private static boolean loadingPinPanel;
 	private static PinPanel pinPanel;
 	
+	private static TextArea keyboardInputText = null;
+	
 	/**
      * @since 0.4
      * @version 0.4
@@ -294,6 +300,7 @@ public class MainFrame extends Widget{
         fileSelector.addCallback(cb);
         add(fileSelector);
         
+        
         open = new Button("Open model ...");
         open.setTheme("button");
         open.setTooltipContent("Open the dialog with the file chooser to select an .obj file.");
@@ -305,63 +312,9 @@ public class MainFrame extends Widget{
         });
         add(open);
         
-        pinToggleButton = new ToggleButton("Pin panel");
-        pinToggleButton.setTheme("togglebutton");
-        pinToggleButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-        pinToggleButton.addCallback(new Runnable(){
-           @Override
-        public void run(){
-               boolean enabled = pinToggleButton.isActive();
-               menuOpened = enabled;
-               setPinButtonsVisible(enabled);
-               //initPinButtonsEnabled();
-           }
-        });
-        add(pinToggleButton);
+        pinInit();
         
-        openPinButton = new Button("Open ...");
-        openPinButton.setTheme("button");
-        openPinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-        openPinButton.addCallback(new Runnable(){
-           @Override
-        public void run(){
-               openAPinPanelFile();
-           }
-        });
-        add(openPinButton);
         
-        newPinButton = new Button("New");
-        newPinButton.setTheme("button");
-        newPinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-        newPinButton.addCallback(new Runnable(){
-           @Override
-        public void run(){
-               newPinPanel();
-           }
-        });
-        add(newPinButton);
-        
-        savePinButton = new Button("Save");
-        savePinButton.setTheme("button");
-        savePinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-        savePinButton.addCallback(new Runnable(){
-           @Override
-        public void run(){
-               savePinPanel();
-           }
-        });
-        add(savePinButton);
-        
-        saveAsPinButton = new Button("Save as ...");
-        saveAsPinButton.setTheme("button");
-        saveAsPinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-        saveAsPinButton.addCallback(new Runnable(){
-           @Override
-        public void run(){
-               saveAsPinPanel();
-           }
-        });
-        add(saveAsPinButton);
         
         exit = new Button("Exit");
         exit.setTheme("button");
@@ -726,7 +679,108 @@ public class MainFrame extends Widget{
         if(selectedResolution!=-1)displayModeListBox.setSelected(selectedResolution);
 	}
 	
-	
+	/**
+	 * Init pin related swings
+	 */
+    private void pinInit() {
+        pinToggleButton = new ToggleButton("Pin panel");
+        pinToggleButton.setTheme("togglebutton");
+        pinToggleButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+        pinToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               boolean enabled = pinToggleButton.isActive();
+               menuOpened = enabled;
+               setPinButtonsVisible(enabled);
+               setButtonsEnabled(! enabled);
+               pinToggleButton.setEnabled(true);
+           }
+        });
+        add(pinToggleButton);
+        
+        openPinButton = new Button("Open ...");
+        openPinButton.setTheme("button");
+        openPinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+        openPinButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               openAPinPanelFile();
+               setPinButtonsVisible(false);
+           }
+        });
+        add(openPinButton);
+        
+        newPinButton = new Button("New");
+        newPinButton.setTheme("button");
+        newPinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+        newPinButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               newPinPanel();
+               setPinButtonsVisible(false);
+           }
+        });
+        add(newPinButton);
+        
+        savePinButton = new Button("Save");
+        savePinButton.setTheme("button");
+        savePinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+        savePinButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               savePinPanel();
+               setPinButtonsVisible(false);
+           }
+        });
+        add(savePinButton);
+        
+        saveAsPinButton = new Button("Save as ...");
+        saveAsPinButton.setTheme("button");
+        saveAsPinButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+        saveAsPinButton.addCallback(new Runnable(){
+           @Override
+           public void run(){
+               saveAsPinPanel();
+               setPinButtonsVisible(false);
+           }
+        });
+        saveAsPinButton.setEnabled(false);
+        add(saveAsPinButton);
+        
+        // File selectors
+        de.matthiasmann.twl.model.JavaFileSystemModel fsm;
+        Callback cb;
+        
+        
+        
+        fsAddImg = new FileSelector();
+        fsAddImg.setTheme("fileselector");
+        fsAddImg.setVisible(false);
+        fsm= JavaFileSystemModel.getInstance();
+        fileSelector.setFileSystemModel(fsm);
+        cb = new Callback() {
+            @Override
+            public void filesSelected(Object[] files) {
+                setButtonsEnabled(true);
+                fsAddImg.setVisible(false);
+                File file= (File)files[0];
+                System.out.println("\nOpening file: "+file.getAbsolutePath());
+                if (loadingPinPanel) {
+                    loadPinPanel(file.getAbsolutePath());
+                    loadingPinPanel = false;
+                }
+                else loadModel(file.getAbsolutePath());
+            }
+            @Override
+            public void canceled() {
+                setButtonsEnabled(true);
+                fsAddImg.setVisible(false);
+                
+            }
+        };
+        fsAddImg.addCallback(cb);
+        add(fsAddImg);
+    }
     protected void initPinButtonsEnabled() {
         // always enabled
         openPinButton.setEnabled(true); 
@@ -792,6 +846,7 @@ public class MainFrame extends Widget{
     protected void saveAsPinPanel() {
         // TODO Auto-generated method stub
         msgBoxDestroy();
+        inputBox("a", "b", null, null);
     }
     
 	/**
@@ -936,6 +991,11 @@ public class MainFrame extends Widget{
         int fsHeight=settings.resHeight*19/24+openHeight-settings.resWidth/2+rlWidth/2;
         fileSelector.setSize(rlWidth,fsHeight);
         fileSelector.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
+        
+        
+        fsAddImg.adjustSize();
+        fsAddImg.setSize(rlWidth,fsHeight);
+        fsAddImg.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
         
         helpScrollPane.setSize(rlWidth, fsHeight);
         helpScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
@@ -1384,7 +1444,6 @@ public class MainFrame extends Widget{
 	 * @version 0.4
 	 */
 	private static void pollInput(){
-	    
 	    
 		while(Keyboard.next()){
 			if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
@@ -1921,6 +1980,77 @@ public class MainFrame extends Widget{
         add(msgBoxContent);
 	}
 	
+	public void inputBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
+        msgBoxContent = new TextArea();
+        msgBoxTitle = new TextArea();
+        msgBoxInput = new TextArea();
+        
+        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+        SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
+        
+        SimpleTextAreaModel stmInput = new SimpleTextAreaModel("");
+        
+        
+        msgBoxContent.setModel(stmMsg);
+        msgBoxTitle.setModel(stmTit);
+        msgBoxInput.setModel(stmInput);
+        
+        StyleSheet css = new StyleSheet();
+        try {
+            css.parse("p,div { text-align: center; }");
+            msgBoxTitle.setStyleClassResolver(css);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+        msgBoxContent.adjustSize();
+        msgBoxTitle.adjustSize();
+        msgBoxInput.adjustSize();
+        
+        msgBoxTitle.setTheme("msgbox-title");
+        msgBoxContent.setTheme("msgbox-content");
+        msgBoxInput.setTheme("textarea");
+        
+        msgBoxTitle.setSize(200, 20);
+        msgBoxContent.setSize(200, 20);
+        msgBoxInput.setSize(200, 20);
+        
+        msgBoxInput.setEnabled(true);
+        msgBoxInput.setCanAcceptKeyboardFocus(true);
+        
+        
+        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 40);
+        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+        msgBoxInput.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 0);
+        
+        msgBoxCancelButton = new Button("OK");
+        msgBoxCancelButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 + 20);
+        msgBoxCancelButton.setSize(100, 40);       
+        
+        msgBoxOkButton = new Button("Cancel");
+        msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 20);
+        msgBoxOkButton.setSize(100, 40);
+        
+        msgBoxOkButton.addCallback(okFunction != null ? okFunction : new Runnable() {
+            public void run() {
+                msgBoxDestroy();
+            }
+        });
+        msgBoxCancelButton.addCallback(cancelFunction != null ? cancelFunction : new Runnable() {
+            public void run() {
+                msgBoxDestroy();
+            }
+        });
+        
+        add(msgBoxCancelButton);
+        add(msgBoxOkButton);
+        add(msgBoxTitle);
+        add(msgBoxInput);
+        add(msgBoxContent);
+    }
+	
 	public void msgBoxDestroy() {
         if (msgBoxContent != null) {
             removeChild(msgBoxContent);
@@ -1936,6 +2066,11 @@ public class MainFrame extends Widget{
             removeChild(msgBoxCloseButton);
             msgBoxCloseButton.destroy();
             msgBoxCloseButton = null;
+        }
+        if (msgBoxInput != null) {
+            removeChild(msgBoxInput);
+            msgBoxInput.destroy();
+            msgBoxInput = null;
         }
         if (msgBoxOkButton != null) {
             removeChild(msgBoxOkButton);
