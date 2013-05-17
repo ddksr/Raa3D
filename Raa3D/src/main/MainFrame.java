@@ -337,39 +337,8 @@ public class MainFrame extends Widget{
         exit.setTooltipContent("Terminates this program.");
         exit.addCallback(new Runnable(){
            @Override
-        public void run(){
-               if (pinPanel != null) {
-                   try {
-                    boolean success = pinPanel.close();
-                    if (success) {
-                        exitProgram(0);
-                    }
-                    else {
-                        confirmBox("Unsaved changes", "Are you sure you want to close Raa3D?", new Runnable() {
-                            public void run() {
-                             // TODO Auto-generated method stub
-                                try {
-                                    pinPanel.destroy();
-                                } catch(Exception e) {
-                                    // TODO Auto-generated catch block
-                                    e.printStackTrace();
-                                }
-                                exitProgram(0);
-                            }
-                        }, new Runnable() {
-                            @Override
-                            public void run() {
-                                exitProgram(0);
-                            }
-                            
-                        });
-                    }
-                } catch(Exception e) {
-                    e.printStackTrace();
-                    exitProgram(0);
-                }
-               }               
-               else exitProgram(0);
+           public void run(){
+               safeExit();
            }
         });
         add(exit);
@@ -726,7 +695,40 @@ public class MainFrame extends Widget{
         if(selectedResolution!=-1)displayModeListBox.setSelected(selectedResolution);
 	}
 	
-	/**
+	protected void safeExit() {
+	    System.out.println("Safe exit");
+	    if (pinPanel != null) {
+            try {
+                boolean success = pinPanel.close();
+                if (success) {
+                    exitProgram(0);
+                }
+                else {
+                    confirmBox("Unsaved changes", "Are you sure?", new Runnable() {
+                        public void run() {
+                            // TODO Auto-generated method stub
+                            try {
+                                pinPanel.destroy();
+                            } catch(Exception e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                            exitProgram(0);
+                        }
+                    }, new Runnable() {
+                        public void run() {
+                            exitProgram(0);
+                        }
+                    });
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+                exitProgram(0);
+            }
+        }               
+        else exitProgram(0);
+    }
+    /**
 	 * Init pin related swings
 	 */
     private void pinInit() {
@@ -2040,15 +2042,18 @@ public class MainFrame extends Widget{
         
         msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 40);
         msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+
         
-        msgBoxCancelButton = new Button("OK");
-        msgBoxCancelButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
-        msgBoxCancelButton.setSize(100, 40);       
-        
-        msgBoxOkButton = new Button("Cancel");
-        msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2);
+        msgBoxOkButton = new Button("OK");
+        msgBoxOkButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
         msgBoxOkButton.setSize(100, 40);
         
+        msgBoxCancelButton = new Button("Cancel");
+        msgBoxCancelButton.setPosition(settings.resWidth/2, settings.resHeight/2);
+        msgBoxCancelButton.setSize(100, 40);       
+
+        
+        // Callbacks
         msgBoxOkButton.addCallback(new Runnable() {
             public void run() {
                 setButtonsEnabled(true);
@@ -2065,7 +2070,7 @@ public class MainFrame extends Widget{
             }
         });
         if (cancelFunction != null) {
-            msgBoxOkButton.addCallback(cancelFunction);
+            msgBoxCancelButton.addCallback(cancelFunction);
         }
         
         add(msgBoxCancelButton);
@@ -2110,13 +2115,13 @@ public class MainFrame extends Widget{
         msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
         msgBoxInput.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 0);
         
-        msgBoxCancelButton = new Button("OK");
-        msgBoxCancelButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 + 20);
-        msgBoxCancelButton.setSize(100, 40);       
+        msgBoxOkButton = new Button("OK");
+        msgBoxOkButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 + 20);
+        msgBoxOkButton.setSize(100, 40);       
         
-        msgBoxOkButton = new Button("Cancel");
-        msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 20);
-        msgBoxOkButton.setSize(100, 40);
+        msgBoxCancelButton = new Button("Cancel");
+        msgBoxCancelButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 20);
+        msgBoxCancelButton.setSize(100, 40);
         
         msgBoxOkButton.addCallback(new Runnable() {
             public void run() {
