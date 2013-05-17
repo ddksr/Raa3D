@@ -292,16 +292,18 @@ public class MainFrame extends Widget{
                 setButtonsEnabled(true);
                 fileSelector.setVisible(false);
                 File file= (File)files[0];
-                System.out.println("\nOpening file: "+file.getAbsolutePath());
+                String path = file.getAbsolutePath();
+                System.out.println("\nOpening file: "+path);
                 if (loadingPinPanel) {
-                    loadPinPanel(file.getAbsolutePath());
+                    loadPinPanel(path);
                     loadingPinPanel = false;
                 }
                 else {
-                    defaultPath = file.getPath().substring(0, java.io.File.pathSeparatorChar);
+                    defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
                     modelName = file.getName();
-                    System.out.println(defaultPath);
+                    infoBox("Info", "Loading model ... ");
                     loadModel(file.getAbsolutePath());
+                    msgBoxDestroy();
                 }
             }
             @Override
@@ -848,7 +850,12 @@ public class MainFrame extends Widget{
             }
         };
         if (pinPanel == null || pinPanel.hasChanges()) {
-            callback.run();
+            if(defaultPath != null) {
+                callback.run();
+            }
+            else {
+                alertBox("Error", "No model opened.");
+            }
         }
         else {
             confirmBox("New pin panel", "Are you sure? All unsaved changes will be lost.", callback, null);
@@ -880,7 +887,7 @@ public class MainFrame extends Widget{
                 public void run() {
                     String fname = msgBoxInput.getText();
                     if(fname.length() > 0) {
-                        pinPanel.setFileLocation(defaultPath + File.pathSeparator + fname);
+                        pinPanel.setFileLocation(defaultPath + File.separator + fname);
                         try {
                             pinPanel.save();
                         } catch(Exception e) {
@@ -2111,6 +2118,7 @@ public class MainFrame extends Widget{
     }
 	
 	public void msgBoxDestroy() {
+	    inputTextMode = false;
         if (msgBoxContent != null) {
             removeChild(msgBoxContent);
             msgBoxContent.destroy();
