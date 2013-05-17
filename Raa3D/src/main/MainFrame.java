@@ -338,7 +338,38 @@ public class MainFrame extends Widget{
         exit.addCallback(new Runnable(){
            @Override
         public void run(){
-               exitProgram(0);
+               if (pinPanel != null) {
+                   try {
+                    boolean success = pinPanel.close();
+                    if (success) {
+                        exitProgram(0);
+                    }
+                    else {
+                        confirmBox("Unsaved changes", "Are you sure you want to close Raa3D?", new Runnable() {
+                            public void run() {
+                             // TODO Auto-generated method stub
+                                try {
+                                    pinPanel.destroy();
+                                } catch(Exception e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                }
+                                exitProgram(0);
+                            }
+                        }, new Runnable() {
+                            @Override
+                            public void run() {
+                                exitProgram(0);
+                            }
+                            
+                        });
+                    }
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    exitProgram(0);
+                }
+               }               
+               else exitProgram(0);
            }
         });
         add(exit);
