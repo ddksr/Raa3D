@@ -1978,6 +1978,7 @@ public class MainFrame extends Widget{
         msgBoxCloseButton.setSize(100, 40);
         msgBoxCloseButton.addCallback(new Runnable() {
             public void run() {
+                setButtonsEnabled(true);
                 msgBoxDestroy();
             }
         });
@@ -2020,6 +2021,7 @@ public class MainFrame extends Widget{
         
         msgBoxOkButton.addCallback(new Runnable() {
             public void run() {
+                setButtonsEnabled(true);
                 msgBoxDestroy();
                 inputTextMode = false;
             }
@@ -2030,6 +2032,7 @@ public class MainFrame extends Widget{
         msgBoxCancelButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
+                setButtonsEnabled(true);
                 inputTextMode = false;
             }
         });
@@ -2051,9 +2054,7 @@ public class MainFrame extends Widget{
         msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
         msgBoxInput = new EditField(null, stmInput);
-        
-        
-        
+
         msgBoxContent.setModel(stmMsg);
         msgBoxTitle.setModel(stmTit);
         //msgBoxInput.setModel(stmInput);
@@ -2091,6 +2092,7 @@ public class MainFrame extends Widget{
             public void run() {
                 msgBoxDestroy();
                 inputTextMode = false;
+                setButtonsEnabled(true);
             }
         });
         if (okFunction != null) {
@@ -2099,6 +2101,7 @@ public class MainFrame extends Widget{
         msgBoxCancelButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
+                setButtonsEnabled(true);
                 inputTextMode = false;
             }
         });
@@ -2112,9 +2115,6 @@ public class MainFrame extends Widget{
         add(msgBoxInput);
         add(msgBoxContent);
         inputTextMode = true;
-        
-        //inputContent = new String();
-        //keyboardInputText = msgBoxInput;
     }
 	
 	public void msgBoxDestroy() {
