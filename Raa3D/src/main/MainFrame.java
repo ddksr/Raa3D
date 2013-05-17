@@ -223,7 +223,7 @@ public class MainFrame extends Widget{
     private Button msgBoxCloseButton;
     private Button msgBoxCancelButton;
     
-    private static boolean dialogOpened;
+    private static boolean dialogOpened = false;
     private static boolean menuOpened = false;
 	//parameters
 	static float fovy=45;
@@ -735,6 +735,7 @@ public class MainFrame extends Widget{
                newPinPanel();
                setPinButtonsVisible(false);
                pinToggleButton.setActive(false);
+               setButtonsEnabled(true);
            }
         });
         add(newPinButton);
@@ -748,6 +749,7 @@ public class MainFrame extends Widget{
                savePinPanel();
                setPinButtonsVisible(false);
                pinToggleButton.setActive(false);
+               setButtonsEnabled(true);
            }
         });
         add(savePinButton);
@@ -761,6 +763,7 @@ public class MainFrame extends Widget{
                saveAsPinPanel();
                setPinButtonsVisible(false);
                pinToggleButton.setActive(false);
+               setButtonsEnabled(true);
            }
         });
         //saveAsPinButton.setEnabled(false);
@@ -811,7 +814,6 @@ public class MainFrame extends Widget{
     }
 	
     public void setButtonsEnabled(boolean enabled){
-	    dialogOpened=enabled;
 	    open.setEnabled(enabled);
 	    pinToggleButton.setEnabled(enabled);
         displayModesButton.setEnabled(enabled);
@@ -860,6 +862,7 @@ public class MainFrame extends Widget{
         else {
             confirmBox("New pin panel", "Are you sure? All unsaved changes will be lost.", callback, null);
         }
+        
     }
 	
     /**
@@ -1494,18 +1497,6 @@ public class MainFrame extends Widget{
 	 * @version 0.4
 	 */
 	private static void pollInput(){
-//	    if (keyboardInputText != null) {
-//	        while(Keyboard.next()){
-//	            if(Keyboard.getEventKeyState()){
-//	                int key = Keyboard.getEventKey();
-//	                
-//	                TextAreaModel tam = keyboardInputText.getModel();
-//	                
-//	            }
-//	        }
-//	        return;
-//	    }
-	    
 	    if(inputTextMode) return;
 	    
 		while(Keyboard.next()){
@@ -1545,7 +1536,8 @@ public class MainFrame extends Widget{
 		}
 		
 		
-		if(!dialogOpened || menuOpened )return;
+		if(dialogOpened || menuOpened )return;
+		
 		int z=Mouse.getDWheel();
         if(z>0){
             cameraX*=0.8;
@@ -1899,6 +1891,7 @@ public class MainFrame extends Widget{
 	// User messaging section
 	
 	public void infoBox(String title, String message) {
+	    dialogOpened = true;
 	    
 	    msgBoxContent = new TextArea();
 	    msgBoxTitle = new TextArea();
@@ -1936,11 +1929,13 @@ public class MainFrame extends Widget{
 	    add(msgBoxTitle);
 	    add(msgBoxContent);
 	    
-	    inputTextMode = true;
+	    //inputTextMode = false;
 	}
 	
 	
 	public void alertBox(String title, String message) {
+	    dialogOpened = true;
+	    
 	    msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
         
@@ -1986,9 +1981,13 @@ public class MainFrame extends Widget{
         add(msgBoxCloseButton);
         add(msgBoxTitle);
         add(msgBoxContent);
+        
+        //inputTextMode = false;
 	}
 	
 	public void confirmBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
+	    dialogOpened = true;
+	    
 	    msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
         
@@ -2023,7 +2022,6 @@ public class MainFrame extends Widget{
             public void run() {
                 setButtonsEnabled(true);
                 msgBoxDestroy();
-                inputTextMode = false;
             }
         });
         if (okFunction != null) {
@@ -2033,7 +2031,6 @@ public class MainFrame extends Widget{
             public void run() {
                 msgBoxDestroy();
                 setButtonsEnabled(true);
-                inputTextMode = false;
             }
         });
         if (cancelFunction != null) {
@@ -2047,6 +2044,8 @@ public class MainFrame extends Widget{
 	}
 	
 	public void inputBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
+	    dialogOpened = true;
+	    
 	    SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
         
@@ -2114,10 +2113,13 @@ public class MainFrame extends Widget{
         add(msgBoxTitle);
         add(msgBoxInput);
         add(msgBoxContent);
+        
+        
         inputTextMode = true;
     }
 	
 	public void msgBoxDestroy() {
+	    dialogOpened = false;
 	    inputTextMode = false;
         if (msgBoxContent != null) {
             removeChild(msgBoxContent);

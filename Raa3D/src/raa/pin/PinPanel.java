@@ -30,7 +30,7 @@ public class PinPanel {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		hasChanges = false;
+		hasChanges = true;
 	}
 	
 	public PinPanel(String nid) {
