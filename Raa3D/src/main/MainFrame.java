@@ -86,7 +86,6 @@ import static org.lwjgl.opengl.GL20.glGetShaderInfoLog;
 import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
-import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 import static tools.Tools.allocFloats;
 
 import java.io.BufferedReader;
@@ -99,6 +98,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+
 import java.nio.FloatBuffer;
 
 import models.ObjOrPlyModel;
@@ -121,6 +121,7 @@ import raa.pin.PinPanel;
 import tools.Quaternion;
 import tools.Vector;
 import de.matthiasmann.twl.Button;
+import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.EditField;
 import de.matthiasmann.twl.FileSelector;
 import de.matthiasmann.twl.FileSelector.Callback;
@@ -137,6 +138,7 @@ import de.matthiasmann.twl.model.EditFieldModel;
 import de.matthiasmann.twl.model.JavaFileSystemModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLTexture;
 import de.matthiasmann.twl.textarea.SimpleTextAreaModel;
 import de.matthiasmann.twl.textarea.StyleSheet;
 import de.matthiasmann.twl.textarea.TextAreaModel;
@@ -212,6 +214,12 @@ public class MainFrame extends Widget{
     private SimpleTextAreaModel stamHelp, stamCredits;
     private FileSelector fileSelector;
     private FileSelector fsAddImg;
+    
+    /**image***/
+    private ToggleButton image;
+    private ScrollPane imageScrollPane;  
+    private ImageWidget imageWidget;
+    /**********/
     
     private ListBox displayModeListBox;
     private de.matthiasmann.twl.ToggleButton fullscreenToggle;
@@ -298,7 +306,8 @@ public class MainFrame extends Widget{
                     loadingPinPanel = false;
                 }
                 else {
-                    defaultPath = file.getPath().substring(0, java.io.File.pathSeparatorChar);
+                    //defaultPath = file.getPath().substring(0, java.io.File.pathSeparatorChar);
+                    defaultPath = file.getPath();
                     modelName = file.getName();
                     System.out.println(defaultPath);
                     loadModel(file.getAbsolutePath());
@@ -399,6 +408,26 @@ public class MainFrame extends Widget{
         });
         add(help);
         
+        /****image*****/
+        image = new ToggleButton("Image");
+        image.setTheme("togglebutton");
+        image.setTooltipContent("Shows controls.");
+        image.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               if(image.isActive()){
+                   imageScrollPane.setVisible(true);
+                   setButtonsEnabled(false);
+                   image.setEnabled(true);
+                 //  drawImage();
+               }else{
+                   imageScrollPane.setVisible(false);
+                   setButtonsEnabled(true);
+               }
+           }
+        });
+        add(image);
+        /**************/
         credits = new ToggleButton("Licensing");
         credits.setTheme("togglebutton");
         credits.setTooltipContent("Shows authorship and licensing information.");
@@ -595,6 +624,15 @@ public class MainFrame extends Widget{
         add(helpScrollPane);
         helpScrollPane.setContent(helpTextArea);
         
+        /***image***/
+        imageWidget = new ImageWidget("C:\\Users\\Jan\\Desktop\\team - Copy.jpg");
+        imageScrollPane = new ScrollPane();
+        imageScrollPane.setTheme("scrollpane");
+        imageScrollPane.setVisible(false);
+        add(imageScrollPane);
+        imageScrollPane.setContent(imageWidget);
+        /***********/
+        
         displayModesButton = new Button("Display Modes...");
         displayModesButton.setTheme("button");
         displayModesButton.setTooltipContent("Open the list with the available display modes.");
@@ -692,6 +730,7 @@ public class MainFrame extends Widget{
         displayModeListBox.setModel(scListModel);
         if(selectedResolution!=-1)displayModeListBox.setSelected(selectedResolution);
 	}
+	
 	
 	/**
 	 * Init pin related swings
@@ -1045,6 +1084,10 @@ public class MainFrame extends Widget{
         helpScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
         helpTextArea.setSize(rlWidth, fsHeight);
         
+        /*******image*****/
+        imageScrollPane.setSize(rlWidth, fsHeight);
+        imageScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
+        /****************/
     }
 	
 	/**
@@ -1932,7 +1975,7 @@ public class MainFrame extends Widget{
 	    inputTextMode = true;
 	}
 	
-	
+
 	public void alertBox(String title, String message) {
 	    msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
@@ -2141,5 +2184,46 @@ public class MainFrame extends Widget{
             msgBoxCancelButton.destroy();
             msgBoxCancelButton = null;
         }
+    }
+	
+public void displayImage(String title, String message) {
+        
+        msgBoxContent = new TextArea();
+        msgBoxTitle = new TextArea();
+        
+        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+        SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
+        
+        
+        msgBoxContent.setModel(stmMsg);
+        msgBoxTitle.setModel(stmTit);
+        
+        StyleSheet css = new StyleSheet();
+        try {
+            css.parse("p,div { text-align: center; }");
+            msgBoxTitle.setStyleClassResolver(css);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+        msgBoxContent.adjustSize();
+        msgBoxTitle.adjustSize();
+        
+        msgBoxTitle.setTheme("msgbox-title");
+        msgBoxContent.setTheme("msgbox-content");
+        
+        msgBoxTitle.setSize(200, 20);
+        msgBoxContent.setSize(200, 20);
+        
+        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
+        
+        
+        add(msgBoxTitle);
+        add(msgBoxContent);
+        
+        inputTextMode = true;
     }
 }
