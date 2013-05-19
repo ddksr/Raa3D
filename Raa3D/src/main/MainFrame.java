@@ -86,9 +86,9 @@ import static org.lwjgl.opengl.GL20.glGetShaderInfoLog;
 import static org.lwjgl.opengl.GL20.glLinkProgram;
 import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
-import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 import static tools.Tools.allocFloats;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -99,10 +99,13 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
+import javax.imageio.ImageIO;
 import models.ObjOrPlyModel;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
@@ -141,6 +144,11 @@ import de.matthiasmann.twl.textarea.SimpleTextAreaModel;
 import de.matthiasmann.twl.textarea.StyleSheet;
 import de.matthiasmann.twl.textarea.TextAreaModel;
 import de.matthiasmann.twl.theme.ThemeManager;
+
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import javax.swing.JOptionPane;
+
 
 /**
  * @author Simon �agar, 63090355
@@ -202,6 +210,7 @@ public class MainFrame extends Widget{
     private Button saveAsPinButton;
     
     private Button displayModesButton, okayVideoSetting, cancelVideoSetting;
+    private Button prtscr;
     private Button exit;
     private ToggleButton help;
     private ToggleButton credits;
@@ -327,6 +336,48 @@ public class MainFrame extends Widget{
            }
         });
         add(open);
+             
+        prtscr = new Button("Screen shot...");
+        prtscr.setTheme("button");
+        prtscr.setTooltipContent("Create screenshot.");
+        prtscr.addCallback(new Runnable(){
+           /**
+            * Create screen shoot of current view
+            */
+           public void run(){
+               GL11.glReadBuffer(GL11.GL_FRONT);
+               int width = Display.getDisplayMode().getWidth();
+               int height= Display.getDisplayMode().getHeight();
+               int bpp = 4; // Assuming a 32-bit display with a byte each for red, green, blue, and alpha.
+               ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * bpp);
+               GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);                             
+               BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+               String prtscr_filename = "screenshot.png";
+               File outfile =  new File(prtscr_filename);
+               
+               for(int x = 0; x < width; x++) { 
+                   for(int y = 0; y < height; y++) {
+                       int i = (x + (width * y)) * bpp;
+                       int r = buffer.get(i) & 0xFF;
+                       int g = buffer.get(i + 1) & 0xFF;
+                       int b = buffer.get(i + 2) & 0xFF;
+                       image.setRGB(x, height - (y + 1), (0xFF << 24) | (r << 16) | (g << 8) | b);
+                   }
+               }
+
+               try {
+                   ImageIO.write(image, "PNG", outfile); // "PNG" or "JPG"
+                   
+                   JOptionPane.showMessageDialog(null,"Slika " + prtscr_filename + " je bila shranjena", "Slika shranjena", JOptionPane.WARNING_MESSAGE);
+               } catch (IOException e) { 
+                   e.printStackTrace(); 
+               }        
+           }
+           
+
+        });
+        add(prtscr);
+        
         
         pinInit();
         
@@ -852,6 +903,7 @@ public class MainFrame extends Widget{
         displayModesButton.setEnabled(enabled);
         help.setEnabled(enabled);
         credits.setEnabled(enabled);
+        prtscr.setEnabled(enabled);
 	}
 	
 	/**
@@ -1003,10 +1055,11 @@ public class MainFrame extends Widget{
 	    stereoToggleButton.adjustSize();
 	    help.adjustSize();
 	    credits.adjustSize();
+	    prtscr.adjustSize();
 	    exit.adjustSize();
         int openHeight=Math.max(25,settings.resHeight/18);
         
-        int buttonWidth=settings.resWidth/7+1;
+        int buttonWidth=settings.resWidth/8+1;
         open.setSize(buttonWidth, openHeight);
         open.setPosition(0, 0);
         
@@ -1050,8 +1103,10 @@ public class MainFrame extends Widget{
         help.setSize(buttonWidth, openHeight);
         credits.setPosition(buttonWidth*5, 0);
         credits.setSize(buttonWidth, openHeight);
-        exit.setPosition(buttonWidth*6, 0);
-        exit.setSize(settings.resWidth-buttonWidth*6, openHeight);
+        prtscr.setPosition(buttonWidth*6, 0);
+        prtscr.setSize(buttonWidth, openHeight);
+        exit.setPosition(buttonWidth*7, 0);
+        exit.setSize(settings.resWidth-buttonWidth*7, openHeight);
         
         
         int rlWidth=settings.resWidth*8/10;
