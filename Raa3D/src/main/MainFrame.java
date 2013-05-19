@@ -261,6 +261,12 @@ public class MainFrame extends Widget{
 	//camera pose
 	static Quaternion cameraOrientation;
 	static float cameraX=0, cameraY=0, cameraZ=0, cameraMoveSpeed=1.667f;
+	//mouse position
+	static int mouse_x = Mouse.getX();
+	static int mouse_y = Mouse.getY();
+	//zoom
+	static double zoom = 1;
+
 	static double cameraRotationSpeed=(float)(72*Math.PI/180/60);
 	//variables for rotating the veins
 	static double[] screenPlaneInitialUpperLeft, screenPlaneInitialUpperRight, screenPlaneInitialLowerLeft, screenPlaneInitialLowerRight;
@@ -481,6 +487,7 @@ public class MainFrame extends Widget{
         "   R - moves the camera upwards\n   F - moves the camera downwards\n" +
         "You can also use the ellipse on the right for more intuitive or finer movements.\n\n" +
         "You can scroll the mouse wheel to move closer or further away from the model.\n" +
+        "You can hold left or right mouse button while moving mouse.\n" +
         "You can click on an invisible sphere around the model and drag to rotate it.\n\n" +
         "You may change how the model is rendered with the following buttons:\n" +
         "   0 - use a fixed function pipeline\n" +
@@ -1631,10 +1638,12 @@ public class MainFrame extends Widget{
             cameraX*=0.8;
             cameraY*=0.8;
             cameraZ*=0.8;
+            zoom*=1/0.8;
         }else if(z<0){
             cameraX*=1.25;
             cameraY*=1.25;
             cameraZ*=1.25;
+            zoom*=1/1.25;
         }
         
 		//moving the camera
@@ -1810,6 +1819,47 @@ public class MainFrame extends Widget{
 		            cameraY+=(float)v[1];
 		            cameraZ+=(float)v[2];
                 }
+		    }else if(Mouse.isButtonDown(1)){ // When user clicks and moves right mouse button
+		        
+                // Moving mouse left
+                if (Mouse.getX() < mouse_x) {
+                    double v[]= new double[]{-0.1 / zoom, 0, 0};
+                    v=cameraOrientation.rotateVector3d(v);
+                    cameraX+=(float)v[0];
+                    cameraY+=(float)v[1];
+                    cameraZ+=(float)v[2];   
+                }
+                
+                // Moving mouse right
+                if (Mouse.getX() > mouse_x) {
+                    double v[]= new double[]{0.1 / zoom, 0, 0};
+                    v=cameraOrientation.rotateVector3d(v);
+                    cameraX+=(float)v[0];
+                    cameraY+=(float)v[1];
+                    cameraZ+=(float)v[2];
+                }
+                
+                // Moving mouse up
+                if (Mouse.getY() < mouse_y) {
+                 double v[]= new double[]{0, -0.1 / zoom, 0};
+                 v=cameraOrientation.rotateVector3d(v);
+                 cameraX+=(float)v[0];
+                 cameraY+=(float)v[1];
+                 cameraZ+=(float)v[2];   
+                }
+                
+                // Moving mouse down
+                if (Mouse.getY() > mouse_y) {
+                 double v[]= new double[]{0, 0.1 / zoom, 0};
+                 v=cameraOrientation.rotateVector3d(v);
+                 cameraX+=(float)v[0];
+                 cameraY+=(float)v[1];
+                 cameraZ+=(float)v[2];
+                }
+                
+                mouse_x = Mouse.getX();
+                mouse_y = Mouse.getY();
+
 		    }else{
 		        clickedOn=CLICKED_ON_NOTHING;
 		        veinsGrabbedAt=null;
