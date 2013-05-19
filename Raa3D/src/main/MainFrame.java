@@ -294,23 +294,30 @@ public class MainFrame extends Widget{
                 File file= (File)files[0];
                 String path = file.getAbsolutePath();
                 System.out.println("\nOpening file: "+path);
+                dialogOpened = true;
                 if (loadingPinPanel) {
                     loadPinPanel(path);
                     loadingPinPanel = false;
+
+                    initPinButtonsEnabled();
                 }
                 else {
                     defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
                     modelName = file.getName();
                     infoBox("Info", "Loading model ... ");
                     loadModel(file.getAbsolutePath());
+
                     msgBoxDestroy();
+
+                    // TODO: open pin panel if exists
+                    initPinButtonsEnabled();
                 }
             }
             @Override
             public void canceled() {
                 setButtonsEnabled(true);
                 fileSelector.setVisible(false);
-                
+                dialogOpened = false;
             }
         };
         fileSelector.addCallback(cb);
@@ -831,11 +838,13 @@ public class MainFrame extends Widget{
         };
         fsAddImg.addCallback(cb);
         add(fsAddImg);
+        
+        initPinButtonsEnabled();
     }
     protected void initPinButtonsEnabled() {
         // always enabled
-        openPinButton.setEnabled(true); 
-        newPinButton.setEnabled(true);
+        openPinButton.setEnabled(openedModel != null); 
+        newPinButton.setEnabled(openedModel != null);
         savePinButton.setEnabled(pinPanel != null && pinPanel.hasChanges());
         saveAsPinButton.setEnabled(pinPanel != null);
     }
@@ -895,7 +904,8 @@ public class MainFrame extends Widget{
         else {
             confirmBox("New pin panel", "Are you sure? All unsaved changes will be lost.", callback, null);
         }
-        
+
+        initPinButtonsEnabled();
     }
 	
     /**
@@ -1164,6 +1174,7 @@ public class MainFrame extends Widget{
         double[] v = Quaternion.quaternionReciprocal(currentModelOrientation).rotateVector3d(new double[]{0,1,0});
         currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, Quaternion.quaternionFromAngleAndRotationAxis(angle2, v));
 	    addedModelOrientation = new Quaternion();
+	    
 	    
 	}
     private static void loadPinPanel(String filePath) {
