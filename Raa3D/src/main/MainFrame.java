@@ -216,8 +216,6 @@ public class MainFrame extends Widget{
     private FileSelector fsAddImg;
     
     /**image***/
-    private ToggleButton image;
-    private ScrollPane imageScrollPane;  
     private ImageWidget imageWidget;
     /**********/
     
@@ -408,26 +406,6 @@ public class MainFrame extends Widget{
         });
         add(help);
         
-        /****image*****/
-        image = new ToggleButton("Image");
-        image.setTheme("togglebutton");
-        image.setTooltipContent("Shows controls.");
-        image.addCallback(new Runnable(){
-           @Override
-        public void run(){
-               if(image.isActive()){
-                   imageScrollPane.setVisible(true);
-                   setButtonsEnabled(false);
-                   image.setEnabled(true);
-                 //  drawImage();
-               }else{
-                   imageScrollPane.setVisible(false);
-                   setButtonsEnabled(true);
-               }
-           }
-        });
-        add(image);
-        /**************/
         credits = new ToggleButton("Licensing");
         credits.setTheme("togglebutton");
         credits.setTooltipContent("Shows authorship and licensing information.");
@@ -623,15 +601,6 @@ public class MainFrame extends Widget{
         helpScrollPane.setVisible(false);
         add(helpScrollPane);
         helpScrollPane.setContent(helpTextArea);
-        
-        /***image***/
-        imageWidget = new ImageWidget("C:\\Users\\Jan\\Desktop\\team - Copy.jpg");
-        imageScrollPane = new ScrollPane();
-        imageScrollPane.setTheme("scrollpane");
-        imageScrollPane.setVisible(false);
-        add(imageScrollPane);
-        imageScrollPane.setContent(imageWidget);
-        /***********/
         
         displayModesButton = new Button("Display Modes...");
         displayModesButton.setTheme("button");
@@ -1084,10 +1053,6 @@ public class MainFrame extends Widget{
         helpScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
         helpTextArea.setSize(rlWidth, fsHeight);
         
-        /*******image*****/
-        imageScrollPane.setSize(rlWidth, fsHeight);
-        imageScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
-        /****************/
     }
 	
 	/**
