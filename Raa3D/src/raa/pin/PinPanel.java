@@ -30,7 +30,7 @@ public class PinPanel {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		hasChanges = false;
+		hasChanges = true;
 	}
 	
 	public PinPanel(String nid) {
@@ -60,7 +60,8 @@ public class PinPanel {
 	public void setFileName(String fname) {
 		fileLoc = fname;
 		String[] parts = fname.split("\\.");
-		if(! parts[parts.length-1].equals(PinPanel.EXT)) fileLoc += "." + PinPanel.EXT;
+		if(! parts[parts.length-1].equals(PinPanel.EXT)) 
+		    fileLoc += "." + PinPanel.EXT;
 	}
 
 	public void save() throws Exception {
@@ -70,6 +71,7 @@ public class PinPanel {
 		pw.print(index.toString());
 		pw.close();
 		
+		System.out.println("Saving pin panel to " + fileLoc);
 		
 		int bytesIn;
 		byte[] readBuffer = new byte[2156];
@@ -181,7 +183,7 @@ public class PinPanel {
 		return new PinPanel(nid);
 	}
 	
-	public void close() throws Exception {
+	public void destroy() throws Exception {
 		String loc = tmpLoc + File.separator + id;
 		
 		File dirImg = new File(loc + File.separator + "img");
@@ -201,5 +203,16 @@ public class PinPanel {
 		dirTxt.delete();
 		new File(loc + File.separator + "index").delete();
 		new File(loc).delete();
+	}
+	
+	public boolean close() throws Exception {
+	    if (hasChanges) {
+	        System.out.println("Pin panel has unsaved changes. Destroy?");
+	        return false;
+	    }
+	    else {
+	        destroy();
+	        return true;
+	    }
 	}
 }

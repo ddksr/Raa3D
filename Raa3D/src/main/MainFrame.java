@@ -229,7 +229,7 @@ public class MainFrame extends Widget{
     private Button msgBoxCloseButton;
     private Button msgBoxCancelButton;
     
-    private static boolean dialogOpened;
+    private static boolean dialogOpened = false;
     private static boolean menuOpened = false;
 	//parameters
 	static float fovy=45;
@@ -298,17 +298,18 @@ public class MainFrame extends Widget{
                 setButtonsEnabled(true);
                 fileSelector.setVisible(false);
                 File file= (File)files[0];
-                System.out.println("\nOpening file: "+file.getAbsolutePath());
+                String path = file.getAbsolutePath();
+                System.out.println("\nOpening file: "+path);
                 if (loadingPinPanel) {
-                    loadPinPanel(file.getAbsolutePath());
+                    loadPinPanel(path);
                     loadingPinPanel = false;
                 }
                 else {
-                    //defaultPath = file.getPath().substring(0, java.io.File.pathSeparatorChar);
-                    defaultPath = file.getPath();
+              		defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
                     modelName = file.getName();
-                    System.out.println(defaultPath);
+                    infoBox("Info", "Loading model ... ");
                     loadModel(file.getAbsolutePath());
+                    msgBoxDestroy();
                 }
             }
             @Override
@@ -342,8 +343,8 @@ public class MainFrame extends Widget{
         exit.setTooltipContent("Terminates this program.");
         exit.addCallback(new Runnable(){
            @Override
-        public void run(){
-               exitProgram(0);
+           public void run(){
+               safeExit();
            }
         });
         add(exit);
@@ -701,7 +702,40 @@ public class MainFrame extends Widget{
 	}
 	
 	
-	/**
+	protected void safeExit() {
+	    System.out.println("Safe exit");
+	    if (pinPanel != null) {
+            try {
+                boolean success = pinPanel.close();
+                if (success) {
+                    exitProgram(0);
+                }
+                else {
+                    confirmBox("Unsaved changes", "Are you sure?", new Runnable() {
+                        public void run() {
+                            // TODO Auto-generated method stub
+                            try {
+                                pinPanel.destroy();
+                            } catch(Exception e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+                            exitProgram(0);
+                        }
+                    }, new Runnable() {
+                        public void run() {
+                            exitProgram(0);
+                        }
+                    });
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+                exitProgram(0);
+            }
+        }               
+        else exitProgram(0);
+    }
+    /**
 	 * Init pin related swings
 	 */
     private void pinInit() {
@@ -741,6 +775,7 @@ public class MainFrame extends Widget{
                newPinPanel();
                setPinButtonsVisible(false);
                pinToggleButton.setActive(false);
+               setButtonsEnabled(true);
            }
         });
         add(newPinButton);
@@ -754,6 +789,7 @@ public class MainFrame extends Widget{
                savePinPanel();
                setPinButtonsVisible(false);
                pinToggleButton.setActive(false);
+               setButtonsEnabled(true);
            }
         });
         add(savePinButton);
@@ -767,6 +803,7 @@ public class MainFrame extends Widget{
                saveAsPinPanel();
                setPinButtonsVisible(false);
                pinToggleButton.setActive(false);
+               setButtonsEnabled(true);
            }
         });
         //saveAsPinButton.setEnabled(false);
@@ -817,7 +854,6 @@ public class MainFrame extends Widget{
     }
 	
     public void setButtonsEnabled(boolean enabled){
-	    dialogOpened=enabled;
 	    open.setEnabled(enabled);
 	    pinToggleButton.setEnabled(enabled);
         displayModesButton.setEnabled(enabled);
@@ -856,11 +892,17 @@ public class MainFrame extends Widget{
             }
         };
         if (pinPanel == null || pinPanel.hasChanges()) {
-            callback.run();
+            if(defaultPath != null) {
+                callback.run();
+            }
+            else {
+                alertBox("Error", "No model opened.");
+            }
         }
         else {
             confirmBox("New pin panel", "Are you sure? All unsaved changes will be lost.", callback, null);
         }
+        
     }
 	
     /**
@@ -888,7 +930,7 @@ public class MainFrame extends Widget{
                 public void run() {
                     String fname = msgBoxInput.getText();
                     if(fname.length() > 0) {
-                        pinPanel.setFileLocation(defaultPath + File.pathSeparator + fname);
+                        pinPanel.setFileLocation(defaultPath + File.separator + fname);
                         try {
                             pinPanel.save();
                         } catch(Exception e) {
@@ -1495,18 +1537,6 @@ public class MainFrame extends Widget{
 	 * @version 0.4
 	 */
 	private static void pollInput(){
-//	    if (keyboardInputText != null) {
-//	        while(Keyboard.next()){
-//	            if(Keyboard.getEventKeyState()){
-//	                int key = Keyboard.getEventKey();
-//	                
-//	                TextAreaModel tam = keyboardInputText.getModel();
-//	                
-//	            }
-//	        }
-//	        return;
-//	    }
-	    
 	    if(inputTextMode) return;
 	    
 		while(Keyboard.next()){
@@ -1546,7 +1576,8 @@ public class MainFrame extends Widget{
 		}
 		
 		
-		if(!dialogOpened || menuOpened )return;
+		if(dialogOpened || menuOpened )return;
+		
 		int z=Mouse.getDWheel();
         if(z>0){
             cameraX*=0.8;
@@ -1900,6 +1931,7 @@ public class MainFrame extends Widget{
 	// User messaging section
 	
 	public void infoBox(String title, String message) {
+	    dialogOpened = true;
 	    
 	    msgBoxContent = new TextArea();
 	    msgBoxTitle = new TextArea();
@@ -1937,11 +1969,13 @@ public class MainFrame extends Widget{
 	    add(msgBoxTitle);
 	    add(msgBoxContent);
 	    
-	    inputTextMode = true;
+	    //inputTextMode = false;
 	}
 	
 
 	public void alertBox(String title, String message) {
+	    dialogOpened = true;
+	    
 	    msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
         
@@ -1979,6 +2013,7 @@ public class MainFrame extends Widget{
         msgBoxCloseButton.setSize(100, 40);
         msgBoxCloseButton.addCallback(new Runnable() {
             public void run() {
+                setButtonsEnabled(true);
                 msgBoxDestroy();
             }
         });
@@ -1986,9 +2021,13 @@ public class MainFrame extends Widget{
         add(msgBoxCloseButton);
         add(msgBoxTitle);
         add(msgBoxContent);
+        
+        //inputTextMode = false;
 	}
 	
 	public void confirmBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
+	    dialogOpened = true;
+	    
 	    msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
         
@@ -2010,19 +2049,22 @@ public class MainFrame extends Widget{
         
         msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 40);
         msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+
         
-        msgBoxCancelButton = new Button("OK");
-        msgBoxCancelButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
-        msgBoxCancelButton.setSize(100, 40);       
-        
-        msgBoxOkButton = new Button("Cancel");
-        msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2);
+        msgBoxOkButton = new Button("OK");
+        msgBoxOkButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
         msgBoxOkButton.setSize(100, 40);
         
+        msgBoxCancelButton = new Button("Cancel");
+        msgBoxCancelButton.setPosition(settings.resWidth/2, settings.resHeight/2);
+        msgBoxCancelButton.setSize(100, 40);       
+
+        
+        // Callbacks
         msgBoxOkButton.addCallback(new Runnable() {
             public void run() {
+                setButtonsEnabled(true);
                 msgBoxDestroy();
-                inputTextMode = false;
             }
         });
         if (okFunction != null) {
@@ -2031,11 +2073,11 @@ public class MainFrame extends Widget{
         msgBoxCancelButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
-                inputTextMode = false;
+                setButtonsEnabled(true);
             }
         });
         if (cancelFunction != null) {
-            msgBoxOkButton.addCallback(cancelFunction);
+            msgBoxCancelButton.addCallback(cancelFunction);
         }
         
         add(msgBoxCancelButton);
@@ -2045,6 +2087,8 @@ public class MainFrame extends Widget{
 	}
 	
 	public void inputBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
+	    dialogOpened = true;
+	    
 	    SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
         
@@ -2052,9 +2096,7 @@ public class MainFrame extends Widget{
         msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
         msgBoxInput = new EditField(null, stmInput);
-        
-        
-        
+
         msgBoxContent.setModel(stmMsg);
         msgBoxTitle.setModel(stmTit);
         //msgBoxInput.setModel(stmInput);
@@ -2080,18 +2122,19 @@ public class MainFrame extends Widget{
         msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
         msgBoxInput.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 0);
         
-        msgBoxCancelButton = new Button("OK");
-        msgBoxCancelButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 + 20);
-        msgBoxCancelButton.setSize(100, 40);       
+        msgBoxOkButton = new Button("OK");
+        msgBoxOkButton.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 + 20);
+        msgBoxOkButton.setSize(100, 40);       
         
-        msgBoxOkButton = new Button("Cancel");
-        msgBoxOkButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 20);
-        msgBoxOkButton.setSize(100, 40);
+        msgBoxCancelButton = new Button("Cancel");
+        msgBoxCancelButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 20);
+        msgBoxCancelButton.setSize(100, 40);
         
         msgBoxOkButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
                 inputTextMode = false;
+                setButtonsEnabled(true);
             }
         });
         if (okFunction != null) {
@@ -2100,6 +2143,7 @@ public class MainFrame extends Widget{
         msgBoxCancelButton.addCallback(new Runnable() {
             public void run() {
                 msgBoxDestroy();
+                setButtonsEnabled(true);
                 inputTextMode = false;
             }
         });
@@ -2112,13 +2156,14 @@ public class MainFrame extends Widget{
         add(msgBoxTitle);
         add(msgBoxInput);
         add(msgBoxContent);
-        inputTextMode = true;
         
-        //inputContent = new String();
-        //keyboardInputText = msgBoxInput;
+        
+        inputTextMode = true;
     }
 	
 	public void msgBoxDestroy() {
+	    dialogOpened = false;
+	    inputTextMode = false;
         if (msgBoxContent != null) {
             removeChild(msgBoxContent);
             msgBoxContent.destroy();
