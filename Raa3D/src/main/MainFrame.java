@@ -199,7 +199,12 @@ public class MainFrame extends Widget{
         }
     }
     
+    static final int LMB = 0;
+    static final int RMB = 1;
+    static final int MWB = 2;
+    
     private static NeckVeinsSettings settings;
+    public static MainFrame gameUI;
     
     //Widgets
     private static ThemeManager themeManager;
@@ -304,6 +309,7 @@ public class MainFrame extends Widget{
 	private static boolean editMode = false;
 	
 	private static int pinNoteType = PinNote.TEXT_TYPE;
+	
 	/**
      * @since 0.4
      * @version 0.4
@@ -1741,18 +1747,23 @@ public class MainFrame extends Widget{
                     else GL11.glPolygonMode(GL11.GL_FRONT, GL11.GL_LINE);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_ADD){
                     openedModel.increaseSubdivisionDepth();
-                }
-                else if(Keyboard.getEventKey()==Keyboard.KEY_SUBTRACT){
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_SUBTRACT){
                     openedModel.decreaseSubdivisionDepth();
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_9){
                     isAAEnabled=!isAAEnabled;
                 }
 			}
 		}
-		
-		
 		if(dialogOpened || menuOpened )return;
 		
+		//TODO: add CTRL + 1
+		if(Mouse.hasWheel() && Mouse.isButtonDown(2) || false) {
+		    if(Mouse.getEventButton() == MWB) {
+		        // mouse wheel clicked
+		        gameUI.addPinNote();
+		    }
+		}
+
 		int z=Mouse.getDWheel();
         if(z>0){
             cameraX*=0.8;
@@ -1990,7 +2001,29 @@ public class MainFrame extends Widget{
 		
 	}
 	
-	/**
+	private void addPinNote() {
+	    dialogOpened = true; // TODO: dont forget to set it to FALSE
+	    
+	    switch (pinNoteType) {
+	        case PinNote.ABSOLUTE_TYPE:
+	            
+	            
+	            break;
+	        case PinNote.IMAGE_TYPE:
+	            
+	            break;
+	            
+	        case PinNote.TEXT_TYPE:
+	            
+	            break;
+	            
+	        case PinNote.DEFAULT_TYPE:
+	        default:
+	        
+	            break;
+	    }
+    }
+    /**
      * @since 0.1
      * @version 0.1
      */
@@ -2123,7 +2156,7 @@ public class MainFrame extends Widget{
             
             //The TWL part
             renderer = new LWJGLRenderer();
-            MainFrame gameUI = new MainFrame();
+            gameUI = new MainFrame();
             gui = new GUI(gameUI, renderer);
             themeManager = ThemeManager.createThemeManager(
                     MainFrame.class.getResource("simple.xml"), renderer);
