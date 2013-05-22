@@ -88,8 +88,11 @@ import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
 import static tools.Tools.allocFloats;
 
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -149,7 +152,9 @@ import de.matthiasmann.twl.theme.ThemeManager;
 
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 
 /**
@@ -378,8 +383,8 @@ public class MainFrame extends Widget{
                }
 
                try {
+                   //writePMImageToFile(image, "C:\\slike\\mojaslika.pm");
                    ImageIO.write(image, "PNG", outfile); // "PNG" or "JPG"
-                   
                    JOptionPane.showMessageDialog(null,"Slika " + prtscr_filename + " je bila shranjena", "Slika shranjena", JOptionPane.WARNING_MESSAGE);
                } catch (IOException e) { 
                    e.printStackTrace(); 
@@ -758,6 +763,7 @@ public class MainFrame extends Widget{
         displayModeListBox.setModel(scListModel);
         if(selectedResolution!=-1)displayModeListBox.setSelected(selectedResolution);
 	}
+	
 	
 	
 	protected void safeExit() {
