@@ -123,6 +123,7 @@ import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 import org.newdawn.slick.util.ResourceLoader;
 
+import raa.pin.PinNote;
 import raa.pin.PinPanel;
 import tools.Quaternion;
 import tools.Vector;
@@ -210,7 +211,7 @@ public class MainFrame extends Widget{
     //Widgets
     private static ThemeManager themeManager;
     private Button open;
-    private ToggleButton pinToggleButton;
+    private ToggleButton pinPanelToggleButton;
     private Button openPinButton;
     private Button newPinButton;
     private Button savePinButton;
@@ -242,6 +243,14 @@ public class MainFrame extends Widget{
     private Button msgBoxOkButton;
     private Button msgBoxCloseButton;
     private Button msgBoxCancelButton;
+    
+    // Pin note buttons
+    private ToggleButton modeToggleButton;
+    
+    private ToggleButton pinTypToggleButton;
+    private ToggleButton pinImgToggleButton;
+    private ToggleButton pinAbsToggleButton;
+    private ToggleButton pinTxtToggleButton;
     
     private static boolean dialogOpened = false;
     private static boolean menuOpened = false;
@@ -302,6 +311,10 @@ public class MainFrame extends Widget{
 	// String containing default path of the model
 	private static String defaultPath = null;
 	private static String modelName = null;
+	
+	private static boolean editMode = false;
+	
+	private static int pinNoteType = PinNote.TEXT_TYPE;
 	/**
      * @since 0.4
      * @version 0.4
@@ -320,23 +333,30 @@ public class MainFrame extends Widget{
                 File file= (File)files[0];
                 String path = file.getAbsolutePath();
                 System.out.println("\nOpening file: "+path);
+                dialogOpened = true;
                 if (loadingPinPanel) {
                     loadPinPanel(path);
                     loadingPinPanel = false;
+
+                    initPinButtonsEnabled();
                 }
                 else {
               		defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
                     modelName = file.getName();
                     infoBox("Info", "Loading model ... ");
                     loadModel(file.getAbsolutePath());
+
                     msgBoxDestroy();
+
+                    // TODO: open pin panel if exists
+                    initPinButtonsEnabled();
                 }
             }
             @Override
             public void canceled() {
                 setButtonsEnabled(true);
                 fileSelector.setVisible(false);
-                
+                dialogOpened = false;
             }
         };
         fileSelector.addCallback(cb);
@@ -353,6 +373,18 @@ public class MainFrame extends Widget{
            }
         });
         add(open);
+        
+        modeToggleButton = new ToggleButton("Edit mode");
+        modeToggleButton.setTheme("togglebutton");
+        modeToggleButton.setTooltipContent("Select mode");
+        modeToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               editMode = modeToggleButton.isActive();
+               pinTypToggleButton.setEnabled(openedModel != null && pinPanel != null && editMode);
+           }
+        });
+        add(modeToggleButton);
              
         prtscr = new Button("Screen shot...");
         prtscr.setTheme("button");
@@ -803,20 +835,74 @@ public class MainFrame extends Widget{
 	 * Init pin related swings
 	 */
     private void pinInit() {
-        pinToggleButton = new ToggleButton("Pin panel");
-        pinToggleButton.setTheme("togglebutton");
-        pinToggleButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-        pinToggleButton.addCallback(new Runnable(){
+        pinPanelToggleButton = new ToggleButton("Pin panel");
+        pinPanelToggleButton.setTheme("togglebutton");
+        pinPanelToggleButton.setTooltipContent("Toggle pin panel options");
+        pinPanelToggleButton.addCallback(new Runnable(){
            @Override
         public void run(){
-               boolean enabled = pinToggleButton.isActive();
+               boolean enabled = pinPanelToggleButton.isActive();
                menuOpened = enabled;
-               setPinButtonsVisible(enabled);
+               setPinPanelButtonsVisible(enabled);
                setButtonsEnabled(! enabled);
-               pinToggleButton.setEnabled(true);
+               pinPanelToggleButton.setEnabled(true);
            }
         });
-        add(pinToggleButton);
+        add(pinPanelToggleButton);
+        
+        pinTypToggleButton = new ToggleButton("Select pin note type");
+        pinTypToggleButton.setTheme("togglebutton");
+        pinTypToggleButton.setTooltipContent("Toggle pin types");
+        pinTypToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               setPinTypeButtonsVisible(pinTypToggleButton.isActive());
+           }
+        });
+        add(pinTypToggleButton);
+        
+        pinTxtToggleButton = new ToggleButton("Text");
+        pinTxtToggleButton.setTheme("togglebutton");
+        pinTxtToggleButton.setTooltipContent("Text notes.");
+        pinTxtToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               pinNoteType = PinNote.TEXT_TYPE;
+               pinTxtToggleButton.setActive(true);
+               pinImgToggleButton.setActive(false);
+               pinAbsToggleButton.setActive(false);
+           }
+        });
+        pinTxtToggleButton.setActive(true);
+        add(pinTxtToggleButton);
+        
+        pinImgToggleButton = new ToggleButton("Image");
+        pinImgToggleButton.setTheme("togglebutton");
+        pinImgToggleButton.setTooltipContent("Image notes.");
+        pinImgToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               pinNoteType = PinNote.IMAGE_TYPE;
+               pinTxtToggleButton.setActive(false);
+               pinImgToggleButton.setActive(true);
+               pinAbsToggleButton.setActive(false);
+           }
+        });
+        add(pinImgToggleButton);
+        
+        pinAbsToggleButton = new ToggleButton("Absolute point");
+        pinAbsToggleButton.setTheme("togglebutton");
+        pinAbsToggleButton.setTooltipContent("Absolute points.");
+        pinAbsToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               pinNoteType = PinNote.ABSOLUTE_TYPE;
+               pinTxtToggleButton.setActive(false);
+               pinImgToggleButton.setActive(false);
+               pinAbsToggleButton.setActive(true);
+           }
+        });
+        add(pinAbsToggleButton);
         
         openPinButton = new Button("Open ...");
         openPinButton.setTheme("button");
@@ -825,7 +911,8 @@ public class MainFrame extends Widget{
            @Override
         public void run(){
                openAPinPanelFile();
-               setPinButtonsVisible(false);
+               setPinPanelButtonsVisible(false);
+               menuOpened = false;
            }
         });
         add(openPinButton);
@@ -837,9 +924,10 @@ public class MainFrame extends Widget{
            @Override
         public void run(){
                newPinPanel();
-               setPinButtonsVisible(false);
-               pinToggleButton.setActive(false);
+               setPinPanelButtonsVisible(false);
+               pinPanelToggleButton.setActive(false);
                setButtonsEnabled(true);
+               menuOpened = false;
            }
         });
         add(newPinButton);
@@ -851,9 +939,10 @@ public class MainFrame extends Widget{
            @Override
         public void run(){
                savePinPanel();
-               setPinButtonsVisible(false);
-               pinToggleButton.setActive(false);
+               setPinPanelButtonsVisible(false);
+               pinPanelToggleButton.setActive(false);
                setButtonsEnabled(true);
+               menuOpened = false;
            }
         });
         add(savePinButton);
@@ -865,9 +954,10 @@ public class MainFrame extends Widget{
            @Override
            public void run(){
                saveAsPinPanel();
-               setPinButtonsVisible(false);
-               pinToggleButton.setActive(false);
+               setPinPanelButtonsVisible(false);
+               pinPanelToggleButton.setActive(false);
                setButtonsEnabled(true);
+               menuOpened = false;
            }
         });
         //saveAsPinButton.setEnabled(false);
@@ -902,24 +992,34 @@ public class MainFrame extends Widget{
         };
         fsAddImg.addCallback(cb);
         add(fsAddImg);
+        
+        initPinButtonsEnabled();
     }
     protected void initPinButtonsEnabled() {
         // always enabled
-        openPinButton.setEnabled(true); 
-        newPinButton.setEnabled(true);
+        openPinButton.setEnabled(openedModel != null); 
+        newPinButton.setEnabled(openedModel != null);
         savePinButton.setEnabled(pinPanel != null && pinPanel.hasChanges());
         saveAsPinButton.setEnabled(pinPanel != null);
+        pinTypToggleButton.setEnabled(openedModel != null && pinPanel != null && editMode);
     }
-    protected void setPinButtonsVisible(boolean visible) {
+    protected void setPinPanelButtonsVisible(boolean visible) {
 	    openPinButton.setVisible(visible);
         savePinButton.setVisible(visible);
         saveAsPinButton.setVisible(visible);
         newPinButton.setVisible(visible);
     }
+    
+    protected void setPinTypeButtonsVisible(boolean visible) {
+        pinTxtToggleButton.setVisible(visible);
+        pinImgToggleButton.setVisible(visible);
+        pinAbsToggleButton.setVisible(visible);
+    }
 	
     public void setButtonsEnabled(boolean enabled){
 	    open.setEnabled(enabled);
-	    pinToggleButton.setEnabled(enabled);
+	    pinPanelToggleButton.setEnabled(enabled);
+        pinTypToggleButton.setEnabled(enabled && editMode);
         displayModesButton.setEnabled(enabled);
         help.setEnabled(enabled);
         credits.setEnabled(enabled);
@@ -942,8 +1042,8 @@ public class MainFrame extends Widget{
     public void openAPinPanelFile(){ 
         fileSelector.setVisible(true);
         setButtonsEnabled(false);
-        setPinButtonsVisible(false);
-        pinToggleButton.setActive(false);
+        setPinPanelButtonsVisible(false);
+        pinPanelToggleButton.setActive(false);
     }
     
     /**
@@ -967,7 +1067,8 @@ public class MainFrame extends Widget{
         else {
             confirmBox("New pin panel", "Are you sure? All unsaved changes will be lost.", callback, null);
         }
-        
+
+        initPinButtonsEnabled();
     }
 	
     /**
@@ -1066,7 +1167,7 @@ public class MainFrame extends Widget{
 	@Override
     protected void layout(){
 	    open.adjustSize();
-	    pinToggleButton.adjustSize();
+	    pinPanelToggleButton.adjustSize();
 	    openPinButton.adjustSize();
 	    newPinButton.adjustSize();
 	    savePinButton.adjustSize();
@@ -1079,54 +1180,72 @@ public class MainFrame extends Widget{
 	    exit.adjustSize();
         int openHeight=Math.max(25,settings.resHeight/18);
         
-        int buttonWidth=settings.resWidth/8+1;
+        int buttonWidth=settings.resWidth/10+1;
         open.setSize(buttonWidth, openHeight);
         open.setPosition(0, 0);
         
-        pinToggleButton.setSize(buttonWidth, openHeight);
-        pinToggleButton.setPosition(buttonWidth, 0);
+        modeToggleButton.setSize(buttonWidth, openHeight);
+        modeToggleButton.setPosition(buttonWidth, 0);
+        
+        pinPanelToggleButton.setSize(buttonWidth, openHeight);
+        pinPanelToggleButton.setPosition(buttonWidth*2, 0);
         
         newPinButton.setSize(buttonWidth, openHeight);
-        newPinButton.setPosition(buttonWidth, openHeight);
+        newPinButton.setPosition(buttonWidth*2, openHeight);
         newPinButton.setVisible(false);
         
         openPinButton.setSize(buttonWidth, openHeight);
-        openPinButton.setPosition(buttonWidth, openHeight*2);
+        openPinButton.setPosition(buttonWidth*2, openHeight*2);
         openPinButton.setVisible(false);
         
         savePinButton.setSize(buttonWidth, openHeight);
-        savePinButton.setPosition(buttonWidth, openHeight*3);
+        savePinButton.setPosition(buttonWidth*2, openHeight*3);
         savePinButton.setVisible(false);
         
         saveAsPinButton.setSize(buttonWidth, openHeight);
-        saveAsPinButton.setPosition(buttonWidth, openHeight*4);
+        saveAsPinButton.setPosition(buttonWidth*2, openHeight*4);
         saveAsPinButton.setVisible(false);
+
+        pinTypToggleButton.setSize(buttonWidth, openHeight);
+        pinTypToggleButton.setPosition(buttonWidth*3, 0);
         
-        displayModesButton.setPosition(buttonWidth*2, 0);
+        pinTxtToggleButton.setSize(buttonWidth, openHeight);
+        pinTxtToggleButton.setPosition(buttonWidth*3, openHeight);
+        pinTxtToggleButton.setVisible(false);
+        
+        pinImgToggleButton.setSize(buttonWidth, openHeight);
+        pinImgToggleButton.setPosition(buttonWidth*3, openHeight*2);
+        pinImgToggleButton.setVisible(false);
+        
+        pinAbsToggleButton.setSize(buttonWidth, openHeight);
+        pinAbsToggleButton.setPosition(buttonWidth*3, openHeight*3);
+        pinAbsToggleButton.setVisible(false);
+        
+        displayModesButton.setPosition(buttonWidth*4, 0);
         displayModesButton.setSize(buttonWidth, openHeight);
         
         if(settings.stereoEnabled){
-            stereoToggleButton.setPosition(buttonWidth*3, 0);
+            stereoToggleButton.setPosition(buttonWidth*5, 0);
             stereoToggleButton.setSize(buttonWidth, openHeight/2);
-            stereoScrollbar.setPosition(buttonWidth*3, openHeight/2);
+            stereoScrollbar.setPosition(buttonWidth*5, openHeight/2);
             stereoScrollbar.setSize(buttonWidth, openHeight/2);
             //stereoScrollbar.setMinSize(settings.resWidth/36, openHeight);
         }else{
-            stereoToggleButton.setPosition(buttonWidth*3, 0);
+            stereoToggleButton.setPosition(buttonWidth*5, 0);
             stereoToggleButton.setSize(buttonWidth, openHeight);
             
-            stereoScrollbar.setPosition(buttonWidth*3, openHeight);
+            stereoScrollbar.setPosition(buttonWidth*5, openHeight);
             stereoScrollbar.setSize(buttonWidth, openHeight);
         }
         
-        help.setPosition(buttonWidth*4, 0);
+        help.setPosition(buttonWidth*6, 0);
         help.setSize(buttonWidth, openHeight);
-        credits.setPosition(buttonWidth*5, 0);
+        credits.setPosition(buttonWidth*7, 0);
         credits.setSize(buttonWidth, openHeight);
-        prtscr.setPosition(buttonWidth*6, 0);
+        prtscr.setPosition(buttonWidth*8, 0);
         prtscr.setSize(buttonWidth, openHeight);
-        exit.setPosition(buttonWidth*7, 0);
-        exit.setSize(settings.resWidth-buttonWidth*7, openHeight);
+        exit.setPosition(buttonWidth*9, 0);
+        exit.setSize(settings.resWidth-buttonWidth*9, openHeight);
         
         
         int rlWidth=settings.resWidth*8/10;
@@ -1239,6 +1358,7 @@ public class MainFrame extends Widget{
         double[] v = Quaternion.quaternionReciprocal(currentModelOrientation).rotateVector3d(new double[]{0,1,0});
         currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, Quaternion.quaternionFromAngleAndRotationAxis(angle2, v));
 	    addedModelOrientation = new Quaternion();
+	    
 	    
 	}
     private static void loadPinPanel(String filePath) {
