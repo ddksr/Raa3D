@@ -88,8 +88,11 @@ import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
 import static tools.Tools.allocFloats;
 
+import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -125,6 +128,7 @@ import raa.pin.PinPanel;
 import tools.Quaternion;
 import tools.Vector;
 import de.matthiasmann.twl.Button;
+import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.EditField;
 import de.matthiasmann.twl.FileSelector;
 import de.matthiasmann.twl.FileSelector.Callback;
@@ -141,6 +145,7 @@ import de.matthiasmann.twl.model.EditFieldModel;
 import de.matthiasmann.twl.model.JavaFileSystemModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLTexture;
 import de.matthiasmann.twl.textarea.SimpleTextAreaModel;
 import de.matthiasmann.twl.textarea.StyleSheet;
 import de.matthiasmann.twl.textarea.TextAreaModel;
@@ -148,7 +153,9 @@ import de.matthiasmann.twl.theme.ThemeManager;
 
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 
 /**
@@ -227,6 +234,10 @@ public class MainFrame extends Widget{
     private SimpleTextAreaModel stamHelp, stamCredits;
     private FileSelector fileSelector;
     private FileSelector fsAddImg;
+    
+    /**image***/
+    private ImageWidget imageWidget;
+    /**********/
     
     private ListBox displayModeListBox;
     private de.matthiasmann.twl.ToggleButton fullscreenToggle;
@@ -336,7 +347,7 @@ public class MainFrame extends Widget{
                     initPinButtonsEnabled();
                 }
                 else {
-                    defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
+              		defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
                     modelName = file.getName();
                     infoBox("Info", "Loading model ... ");
                     loadModel(file.getAbsolutePath());
@@ -410,8 +421,8 @@ public class MainFrame extends Widget{
                }
 
                try {
+                   //writePMImageToFile(image, "C:\\slike\\mojaslika.pm");
                    ImageIO.write(image, "PNG", outfile); // "PNG" or "JPG"
-                   
                    JOptionPane.showMessageDialog(null,"Slika " + prtscr_filename + " je bila shranjena", "Slika shranjena", JOptionPane.WARNING_MESSAGE);
                } catch (IOException e) { 
                    e.printStackTrace(); 
@@ -790,6 +801,8 @@ public class MainFrame extends Widget{
         displayModeListBox.setModel(scListModel);
         if(selectedResolution!=-1)displayModeListBox.setSelected(selectedResolution);
 	}
+	
+	
 	
 	protected void safeExit() {
 	    System.out.println("Safe exit");
@@ -2223,7 +2236,7 @@ public class MainFrame extends Widget{
 	    //inputTextMode = false;
 	}
 	
-	
+
 	public void alertBox(String title, String message) {
 	    dialogOpened = true;
 	    
@@ -2445,5 +2458,46 @@ public class MainFrame extends Widget{
             msgBoxCancelButton.destroy();
             msgBoxCancelButton = null;
         }
+    }
+	
+public void displayImage(String title, String message) {
+        
+        msgBoxContent = new TextArea();
+        msgBoxTitle = new TextArea();
+        
+        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+        SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
+        
+        
+        msgBoxContent.setModel(stmMsg);
+        msgBoxTitle.setModel(stmTit);
+        
+        StyleSheet css = new StyleSheet();
+        try {
+            css.parse("p,div { text-align: center; }");
+            msgBoxTitle.setStyleClassResolver(css);
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+        msgBoxContent.adjustSize();
+        msgBoxTitle.adjustSize();
+        
+        msgBoxTitle.setTheme("msgbox-title");
+        msgBoxContent.setTheme("msgbox-content");
+        
+        msgBoxTitle.setSize(200, 20);
+        msgBoxContent.setSize(200, 20);
+        
+        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
+        
+        
+        add(msgBoxTitle);
+        add(msgBoxContent);
+        
+        inputTextMode = true;
     }
 }
