@@ -10,23 +10,39 @@ public class PinPanelIndex {
 	public static final String pattern = "(def|img|text|abs) (\\d\\.\\d) (\\d\\.\\d) (\\d\\.\\d) \"(.+)\""; 
 	private LinkedList<PinNote> notes; // internal list
 	
+	private int[] counter;
+	
 	public PinPanelIndex() {
 		notes = new LinkedList<PinNote>();
+		counter = new int[4]; // for every pin note type
+	}
+	
+	public void setCounter(int[] cnt) {
+	    counter = cnt;
 	}
 	
 	public void add(PinNote note) {
 		notes.add(note);
+		counter[note.getType()]++;
 	}
 	
 	public int size() {
 		return notes.size();
 	}
 	
+	public LinkedList<PinNote> getNotes() {
+	    return notes;
+	}
+	
+	public PinNote getFirst() {
+	    return notes.getFirst();
+	}
 	
 	public static PinPanelIndex open(String fname) throws IOException {
 		PinPanelIndex index = new PinPanelIndex();
 		BufferedReader in = new BufferedReader(new FileReader(fname));
 		String line;
+		int[] cnt = new int[4];
 		while((line=in.readLine()) != null) {
 			// Extract comment
 			String ref = line.split("#")[0];
@@ -40,7 +56,18 @@ public class PinPanelIndex {
 					String z = m.group(4);
 					String val = m.group(5);
 					PinNote note = new PinNote(Double.parseDouble(x), Double.parseDouble(y), Double.parseDouble(z), typ, val);
+					note.isNew = false;
+					if(note.getType() == PinNote.TEXT_TYPE) {
+					    note.markUnsynced();
+					}
+					else if(note.getType() == PinNote.IMAGE_TYPE) {
+					    note.markUnsynced();
+					}
+					
 					index.add(note);
+					
+					cnt[PinNote.typeVal2type(typ)]++;
+					index.setCounter(cnt);
 				} catch(Exception e) {
 					e.printStackTrace();
 				}
@@ -57,6 +84,14 @@ public class PinPanelIndex {
 			out += note.toString() + "\n";
 		}
 		return out;
+	}
+	
+	public int count(int type) {
+	    return counter[type];
+	}
+	
+	public void remove(PinNote note) {
+	    notes.remove(note);
 	}
 }
 
