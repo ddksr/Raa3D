@@ -269,7 +269,11 @@ public class ObjOrPlyModel {
                 //glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indexes_forPlyFiles, GL_STATIC_DRAW_ARB);
                 
                 centerx/=vertexCount;centery/=vertexCount;centerz/=vertexCount;
-                
+                System.gc();
+                System.out.println("loaded");
+                /*
+                System.gc();
+                System.out.println("RTree started");
                 //prepare a double[] array for RTree (used for searching ray intersections (not needed for simple rendering))
                 reader=null;
                 plyReader=null;
@@ -277,7 +281,9 @@ public class ObjOrPlyModel {
                 indexBuffer.rewind();
                 rtreeOfTriangles_forPlyFiles = new RTree(trianglesForRTree, indexBuffer, 4);
                 indexBuffer=null;
-                
+                System.gc();
+                System.out.println("RTree constructed");
+                */
                 
                 
             } catch(IOException e) {
