@@ -82,6 +82,10 @@ public class PinPanel {
 		                in.close();
 		                note.markSynced();
 		                break;
+		            case PinNote.IMAGE_TYPE:
+		                note.setAbsImageLocation(getNoteFilePath(note));
+		                note.markSynced();
+		                break;
 		        }
 		    }
 		}
@@ -281,11 +285,14 @@ public class PinPanel {
                    outStream.write(buf, 0, len);
                 }
                 inStream.close();
-                outStream.close(); 
+                outStream.close();
+                
+                note.setAbsImageLocation(loc + File.separator + "img" + File.separator + note.getValue());
             default:
                 break;
         }
 	    hasChanges = true;
+	    note.isNew = false;
 	    index.add(note);
 	}
 
@@ -344,12 +351,12 @@ public class PinPanel {
     
     public void removeNote(PinNote note) {
         index.remove(note);
-        String noteFile = getNoteFile(note);
+        String noteFile = getNoteFilePath(note);
         if(noteFile != null) new File(noteFile).delete();
         hasChanges = true;
     }
     
-    public String getNoteFile(PinNote note) {
+    public String getNoteFilePath(PinNote note) {
         String loc = tmpLoc + File.separator + id;
         if(note.getType() == PinNote.IMAGE_TYPE) {
             return loc + File.separator + "img" + File.separator + note.getValue();

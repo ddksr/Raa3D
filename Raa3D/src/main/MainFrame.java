@@ -147,6 +147,10 @@ import de.matthiasmann.twl.model.DefaultEditFieldModel;
 import de.matthiasmann.twl.model.EditFieldModel;
 import de.matthiasmann.twl.model.JavaFileSystemModel;
 import de.matthiasmann.twl.model.SimpleChangableListModel;
+import de.matthiasmann.twl.renderer.AnimationState;
+import de.matthiasmann.twl.renderer.DynamicImage;
+import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.renderer.lwjgl.LWJGLDynamicImage;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLTexture;
 import de.matthiasmann.twl.textarea.SimpleTextAreaModel;
@@ -209,6 +213,8 @@ public class MainFrame extends Widget{
         }
     }
     
+    static double MAX_RAY_DISTANCE = Double.MAX_VALUE; // set to lower when ray works
+    
     static final int LMB = 0;
     static final int RMB = 1;
     static final int MWB = 2;
@@ -236,7 +242,6 @@ public class MainFrame extends Widget{
     private TextArea helpTextArea;
     private SimpleTextAreaModel stamHelp, stamCredits;
     private FileSelector fileSelector;
-    private FileSelector fsAddImg;
     
     /**image***/
     private ImageWidget imageWidget;
@@ -324,6 +329,7 @@ public class MainFrame extends Widget{
 	
 	// PinPanel related variables
 	private static boolean loadingPinPanel = false;
+	private static boolean loadingImage = false;
 	private static PinPanel pinPanel;
 	
 	
@@ -339,11 +345,17 @@ public class MainFrame extends Widget{
 	
 	private static int pinNoteType = PinNote.TEXT_TYPE;
 	
+	private static double[] lastRay = null;
+	
 	/**
      * @since 0.4
      * @version 0.4
      */
 	public MainFrame(){
+	    double[] ray = {0., 0. ,0.};
+	    lastRay = ray;
+	    ray = null;
+	    
 	    fileSelector = new FileSelector();
         fileSelector.setTheme("fileselector");
         fileSelector.setVisible(false);
@@ -352,33 +364,47 @@ public class MainFrame extends Widget{
         Callback cb = new Callback() {
             @Override
             public void filesSelected(Object[] files) {
-                setButtonsEnabled(true);
-                fileSelector.setVisible(false);
-                File file= (File)files[0];
-                String path = file.getAbsolutePath();
-                System.out.println("\nOpening file: "+path);
-                dialogOpened = false;
-                if (loadingPinPanel) {
-                    loadPinPanel(path);
-                    loadingPinPanel = false;
-
-                    initPinButtonsEnabled();
+                if (! loadingImage) {
+                    setButtonsEnabled(true);
+                    fileSelector.setVisible(false);
+                    File file= (File)files[0];
+                    String path = file.getAbsolutePath();
+                    System.out.println("\nOpening file: "+path);
+                    dialogOpened = false;
+                    if (loadingPinPanel) {
+                        loadPinPanel(path);
+                        loadingPinPanel = false;
+    
+                        initPinButtonsEnabled();
+                    }
+                    else {
+                  		defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
+                        modelName = file.getName();
+                        infoBox("Info", "Loading model ... ");
+                        loadModel(file.getAbsolutePath());
+                        String ppFile = path + "." + PinPanel.EXT;
+                        if(new File(ppFile).exists()) {
+                            System.out.println("Pin panel for model " + modelName + " exists. Loading pin panel ...");
+                            loadPinPanel(ppFile);
+                        }
+                        else pinPanel = null; // set to null!
+                        msgBoxDestroy();
+    
+                        // TODO: open pin panel if exists
+                        initPinButtonsEnabled();
+                    }
                 }
                 else {
-              		defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
-                    modelName = file.getName();
-                    infoBox("Info", "Loading model ... ");
-                    loadModel(file.getAbsolutePath());
-                    String ppFile = path + "." + PinPanel.EXT;
-                    if(new File(ppFile).exists()) {
-                        System.out.println("Pin panel for model " + modelName + " exists. Loading pin panel ...");
-                        loadPinPanel(ppFile);
-                    }
-                    else pinPanel = null; // set to null!
-                    msgBoxDestroy();
-
-                    // TODO: open pin panel if exists
-                    initPinButtonsEnabled();
+                    setButtonsEnabled(true);
+                    fileSelector.setVisible(false);
+                    File file= (File)files[0];
+                    String path = file.getAbsolutePath();
+                    
+                    note = PinNote.newImgNote(lastRay[0], lastRay[1], lastRay[2], path);
+                    note.setAbsImageLocation(path);
+                    showImage(note, true, true);
+                    
+                    loadingImage = false;
                 }
             }
             @Override
@@ -989,36 +1015,6 @@ public class MainFrame extends Widget{
         //saveAsPinButton.setEnabled(false);
         add(saveAsPinButton);
         
-        // File selectors
-        de.matthiasmann.twl.model.JavaFileSystemModel fsm;
-        Callback cb;
-        
-        
-        
-        fsAddImg = new FileSelector();
-        fsAddImg.setTheme("fileselector");
-        fsAddImg.setVisible(false);
-        fsm= JavaFileSystemModel.getInstance();
-        fileSelector.setFileSystemModel(fsm);
-        cb = new Callback() {
-            @Override
-            public void filesSelected(Object[] files) {
-                setButtonsEnabled(true);
-                fsAddImg.setVisible(false);
-                File file= (File)files[0];
-                System.out.println("\nOpening file: "+file.getAbsolutePath());
-                
-            }
-            @Override
-            public void canceled() {
-                setButtonsEnabled(true);
-                fsAddImg.setVisible(false);
-                
-            }
-        };
-        fsAddImg.addCallback(cb);
-        add(fsAddImg);
-        
         initPinButtonsEnabled();
 
     }
@@ -1303,10 +1299,6 @@ public class MainFrame extends Widget{
         fileSelector.setSize(rlWidth,fsHeight);
         fileSelector.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
         
-        
-        fsAddImg.adjustSize();
-        fsAddImg.setSize(rlWidth,fsHeight);
-        fsAddImg.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
         
         helpScrollPane.setSize(rlWidth, fsHeight);
         helpScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
@@ -2044,7 +2036,12 @@ public class MainFrame extends Widget{
 	
 	private void editPinNote() {
 	    if(pinPanel == null) return;
-	    note = pinPanel.getNearest(0, 0, 0); // TODO: get nearest
+	    note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
+	    
+	    if (note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
+	        note = null;
+	    }
+	    
 	    dialogOpened = true; 
 	    inputTextMode = true;
 
@@ -2125,7 +2122,7 @@ public class MainFrame extends Widget{
                        String z = zPinField.getText();
                        String coo = x + " " + y + " " + z;
                        if (note == null) {
-                           note = PinNote.newAbsNote(0, 0, 0, coo);
+                           note = PinNote.newAbsNote(lastRay[0], lastRay[1], lastRay[2], coo);
                            try {
                                pinPanel.addNew(note);
                            } catch(Exception e) {
@@ -2257,6 +2254,13 @@ public class MainFrame extends Widget{
                 
 	            break;
 	        case PinNote.IMAGE_TYPE:
+	            if (note == null) {
+	                loadingImage = true;
+	                fileSelector.setVisible(true);
+	            }
+	            else {
+	                showImage(note, true, false);
+	            }
 	            
 	            break;
 	            
@@ -2290,7 +2294,7 @@ public class MainFrame extends Widget{
 	                   String text = textPinField.getText();
 	                   // TODO: get coordinates
 	                   if(note == null) {
-	                       note = PinNote.newTextNote(0, 0, 0, text); 
+	                       note = PinNote.newTextNote(lastRay[0], lastRay[1], lastRay[2], text); 
                            try {
                                pinPanel.addNew(note);
                            } catch(Exception e) {
@@ -2385,14 +2389,169 @@ public class MainFrame extends Widget{
 	            
 	        case PinNote.DEFAULT_TYPE:
 	        default:
-	        
+	            
 	            break;
 	    }
 	    
 	    initPinButtonsEnabled();
     }
 	
-	private void showPinNote() {
+	private void showImage(PinNote n, boolean edit, boolean isNew) {
+        imageWidget = new ImageWidget();
+        BufferedImage img;
+        int cw = settings.resWidth/2;
+        int ch = settings.resHeight/2;
+        try {
+            img = n.getImageValue();
+            ByteBuffer bb = ImageOp.getImageDataFromImage(img);
+            DynamicImage di = renderer.createDynamicImage(img.getWidth(), img.getHeight()); 
+            
+            di.update(bb, DynamicImage.Format.RGBA);
+            
+            int left = img.getWidth() / 2;
+            int up = img.getHeight() / 2;
+            
+            imageWidget.setImage(di);
+            n.clearImage();
+            note = n;
+            
+            //add(imageWidget);
+            
+            pinItrPane = new ScrollPane(imageWidget);
+            pinItrPane.setFixed(ScrollPane.Fixed.VERTICAL);
+            pinItrPane.setExpandContentSize(true);
+            pinItrPane.setTheme("scrollpane");
+            pinItrPane.setVisible(true);
+            //textPinField.adjustSize();
+            
+            pinItrPane.adjustSize();
+            pinItrPane.setSize(img.getWidth(), img.getHeight());
+            pinItrPane.setPosition(cw - left, ch - up - 20);
+            
+            add(pinItrPane);
+            
+            if(edit) {
+                pinItrOkButton = new Button("Save");
+                pinItrOkButton.setTheme("button");
+                //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+                pinItrOkButton.addCallback(new Runnable(){
+                   @Override
+                   public void run(){
+                       try {
+                       pinPanel.addNew(note);
+                       } catch(Exception e) {
+                           // TODO Auto-generated catch block
+                           e.printStackTrace();
+                       }
+                       
+                       
+                       removeChild(pinItrPane);
+                       pinItrPane.destroy();
+                       removeChild(pinItrOkButton);
+                       pinItrOkButton.destroy();
+                       removeChild(pinItrCancelButton);
+                       pinItrCancelButton.destroy();
+                       removeChild(pinItrDelButton);
+                       pinItrDelButton.destroy();
+                       dialogOpened = false;
+                       inputTextMode = false;
+                       
+                       initPinButtonsEnabled();
+                   }
+                });
+                pinItrOkButton.adjustSize();
+                pinItrOkButton.setSize(50, 25);
+                pinItrOkButton.setPosition(cw + left - 110, ch + up);
+                if(! isNew) pinItrOkButton.setEnabled(false);
+                add(pinItrOkButton);
+                
+                pinItrCancelButton = new Button("Cancel");
+                pinItrCancelButton.setTheme("button");
+                //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+                pinItrCancelButton.addCallback(new Runnable(){
+                   @Override
+                public void run(){
+                       removeChild(pinItrPane);
+                       pinItrPane.destroy();
+                       removeChild(pinItrOkButton);
+                       pinItrOkButton.destroy();
+                       removeChild(pinItrCancelButton);
+                       pinItrCancelButton.destroy();
+                       removeChild(pinItrDelButton);
+                       pinItrDelButton.destroy();
+                       dialogOpened = false;
+                       inputTextMode = false;
+                   }
+                });
+                pinItrCancelButton.adjustSize();
+                pinItrCancelButton.setSize(50, 25);
+                pinItrCancelButton.setPosition(cw + left - 50, ch + up);
+                
+                add(pinItrCancelButton);
+                
+                pinItrDelButton = new Button("Delete");
+                pinItrDelButton.setTheme("button");
+                //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+                pinItrDelButton.addCallback(new Runnable(){
+                   @Override
+                public void run(){
+                       removeChild(pinItrPane);
+                       pinItrPane.destroy();
+                       removeChild(pinItrOkButton);
+                       pinItrOkButton.destroy();
+                       removeChild(pinItrCancelButton);
+                       pinItrCancelButton.destroy();
+                       removeChild(pinItrDelButton);
+                       pinItrDelButton.destroy();
+                       
+                       confirmBox("Delete note", "Are you sure you wish to delete the note?", new Runnable() {
+                            @Override
+                            public void run() {
+                                pinPanel.removeNote(note);
+                                initPinButtonsEnabled();
+                            }
+                       }, null);
+                       dialogOpened = false;
+                       inputTextMode = false;
+                   }
+                });
+                pinItrDelButton.adjustSize();
+                pinItrDelButton.setSize(50, 25);
+                if(! isNew) {
+                    pinItrDelButton.setVisible(false);
+                }
+                pinItrDelButton.setPosition(cw + left - 170, ch + up);
+                
+                add(pinItrDelButton);
+            }
+            else {
+                pinItrCancelButton = new Button("Close");
+                pinItrCancelButton.setTheme("button");
+                //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+                pinItrCancelButton.addCallback(new Runnable(){
+                   @Override
+                public void run(){
+                       removeChild(pinItrPane);
+                       pinItrPane.destroy();
+                       removeChild(pinItrCancelButton);
+                       pinItrCancelButton.destroy();
+                       dialogOpened = false;
+                       inputTextMode = false;
+                   }
+                });
+                pinItrCancelButton.adjustSize();
+                pinItrCancelButton.setSize(50, 25);
+                pinItrCancelButton.setPosition(cw + left - 50, ch + up);
+                
+                add(pinItrCancelButton);
+            }
+            
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+    private void showPinNote() {
         if(pinPanel == null) return;
         note = pinPanel.getNearest(0, 0, 0); // TODO: get nearest
         if (note == null) return;
@@ -2467,7 +2626,7 @@ public class MainFrame extends Widget{
                 
                 break;
             case PinNote.IMAGE_TYPE:
-                
+                showImage(note, false, false);
                 break;
                 
             case PinNote.TEXT_TYPE:

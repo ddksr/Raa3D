@@ -1,5 +1,10 @@
 package raa.pin;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 public class PinNote {
 	public static final int DEFAULT_TYPE = 0;
@@ -21,7 +26,11 @@ public class PinNote {
 	private double absY;
 	private double absZ;
 	
+	private BufferedImage img;
+	private String absImgLoc;
+	
 	private boolean synced = true;
+	public boolean isNew = false;
 	
 	public PinNote() {
 		x = 0;
@@ -29,6 +38,7 @@ public class PinNote {
 		z = 0;
 		type = PinNote.DEFAULT_TYPE;
 		value = new String();
+		isNew = true;
 	}
 	
 	public PinNote(double x1, double y1, double z1, String typeVal, String val) {
@@ -53,6 +63,7 @@ public class PinNote {
             absZ = Double.parseDouble(splitVal[2]);
         }
         else value = val;
+		isNew = true;
 	}
 	
 	public PinNote(double x1, double y1, double z1, int typ, String val) {
@@ -77,8 +88,12 @@ public class PinNote {
             absZ = Double.parseDouble(splitVal[2]);
 		}
 		else value = val;
+		isNew = true;
 	}
 	
+	public void setAbsImageLocation(String ail) {
+	    absImgLoc = ail;
+	}
 	
 	public static int typeVal2type(String val) {
 		if(val.equals("def")) return 0;
@@ -137,9 +152,13 @@ public class PinNote {
 	    return distanceTo(other.x, other.y, other.z);
 	}
 	
-	public String getImageValue() {
+	public BufferedImage getImageValue() throws IOException {
 		if(type == PinNote.IMAGE_TYPE) {
-			//TODO
+			if (img == null) {
+			    System.out.println(absImgLoc);
+			    img = ImageIO.read(new File(absImgLoc));
+			}
+			return img;
 		}
 		return null;
 	}
@@ -217,5 +236,9 @@ public class PinNote {
         absY = Double.parseDouble(splitVal[1]);
         absZ = Double.parseDouble(splitVal[2]);
         value = coo;
+    }
+    
+    public void clearImage() {
+        img = null;
     }
 }

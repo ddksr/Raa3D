@@ -1,8 +1,12 @@
 package main;
 
+import java.awt.Graphics2D;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferByte;
+import java.awt.image.WritableRaster;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -59,7 +63,7 @@ public class ImageOp {
     }
     
     /*
-     * Funkcija pretvori sliko v željen format in jo shrani v datoteko. 
+     * Funkcija pretvori sliko v ï¿½eljen format in jo shrani v datoteko. 
      * Formati: JPG, PNG, BMP, GIF, WBMP
      */
     public static void convertImage(BufferedImage img, String outputFormat, String outputFile) {
@@ -92,6 +96,34 @@ public class ImageOp {
             }
         }
         convertImage(image, outputFormat, outputFile);
+    }
+    
+    /**
+     * Convert a buffered image to a ByteBuffer for displaying purpuse
+     * @param bufferedImage
+     * @return
+     */
+    public static ByteBuffer getImageDataFromImage(BufferedImage bufferedImage)
+    {
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferedImage.getWidth() * bufferedImage.getHeight() * 4);
+
+        for(int i=0; i<bufferedImage.getHeight(); i++) {
+            for(int j=0; j<bufferedImage.getWidth(); j++) {
+                int argb  = bufferedImage.getRGB( j, i );
+                byte alpha = (byte) (argb >> 24);
+                byte red   = (byte) (argb >> 16);
+                byte green = (byte) (argb >> 8);
+                byte blue  = (byte) (argb);
+
+                byteBuffer.put(red);
+                byteBuffer.put(green);
+                byteBuffer.put(blue);
+                byteBuffer.put(alpha);
+            }
+        }
+        byteBuffer.flip();
+
+        return byteBuffer;
     }
     
 }
