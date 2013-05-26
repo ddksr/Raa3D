@@ -1,10 +1,16 @@
 package raa.pin;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.LinkedList;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -18,8 +24,6 @@ public class PinPanel {
 	private boolean hasChanges;
 	
 	public PinPanelIndex index;
-	
-	
 	
 	public PinPanel() { // used for new
 		id = PinPanel.generate_id();
@@ -35,7 +39,12 @@ public class PinPanel {
 	
 	public PinPanel(String nid) {
 		id = nid;
-		refresh();
+		try {
+            refresh();
+        } catch(IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 		hasChanges = false;
 	}
 	
@@ -47,13 +56,33 @@ public class PinPanel {
 	    fileLoc = loc;
 	}
 	
-	private void refresh() {
+	private void refresh() throws IOException {
 		String loc = tmpLoc + File.separator + id;
 		try {
 			index = PinPanelIndex.open(loc + File.separator + "index");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		// Sync text notes
+		for (PinNote note : index.getNotes()) {
+		    if(!note.isSynced()) {
+		        switch(note.getType()) {
+		            case PinNote.TEXT_TYPE:
+		                BufferedReader in = new BufferedReader(new FileReader(loc + File.separator + "txt" + File.separator + note.getValue()));
+		                
+		                String row = new String();
+		                String txt = new String();
+		                while((row = in.readLine()) != null) {
+		                    txt += row + "\n";
+		                }
+		                note.setTextValue(txt);
+		                in.close();
+		                note.markSynced();
+		                break;
+		        }
+		    }
 		}
 	}
 	
@@ -69,6 +98,8 @@ public class PinPanel {
 		// Refresh index
 		PrintWriter pw = new PrintWriter(new FileWriter(loc + File.separator + "index"));
 		pw.print(index.toString());
+		System.out.println("len: " + index.size());
+		System.out.println("vsebina: " + index.toString());
 		pw.close();
 		
 		System.out.println("Saving pin panel to " + fileLoc);
@@ -112,6 +143,8 @@ public class PinPanel {
 			
 			// save to fileLoc
 			zos.close();
+			
+			hasChanges = false;
 		}
 		else {
 			throw new Exception("File location not specified!");
@@ -180,6 +213,12 @@ public class PinPanel {
         zis.closeEntry();
     	zis.close();
 		
+    	// Create directories that do not exist
+    	File img = new File(loc + File.separator + "img");
+    	if(! img.exists()) img.mkdir();
+        File txt = new File(loc + File.separator + "txt");
+    	if(! txt.exists()) txt.mkdir();
+    	
 		return new PinPanel(nid);
 	}
 	
@@ -215,4 +254,89 @@ public class PinPanel {
 	        return true;
 	    }
 	}
+	
+	public void addNew(PinNote note) throws Exception {
+	    String loc = tmpLoc + File.separator + id;
+	    switch(note.getType()) {
+            case PinNote.TEXT_TYPE:
+                note.setValue(getNextTextFileName());
+                PrintWriter out = new PrintWriter(new FileWriter(loc + File.separator + "txt" + File.separator + note.getValue()));
+                out.print(note.getTextValue());
+                note.markSynced();
+                out.close();
+                break;
+            case PinNote.IMAGE_TYPE:
+                // Note: note value will change after next steps
+                String imgLoc = note.getValue();
+                String[] parts = imgLoc.split("\\.");
+                note.setValue(getNextImageFileName(parts[parts.length - 1]));
+                
+                // Copy image to tmp/
+                InputStream inStream = new FileInputStream(imgLoc);
+                OutputStream outStream = new FileOutputStream(loc + File.separator + "img" + File.separator + note.getValue());
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = inStream.read(buf)) > 0) {
+                   outStream.write(buf, 0, len);
+                }
+                inStream.close();
+                outStream.close(); 
+            default:
+                break;
+        }
+	    hasChanges = true;
+	    index.add(note);
+	}
+
+	public LinkedList<PinNote> getNotes() {
+        return index.getNotes();
+    }
+
+    public PinNote getNearest(double x, double y, double z) {
+        if(index.size() == 0) return null;
+        PinNote nearest = index.getFirst();
+        double min = Double.MAX_VALUE;
+        for(PinNote note : index.getNotes()) {
+            double min1 = nearest.distanceToNote(note);
+            if (min1 < min) {
+                min = min1;
+                nearest = note;
+            }
+        }
+        return nearest;
+    }
+
+    public void sync() throws IOException {
+        for (PinNote note : index.getNotes()) {
+            if(! note.isSynced()) {
+                switch(note.getType()) {
+                    case PinNote.TEXT_TYPE:
+                        PrintWriter out = new PrintWriter(new FileWriter(note.getValue()));
+                        out.print(note.getTextValue());
+                        note.markSynced();
+                        out.close();
+                        break;
+                    case PinNote.IMAGE_TYPE:
+                        //TODO: image sync
+                        //TODO: image close (in note)
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        
+    }
+    
+    public String getNextTextFileName() {
+        return index.count(PinNote.TEXT_TYPE) + ".txt";
+    }
+    
+    public String getNextImageFileName(String ext) {
+        return index.count(PinNote.IMAGE_TYPE) + "." + ext;
+    }
+
+    public boolean hasFileName() {
+        return fileLoc != null && fileLoc.length() > 0;
+    }
 }
