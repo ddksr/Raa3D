@@ -915,7 +915,7 @@ public class MainFrame extends Widget{
         });
         add(pinPanelToggleButton);
         
-        pinTypToggleButton = new ToggleButton("Select pin note type");
+        pinTypToggleButton = new ToggleButton("Pin note [text]");
         pinTypToggleButton.setTheme("togglebutton");
         pinTypToggleButton.setTooltipContent("Toggle pin types");
         pinTypToggleButton.addCallback(new Runnable(){
@@ -933,6 +933,9 @@ public class MainFrame extends Widget{
            @Override
         public void run(){
                pinNoteType = PinNote.TEXT_TYPE;
+               pinTypToggleButton.setText("Pin note [text]");
+               pinTypToggleButton.setActive(false);
+               setPinTypeButtonsVisible(false);
                pinTxtToggleButton.setActive(true);
                pinImgToggleButton.setActive(false);
                pinAbsToggleButton.setActive(false);
@@ -948,6 +951,9 @@ public class MainFrame extends Widget{
            @Override
         public void run(){
                pinNoteType = PinNote.IMAGE_TYPE;
+               pinTypToggleButton.setText("Pin note [image]");
+               pinTypToggleButton.setActive(false);
+               setPinTypeButtonsVisible(false);
                pinTxtToggleButton.setActive(false);
                pinImgToggleButton.setActive(true);
                pinAbsToggleButton.setActive(false);
@@ -962,6 +968,9 @@ public class MainFrame extends Widget{
            @Override
         public void run(){
                pinNoteType = PinNote.ABSOLUTE_TYPE;
+               pinTypToggleButton.setText("Pin note [abs.]");
+               pinTypToggleButton.setActive(false);
+               setPinTypeButtonsVisible(false);
                pinTxtToggleButton.setActive(false);
                pinImgToggleButton.setActive(false);
                pinAbsToggleButton.setActive(true);
@@ -2552,7 +2561,7 @@ public class MainFrame extends Widget{
                 });
                 pinItrDelButton.adjustSize();
                 pinItrDelButton.setSize(50, 25);
-                if(! isNew) {
+                if(isNew) {
                     pinItrDelButton.setVisible(false);
                 }
                 pinItrDelButton.setPosition(cw + left - 170, ch + up);
