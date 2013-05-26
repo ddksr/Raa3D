@@ -89,5 +89,9 @@ public class PinPanelIndex {
 	public int count(int type) {
 	    return counter[type];
 	}
+	
+	public void remove(PinNote note) {
+	    notes.remove(note);
+	}
 }
 

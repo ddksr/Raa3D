@@ -269,6 +269,7 @@ public class MainFrame extends Widget{
     private Label zLabelField;
     private EditField zPinField;
     private Button pinItrOkButton;
+    private Button pinItrDelButton;
     private Button pinItrCancelButton;
     private PinNote note;
 
@@ -844,11 +845,7 @@ public class MainFrame extends Widget{
                             }
                             exitProgram(0);
                         }
-                    }, new Runnable() {
-                        public void run() {
-                            exitProgram(0);
-                        }
-                    });
+                    }, null);
                 }
             } catch(Exception e) {
                 e.printStackTrace();
@@ -1113,6 +1110,7 @@ public class MainFrame extends Widget{
                e.printStackTrace();
            }
        }
+       initPinButtonsEnabled();
     }
     
     /**
@@ -2045,9 +2043,12 @@ public class MainFrame extends Widget{
 	private void editPinNote() {
 	    if(pinPanel == null) return;
 	    note = pinPanel.getNearest(0, 0, 0); // TODO: get nearest
-	    dialogOpened = true; // TODO: dont forget to set it to FALSE
+	    dialogOpened = true; 
 	    inputTextMode = true;
-	    switch (pinNoteType) {
+	    
+	    // TODO: determine if note OK
+	    
+	    switch (note == null ? pinNoteType : note.getType()) {
 	        case PinNote.ABSOLUTE_TYPE:
 	            
 	            
@@ -2105,13 +2106,17 @@ public class MainFrame extends Widget{
                        pinItrOkButton.destroy();
                        removeChild(pinItrCancelButton);
                        pinItrCancelButton.destroy();
+                       removeChild(pinItrDelButton);
+                       pinItrDelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       initPinButtonsEnabled();
 	               }
 	            });
 	            pinItrOkButton.adjustSize();
 	            pinItrOkButton.setSize(50, 25);
-	            pinItrOkButton.setPosition(settings.resWidth/2 - 50, settings.resHeight/2 + 200);
+	            pinItrOkButton.setPosition(settings.resWidth/2 + 50, settings.resHeight/2 + 200);
 	            add(pinItrOkButton);
 	            
 	            pinItrCancelButton = new Button("Cancel");
@@ -2126,15 +2131,52 @@ public class MainFrame extends Widget{
                        pinItrOkButton.destroy();
                        removeChild(pinItrCancelButton);
                        pinItrCancelButton.destroy();
+                       removeChild(pinItrDelButton);
+                       pinItrDelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
                    }
                 });
                 pinItrCancelButton.adjustSize();
                 pinItrCancelButton.setSize(50, 25);
-                pinItrCancelButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 200);
+                pinItrCancelButton.setPosition(settings.resWidth/2 + 100, settings.resHeight/2 + 200);
                 
                 add(pinItrCancelButton);
+                
+                pinItrDelButton = new Button("Delete");
+                pinItrDelButton.setTheme("button");
+                //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+                pinItrDelButton.addCallback(new Runnable(){
+                   @Override
+                public void run(){
+                       removeChild(pinItrPane);
+                       pinItrPane.destroy();
+                       removeChild(pinItrOkButton);
+                       pinItrOkButton.destroy();
+                       removeChild(pinItrCancelButton);
+                       pinItrCancelButton.destroy();
+                       removeChild(pinItrDelButton);
+                       pinItrDelButton.destroy();
+                       
+                       confirmBox("Delete note", "Are you sure you wish to delete the note?", new Runnable() {
+                            @Override
+                            public void run() {
+                                pinPanel.removeNote(note);
+                                initPinButtonsEnabled();
+                            }
+                       }, null);
+                       dialogOpened = false;
+                       inputTextMode = false;
+                   }
+                });
+                pinItrDelButton.adjustSize();
+                pinItrDelButton.setSize(50, 25);
+                if(note == null) {
+                    pinItrDelButton.setVisible(false);
+                }
+                pinItrDelButton.setPosition(settings.resWidth/2, settings.resHeight/2 + 200);
+                
+                add(pinItrDelButton);
 	            
 	            break;
 	            
@@ -2183,44 +2225,7 @@ public class MainFrame extends Widget{
                 
                 add(pinItrPane);
                 
-                pinItrOkButton = new Button("OK");
-                pinItrOkButton.setTheme("button");
-                //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-                pinItrOkButton.addCallback(new Runnable(){
-                   @Override
-                public void run(){
-                       String text = textPinField.getText();
-                       // TODO: get coordinates
-                       if(note == null) {
-                           note = PinNote.newTextNote(0, 0, 0, text); 
-                           try {
-                               pinPanel.addNew(note);
-                           } catch(Exception e) {
-                               // TODO Auto-generated catch block
-                               e.printStackTrace();
-                           }
-                       }
-                       else {
-                           note.setTextValue(text);
-                           note.markUnsynced();
-                       }
-                       
-                       removeChild(pinItrPane);
-                       pinItrPane.destroy();
-                       removeChild(pinItrOkButton);
-                       pinItrOkButton.destroy();
-                       removeChild(pinItrCancelButton);
-                       pinItrCancelButton.destroy();
-                       dialogOpened = false;
-                       inputTextMode = false;
-                   }
-                });
-                pinItrOkButton.adjustSize();
-                pinItrOkButton.setSize(50, 25);
-                pinItrOkButton.setPosition(settings.resWidth/2 - 50, settings.resHeight/2 + 200);
-                add(pinItrOkButton);
-                
-                pinItrCancelButton = new Button("Cancel");
+                pinItrCancelButton = new Button("Close");
                 pinItrCancelButton.setTheme("button");
                 //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
                 pinItrCancelButton.addCallback(new Runnable(){
@@ -2228,8 +2233,6 @@ public class MainFrame extends Widget{
                 public void run(){
                        removeChild(pinItrPane);
                        pinItrPane.destroy();
-                       removeChild(pinItrOkButton);
-                       pinItrOkButton.destroy();
                        removeChild(pinItrCancelButton);
                        pinItrCancelButton.destroy();
                        dialogOpened = false;

@@ -37,8 +37,9 @@ public class PinPanel {
 		hasChanges = true;
 	}
 	
-	public PinPanel(String nid) {
+	public PinPanel(String nid, String location) {
 		id = nid;
+		fileLoc = location;
 		try {
             refresh();
         } catch(IOException e) {
@@ -219,7 +220,7 @@ public class PinPanel {
         File txt = new File(loc + File.separator + "txt");
     	if(! txt.exists()) txt.mkdir();
     	
-		return new PinPanel(nid);
+		return new PinPanel(nid, fname);
 	}
 	
 	public void destroy() throws Exception {
@@ -337,6 +338,25 @@ public class PinPanel {
     }
 
     public boolean hasFileName() {
+        System.out.println(fileLoc);
         return fileLoc != null && fileLoc.length() > 0;
+    }
+    
+    public void removeNote(PinNote note) {
+        index.remove(note);
+        String noteFile = getNoteFile(note);
+        if(noteFile != null) new File(noteFile).delete();
+        hasChanges = true;
+    }
+    
+    public String getNoteFile(PinNote note) {
+        String loc = tmpLoc + File.separator + id;
+        if(note.getType() == PinNote.IMAGE_TYPE) {
+            return loc + File.separator + "img" + File.separator + note.getValue();
+        }
+        else if (note.getType() == PinNote.TEXT_TYPE) {
+            return loc + File.separator + "txt" + File.separator + note.getValue();
+        }
+        return null;
     }
 }
