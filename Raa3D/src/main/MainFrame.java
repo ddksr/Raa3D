@@ -230,6 +230,7 @@ public class MainFrame extends Widget{
     private Button newPinButton;
     private Button savePinButton;
     private Button saveAsPinButton;
+    private ToggleButton additionalContentToggleButton;
     
     private Button displayModesButton, okayVideoSetting, cancelVideoSetting;
     private Button prtscr;
@@ -440,6 +441,19 @@ public class MainFrame extends Widget{
            }
         });
         add(modeToggleButton);
+        
+        additionalContentToggleButton = new ToggleButton("Show pin notes");
+        additionalContentToggleButton.setTheme("togglebutton");
+        additionalContentToggleButton.setTooltipContent("Select mode");
+        additionalContentToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               boolean test = additionalContentToggleButton.isActive();
+           }
+        });
+        add(additionalContentToggleButton);
+        
+        
              
         prtscr = new Button("Screen shot...");
         prtscr.setTheme("button");
@@ -1200,78 +1214,83 @@ public class MainFrame extends Widget{
 	    saveAsPinButton.adjustSize();
 	    displayModesButton.adjustSize();
 	    stereoToggleButton.adjustSize();
+	    additionalContentToggleButton.adjustSize();
+	    
 	    help.adjustSize();
 	    credits.adjustSize();
 	    prtscr.adjustSize();
 	    exit.adjustSize();
         int openHeight=Math.max(25,settings.resHeight/18);
         
-        int buttonWidth=settings.resWidth/10+1;
+        int buttonWidth=settings.resWidth/11+1;
         open.setSize(buttonWidth, openHeight);
         open.setPosition(0, 0);
         
         modeToggleButton.setSize(buttonWidth, openHeight);
         modeToggleButton.setPosition(buttonWidth, 0);
         
+        additionalContentToggleButton.setSize(buttonWidth, openHeight);
+        additionalContentToggleButton.setPosition(buttonWidth*2, 0);
+        
         pinPanelToggleButton.setSize(buttonWidth, openHeight);
-        pinPanelToggleButton.setPosition(buttonWidth*2, 0);
+        pinPanelToggleButton.setPosition(buttonWidth*3, 0);
         
         newPinButton.setSize(buttonWidth, openHeight);
-        newPinButton.setPosition(buttonWidth*2, openHeight);
+        newPinButton.setPosition(buttonWidth*3, openHeight);
         newPinButton.setVisible(false);
         
         openPinButton.setSize(buttonWidth, openHeight);
-        openPinButton.setPosition(buttonWidth*2, openHeight*2);
+        openPinButton.setPosition(buttonWidth*3, openHeight*2);
         openPinButton.setVisible(false);
         
         savePinButton.setSize(buttonWidth, openHeight);
-        savePinButton.setPosition(buttonWidth*2, openHeight*3);
+        savePinButton.setPosition(buttonWidth*3, openHeight*3);
         savePinButton.setVisible(false);
         
         saveAsPinButton.setSize(buttonWidth, openHeight);
-        saveAsPinButton.setPosition(buttonWidth*2, openHeight*4);
+        saveAsPinButton.setPosition(buttonWidth*3, openHeight*4);
         saveAsPinButton.setVisible(false);
 
         pinTypToggleButton.setSize(buttonWidth, openHeight);
-        pinTypToggleButton.setPosition(buttonWidth*3, 0);
+        pinTypToggleButton.setPosition(buttonWidth*4, 0);
         
         pinTxtToggleButton.setSize(buttonWidth, openHeight);
-        pinTxtToggleButton.setPosition(buttonWidth*3, openHeight);
+        pinTxtToggleButton.setPosition(buttonWidth*4, openHeight);
         pinTxtToggleButton.setVisible(false);
         
         pinImgToggleButton.setSize(buttonWidth, openHeight);
-        pinImgToggleButton.setPosition(buttonWidth*3, openHeight*2);
+        pinImgToggleButton.setPosition(buttonWidth*4, openHeight*2);
         pinImgToggleButton.setVisible(false);
         
         pinAbsToggleButton.setSize(buttonWidth, openHeight);
-        pinAbsToggleButton.setPosition(buttonWidth*3, openHeight*3);
+        pinAbsToggleButton.setPosition(buttonWidth*4, openHeight*3);
         pinAbsToggleButton.setVisible(false);
         
-        displayModesButton.setPosition(buttonWidth*4, 0);
+        displayModesButton.setPosition(buttonWidth*5, 0);
         displayModesButton.setSize(buttonWidth, openHeight);
         
         if(settings.stereoEnabled){
-            stereoToggleButton.setPosition(buttonWidth*5, 0);
+            stereoToggleButton.setPosition(buttonWidth*6, 0);
             stereoToggleButton.setSize(buttonWidth, openHeight/2);
-            stereoScrollbar.setPosition(buttonWidth*5, openHeight/2);
+            stereoScrollbar.setPosition(buttonWidth*6, openHeight/2);
             stereoScrollbar.setSize(buttonWidth, openHeight/2);
             //stereoScrollbar.setMinSize(settings.resWidth/36, openHeight);
         }else{
-            stereoToggleButton.setPosition(buttonWidth*5, 0);
+            stereoToggleButton.setPosition(buttonWidth*6, 0);
             stereoToggleButton.setSize(buttonWidth, openHeight);
             
-            stereoScrollbar.setPosition(buttonWidth*5, openHeight);
+            stereoScrollbar.setPosition(buttonWidth*6, openHeight);
             stereoScrollbar.setSize(buttonWidth, openHeight);
         }
         
-        help.setPosition(buttonWidth*6, 0);
+        help.setPosition(buttonWidth*7, 0);
         help.setSize(buttonWidth, openHeight);
-        credits.setPosition(buttonWidth*7, 0);
+        credits.setPosition(buttonWidth*8, 0);
         credits.setSize(buttonWidth, openHeight);
-        prtscr.setPosition(buttonWidth*8, 0);
+        prtscr.setPosition(buttonWidth*9, 0);
         prtscr.setSize(buttonWidth, openHeight);
-        exit.setPosition(buttonWidth*9, 0);
-        exit.setSize(settings.resWidth-buttonWidth*9, openHeight);
+        exit.setPosition(buttonWidth*10, 0);
+        exit.setSize(settings.resWidth-buttonWidth*10, openHeight);
         
         
         int rlWidth=settings.resWidth*8/10;
