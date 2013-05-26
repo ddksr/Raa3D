@@ -69,6 +69,8 @@ public class ObjOrPlyModel {
 	int triangleCount_forPlyFiles;
 	private int vertexSize_forPlyFiles;
 	int triangleSize_forPlyFiles;
+	
+	RTree rtreeOfTriangles_forPlyFiles;
 	//FloatBuffer verticesNormals_forPlyFiles;
 	//IntBuffer indexes_forPlyFiles;
 	
@@ -185,6 +187,8 @@ public class ObjOrPlyModel {
                 //indexes_forPlyFiles = BufferUtils.createIntBuffer(triangleCount_forPlyFiles*3);
                 
                 
+                double[] trianglesForRTree = new double[triangleCount_forPlyFiles*9];
+                int trianglesForRTreeIdx=0;
                 // read PLY data into the buffers
                 ElementReader reader = plyReader.nextElementReader();
                 while (reader != null) {
@@ -221,6 +225,10 @@ public class ObjOrPlyModel {
                             vertexBuffer.put((float)g);
                             vertexBuffer.put((float)b);
                             vertexBuffer.put((float)a);
+                            
+                            trianglesForRTree[trianglesForRTreeIdx++]=x;
+                            trianglesForRTree[trianglesForRTreeIdx++]=y;
+                            trianglesForRTree[trianglesForRTreeIdx++]=z;
                             /*
                             vertices.add((float)x);//TODO: remove if not necessary
                             vertices.add((float)y);//TODO: remove if not necessary
@@ -262,10 +270,21 @@ public class ObjOrPlyModel {
                 
                 centerx/=vertexCount;centery/=vertexCount;centerz/=vertexCount;
                 
+                //prepare a double[] array for RTree (used for searching ray intersections (not needed for simple rendering))
+                reader=null;
+                plyReader=null;
+                vertexBuffer=null;
+                indexBuffer.rewind();
+                rtreeOfTriangles_forPlyFiles = new RTree(trianglesForRTree, indexBuffer, 4);
+                indexBuffer=null;
+                
+                
+                
             } catch(IOException e) {
                 e.printStackTrace();
             }
 	    }
+	    
 	}
 	
 	
