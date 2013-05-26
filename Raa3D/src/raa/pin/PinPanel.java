@@ -359,4 +359,8 @@ public class PinPanel {
         }
         return null;
     }
+
+    public void markChanges() {
+        hasChanges = true;
+    }
 }

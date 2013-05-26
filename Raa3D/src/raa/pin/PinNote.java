@@ -17,6 +17,9 @@ public class PinNote {
 	
 	private String textValue;
 	//private Image imgValue;
+	private double absX;
+	private double absY;
+	private double absZ;
 	
 	private boolean synced = true;
 	
@@ -33,7 +36,23 @@ public class PinNote {
 		y = y1;
 		z = z1;
 		type = PinNote.typeVal2type(typeVal);
-		value = val;
+		if (type == PinNote.IMAGE_TYPE) {
+            synced = false;
+            value = val;
+        }
+        else if (type == PinNote.TEXT_TYPE) {
+            textValue = val;
+            value = null;
+            synced = false;
+        }
+        else if (type == PinNote.ABSOLUTE_TYPE) {
+            value = val;
+            String[] splitVal = val.split(" ");
+            absX = Double.parseDouble(splitVal[0]);
+            absY = Double.parseDouble(splitVal[1]);
+            absZ = Double.parseDouble(splitVal[2]);
+        }
+        else value = val;
 	}
 	
 	public PinNote(double x1, double y1, double z1, int typ, String val) {
@@ -49,6 +68,13 @@ public class PinNote {
 		    textValue = val;
 		    value = null;
 		    synced = false;
+		}
+		else if (type == PinNote.ABSOLUTE_TYPE) {
+		    value = val;
+		    String[] splitVal = val.split(" ");
+		    absX = Double.parseDouble(splitVal[0]);
+            absY = Double.parseDouble(splitVal[1]);
+            absZ = Double.parseDouble(splitVal[2]);
 		}
 		else value = val;
 	}
@@ -74,6 +100,25 @@ public class PinNote {
 	public void setValue(String val) {
 	    value = val;
 	}
+	
+	public double getAbsXVal() {
+	    return absX;
+	}
+	
+	public double getAbsYVal() {
+        return absY;
+    }
+
+    public double getAbsZVal() {
+        return absZ;
+    }
+    
+    public void setAbs(double x1, double y1, double z1) {
+        absX = x1;
+        absY = y1;
+        absZ = z1;
+        value = absX + " " + absY + " " + absZ;
+    }
 	
 	public String getTextValue() {
 		if(type == PinNote.TEXT_TYPE) {
@@ -164,5 +209,13 @@ public class PinNote {
     
     public boolean isSynced() {
         return synced;
+    }
+
+    public void setAbs(String coo) {
+        String[] splitVal = coo.split(" ");
+        absX = Double.parseDouble(splitVal[0]);
+        absY = Double.parseDouble(splitVal[1]);
+        absZ = Double.parseDouble(splitVal[2]);
+        value = coo;
     }
 }
