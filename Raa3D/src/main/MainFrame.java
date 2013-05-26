@@ -1742,6 +1742,8 @@ public class MainFrame extends Widget{
 	
 	private static boolean isAAEnabled=false, wireframe=false;
 
+    private static boolean ctrlPressed = false;
+
 	/**
 	 * @since 0.1
 	 * @version 0.4
@@ -1751,12 +1753,19 @@ public class MainFrame extends Widget{
 	        
 	        return;
 	    }
-	    
 		while(Keyboard.next()){
 			if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
 				if(Keyboard.getEventKey()==Keyboard.KEY_TAB){
 					if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
-				}else if(Keyboard.getEventKey()==Keyboard.KEY_1){
+				}else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
+				    ctrlPressed = true;
+				}else if(Keyboard.getEventKey()==Keyboard.KEY_RCONTROL) {
+				    ctrlPressed = true;
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_LMETA) {
+                    ctrlPressed = true;
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_RMETA) {
+                    ctrlPressed = true;
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_1){
                     activeShaderProgram=1;
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_2){
                     activeShaderProgram=2;
@@ -1783,17 +1792,24 @@ public class MainFrame extends Widget{
                     openedModel.decreaseSubdivisionDepth();
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_9){
                     isAAEnabled=!isAAEnabled;
+                }else {
+                    ctrlPressed = false;
                 }
+			}
+			else {
+			    ctrlPressed = false;
 			}
 		}
 		if(dialogOpened || menuOpened )return;
 		
 		//TODO: add CTRL + 1
-		if(Mouse.hasWheel() && Mouse.isButtonDown(2) || false) {
-		    if(Mouse.getEventButton() == MWB) {
+		if(Mouse.hasWheel() && Mouse.isButtonDown(2) || ctrlPressed) {
+		    int evnt = Mouse.getEventButton();
+		    if(evnt == MWB || ctrlPressed && evnt == LMB) {
 		        // mouse wheel clicked
 		        if(editMode) gameUI.editPinNote();
 		        else gameUI.showPinNote();
+		        ctrlPressed = false;
 		    }
 		}
 
