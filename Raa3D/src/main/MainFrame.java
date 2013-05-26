@@ -106,6 +106,8 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
 import javax.imageio.ImageIO;
+
+import models.Bubbles;
 import models.ObjOrPlyModel;
 
 import org.lwjgl.BufferUtils;
@@ -279,7 +281,7 @@ public class MainFrame extends Widget{
 	static final int NUMBER_OF_SHADER_PROGRAMS=9;
 	static int activeShaderProgram=6;
 	//HUD
-	static Texture rotationCircle, circleGlow, movementCircle, rotationElipse, movementElipse, ellipseGlow;
+	static Texture rotationCircle, circleGlow, movementCircle, rotationElipse, movementElipse, ellipseGlow, bubbleTexture;
 	//window variables
 	private static boolean isRunning;
 	private static long timePastFrame, fps, timePastFps, fpsToDisplay;
@@ -320,6 +322,8 @@ public class MainFrame extends Widget{
 	private static boolean editMode = false;
 	
 	private static int pinNoteType = PinNote.TEXT_TYPE;
+	
+	public static boolean pinsVisible=true;
 	
 	/**
      * @since 0.4
@@ -1418,6 +1422,13 @@ public class MainFrame extends Widget{
             System.err.println("Loading texture main/ellipseGlow.png unsuccessful");
             e.printStackTrace();
         }
+        try {
+            bubbleTexture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("main/bubble.png"));
+            Bubbles.setTexture(bubbleTexture);
+        } catch(IOException e) {
+            System.err.println("Loading texture main/bubble.png unsuccessful");
+            e.printStackTrace();
+        }
 	}
 	
 	/**
@@ -1425,12 +1436,14 @@ public class MainFrame extends Widget{
      * @version 0.1
      */
 	private static void drawHUD(){
+	    
+	    GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
 	    //prepare
         glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
-        glOrtho(0, settings.resWidth, 0, settings.resHeight, 0.2f, 2);
+        glOrtho(0, settings.resWidth, 0, settings.resHeight, 0.2f, 20);
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glLoadIdentity();
@@ -1462,6 +1475,9 @@ public class MainFrame extends Widget{
         glTexCoord2f(1, 1);
         glVertex3f(x+1.5f*r, y-r, -1.0f);
         glEnd();
+        
+        
+        
         GL11.glBindTexture(GL_TEXTURE_2D, movementElipse.getTextureID());
         glBegin(GL_QUADS);
         glTexCoord2f(1, 0);
@@ -1473,6 +1489,8 @@ public class MainFrame extends Widget{
         glTexCoord2f(1, 1);
         glVertex3f(x2+1.5f*r, y2-r, -1.0f);
         glEnd();
+        
+        
         
         if(clickedOn==CLICKED_ON_MOVE_ELLIPSE || clickedOn==CLICKED_ON_ROTATION_ELLIPSE){
             float x3=x, y3=y;
@@ -1681,8 +1699,10 @@ public class MainFrame extends Widget{
 	        setCameraAndLight(0);
 	        renderVeins();
 	    }
+	    if(pinsVisible){
+            Bubbles.drawBubble(0f, 0f, 0f);
+        }
 		//HUD
-	    GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
 		drawHUD();
 		if(settings.isFpsShown)Display.setTitle(title+" - FPS: "+fpsToDisplay);else	Display.setTitle(title);
 	}

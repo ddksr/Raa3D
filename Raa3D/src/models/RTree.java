@@ -20,7 +20,7 @@ public class RTree {
 	Node currentBest;
 	Node highestInBox;
 	
-	double[] triangleVertices;
+	float[] triangleVertices;
 	
 	
 	/*public RTree(ArrayList<double[]> input, int degree){
@@ -45,7 +45,7 @@ public class RTree {
 		hanger.children[0].parent=hanger;
 	}*/
 	
-	public RTree(double[] inputTriangleVertices, IntBuffer triangleIndices, int degree){
+	public RTree(float[] inputTriangleVertices, IntBuffer triangleIndices, int degree){
 	    triangleVertices=inputTriangleVertices;
         treeDegree=degree;
         hanger = new Node(null);
@@ -99,8 +99,8 @@ public class RTree {
 		@Override
 		public int compare(Node n1, Node n2) {
 			int d=depth%3;
-			double[] t = new double[3];
-			double[] p = new double[3];
+			float[] t = new float[3];
+			float[] p = new float[3];
 			for(int i=0;i<3;i++){
 				t[d]=(n1.box.c[d][0]+n1.box.c[d][0])/2;
 				p[d]=(n2.box.c[d][0]+n2.box.c[d][0])/2;
@@ -139,11 +139,11 @@ public class RTree {
 		if(hanger.children[0]==null)return foundPoints;
 		else{
 			ArrayList<Node> foundNodes = new ArrayList<Node>();
-			double[][] newBoxDoubles = new double[3][2];
+			float[][] newBoxFloats = new float[3][2];
 			for(int i=0;i<3;i++)
 				for(int j=0;j<2;j++)
-					newBoxDoubles[i][j]=b.c[i][j];
-			Box box = new Box(newBoxDoubles);
+					newBoxFloats[i][j]=b.c[i][j];
+			Box box = new Box(newBoxFloats);
 			hanger.children[0].fillNodesInBox(box,foundNodes);
 			for(Node n:foundNodes)foundPoints.add(new Point3D(n.box.c[0][0], n.box.c[1][0], n.box.c[2][0]));
 			return foundPoints;
@@ -174,9 +174,9 @@ public class RTree {
 		}
 		public Node(Node parent) {
 			super();
-			double[][] bx = new double[][]{{Double.MAX_VALUE, Double.MIN_VALUE},
-					{Double.MAX_VALUE, Double.MIN_VALUE},
-					{Double.MAX_VALUE, Double.MIN_VALUE}};
+			float[][] bx = new float[][]{{Float.MAX_VALUE, Float.MIN_VALUE},
+					{Float.MAX_VALUE, Float.MIN_VALUE},
+					{Float.MAX_VALUE, Float.MIN_VALUE}};
 			this.box = new Box(bx);
 			this.parent = parent;
 			children = new Node[treeDegree];
@@ -232,7 +232,7 @@ public class RTree {
 				if(box.avgSqDistToPoint(p)<currentBest.box.avgSqDistToPoint(p))currentBest=this;
 				return;
 			}
-			double range = Math.sqrt(currentBest.box.avgSqDistToPoint(p));
+			float range = (float)Math.sqrt(currentBest.box.avgSqDistToPoint(p));
 			
 			for(int i=0;i<treeDegree;i++){
 				if(children[i]!=null){
@@ -255,7 +255,7 @@ public class RTree {
 			Node localBest = children[0];
 			for(int i=1;i<treeDegree;i++){
 				if(children[i]!=null){
-					double childDistance = children[i].box.avgSqDistToPoint(inputPoint);
+					float childDistance = children[i].box.avgSqDistToPoint(inputPoint);
 					if((childDistance<localBest.box.avgSqDistToPoint(inputPoint) || localBest.box.avgSqDistToPoint(inputPoint)==0) && childDistance!=0){
 						localBest = children[i];
 					}
@@ -271,11 +271,11 @@ public class RTree {
 		}
 		public void DFNNUnwindNotSelf(Point3D p, Node alreadyChecked){
 			if(children[0]==null){
-				double thisDistance = box.avgSqDistToPoint(p); 
+				float thisDistance = box.avgSqDistToPoint(p); 
 				if(thisDistance<currentBest.box.avgSqDistToPoint(p) && thisDistance!=0)currentBest=this;
 				return;
 			}
-			double range = Math.sqrt(currentBest.box.avgSqDistToPoint(p));
+			float range = (float)Math.sqrt(currentBest.box.avgSqDistToPoint(p));
 			for(int i=0;i<treeDegree;i++){
 				if(children[i]!=null){
 					if(children[i]!=alreadyChecked){

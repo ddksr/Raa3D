@@ -5,21 +5,21 @@ package models;
  * April, 23, 2013
  */
 public class Box {
-	double[][] c;
+	float[][] c;
 	int[] triangleIndices;
 
-	public Box(double[][] c) {this.c = c;}
+	public Box(float[][] c) {this.c = c;}
 	public Box(){
-		c = new double[3][2];
+		c = new float[3][2];
 		for(int i=0;i<3;i++){
-			c[i][0]=Double.MIN_VALUE;
-			c[i][1]=Double.MAX_VALUE;
+			c[i][0]=Float.MIN_VALUE;
+			c[i][1]=Float.MAX_VALUE;
 		}
 	}
 	
 	
-	public Box(double[] points, int[] indices){ //this is for inserting triangles
-        c = new double[3][2];
+	public Box(float[] points, int[] indices){ //this is for inserting triangles
+        c = new float[3][2];
         for(int i=0;i<3;i++){
             c[i][0]=points[indices[0]*3+i];
             c[i][1]=points[indices[0]*3+i];
@@ -33,16 +33,16 @@ public class Box {
         }
     }
 	
-	public double avgSqDistToPoint(Point3D p){
-		double x = (c[0][0]+c[0][1])/2-p.x;
-		double y = (c[1][0]+c[1][1])/2-p.y;
-		double z = (c[2][0]+c[2][1])/2-p.z;
+	public float avgSqDistToPoint(Point3D p){
+		float x = (c[0][0]+c[0][1])/2-p.x;
+		float y = (c[1][0]+c[1][1])/2-p.y;
+		float z = (c[2][0]+c[2][1])/2-p.z;
 		return x*x+y*y+z*z;
 	}
 	
 	public boolean isCollidingBox(Box box){
-		double[][] a = this.c;
-		double[][] b = box.c;
+		float[][] a = this.c;
+		float[][] b = box.c;
 		for(int i=0;i<3;i++){
 			if(a[i][0]>b[i][1])return false;
 			if(a[i][1]<b[i][0])return false;
@@ -50,8 +50,8 @@ public class Box {
 		return true;
 	}
 	public boolean isCollidingBox2(Box box){
-		double[][] a = this.c;
-		double[][] b = box.c;
+		float[][] a = this.c;
+		float[][] b = box.c;
 		for(int i=0;i<3;i++){
 			if(a[i][0]==b[i][1])return true;
 			if(a[i][1]==b[i][0])return true;

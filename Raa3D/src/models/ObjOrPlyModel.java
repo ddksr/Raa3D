@@ -52,8 +52,8 @@ public class ObjOrPlyModel {
 	//global variables
 	//     used for both .obj and .ply formats
 	public double centerx, centery, centerz;
-	public double maxX, maxY, maxZ;
-	public double minX, minY, minZ;
+	public float maxX, maxY, maxZ;
+	public float minX, minY, minZ;
 	
 	
 	//     used for .obj files
@@ -187,24 +187,22 @@ public class ObjOrPlyModel {
                 //indexes_forPlyFiles = BufferUtils.createIntBuffer(triangleCount_forPlyFiles*3);
                 
                 
-                double[] trianglesForRTree = new double[triangleCount_forPlyFiles*9];
-                int trianglesForRTreeIdx=0;
                 // read PLY data into the buffers
                 ElementReader reader = plyReader.nextElementReader();
                 while (reader != null) {
                     if(reader.getElementType().getName().equals("vertex")) {
                         org.smurn.jply.Element vertex = reader.readElement();
                         while (vertex != null) {
-                            double x = vertex.getDouble("x");
-                            double y = vertex.getDouble("y");
-                            double z = vertex.getDouble("z");
-                            double nx = vertex.getDouble("nx");
-                            double ny = vertex.getDouble("ny");
-                            double nz = vertex.getDouble("nz");
-                            double r = vertex.getDouble("red")/255d;
-                            double g = vertex.getDouble("green")/255d;
-                            double b = vertex.getDouble("blue")/255d;
-                            double a = vertex.getDouble("alpha")/255d;
+                            float x = (float)vertex.getDouble("x");
+                            float y = (float)vertex.getDouble("y");
+                            float z = (float)vertex.getDouble("z");
+                            float nx = (float)vertex.getDouble("nx");
+                            float ny = (float)vertex.getDouble("ny");
+                            float nz = (float)vertex.getDouble("nz");
+                            float r = (float)vertex.getDouble("red")/255f;
+                            float g = (float)vertex.getDouble("green")/255f;
+                            float b = (float)vertex.getDouble("blue")/255f;
+                            float a = (float)vertex.getDouble("alpha")/255f;
                             
                             //System.out.println(r+", "+g+", "+b+", "+a);
                             /*
@@ -215,20 +213,22 @@ public class ObjOrPlyModel {
                             verticesNormals_forPlyFiles.put((float)ny);
                             verticesNormals_forPlyFiles.put((float)nz);
                             */
-                            vertexBuffer.put((float)x);
-                            vertexBuffer.put((float)y);
-                            vertexBuffer.put((float)z);
-                            vertexBuffer.put((float)nx);
-                            vertexBuffer.put((float)ny);
-                            vertexBuffer.put((float)nz);
-                            vertexBuffer.put((float)r);
-                            vertexBuffer.put((float)g);
-                            vertexBuffer.put((float)b);
-                            vertexBuffer.put((float)a);
+                            vertexBuffer.put(x);
+                            vertexBuffer.put(y);
+                            vertexBuffer.put(z);
+                            vertexBuffer.put(nx);
+                            vertexBuffer.put(ny);
+                            vertexBuffer.put(nz);
+                            vertexBuffer.put(r);
+                            vertexBuffer.put(g);
+                            vertexBuffer.put(b);
+                            vertexBuffer.put(a);
                             
+                            /*
                             trianglesForRTree[trianglesForRTreeIdx++]=x;
                             trianglesForRTree[trianglesForRTreeIdx++]=y;
                             trianglesForRTree[trianglesForRTreeIdx++]=z;
+                            */
                             /*
                             vertices.add((float)x);//TODO: remove if not necessary
                             vertices.add((float)y);//TODO: remove if not necessary
@@ -269,21 +269,29 @@ public class ObjOrPlyModel {
                 //glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indexes_forPlyFiles, GL_STATIC_DRAW_ARB);
                 
                 centerx/=vertexCount;centery/=vertexCount;centerz/=vertexCount;
-                System.gc();
-                System.out.println("loaded");
-                /*
-                System.gc();
+                
                 System.out.println("RTree started");
+                System.gc();
                 //prepare a double[] array for RTree (used for searching ray intersections (not needed for simple rendering))
                 reader=null;
                 plyReader=null;
-                vertexBuffer=null;
+                vertexBuffer.rewind();
                 indexBuffer.rewind();
+                float[] trianglesForRTree = new float[triangleCount_forPlyFiles*9];
+                int trianglesForRTreeIdx=0;
+                while(vertexBuffer.hasRemaining()){
+                    trianglesForRTree[trianglesForRTreeIdx++]=vertexBuffer.get();
+                    trianglesForRTree[trianglesForRTreeIdx++]=vertexBuffer.get();
+                    trianglesForRTree[trianglesForRTreeIdx++]=vertexBuffer.get();
+                    for(int i=0;i<7;i++){
+                        vertexBuffer.get();
+                    }
+                }
+                vertexBuffer=null;
                 rtreeOfTriangles_forPlyFiles = new RTree(trianglesForRTree, indexBuffer, 4);
                 indexBuffer=null;
                 System.gc();
                 System.out.println("RTree constructed");
-                */
                 
                 
             } catch(IOException e) {
@@ -361,6 +369,7 @@ public class ObjOrPlyModel {
 		    glColorPointer(4, GL11.GL_FLOAT, vertexSize_forPlyFiles, 24);
 		    
 		    //org.lwjgl.opengl.Util.checkGLError();
+		    Bubbles.getAndSetMatrices();
 		    glDrawElements(GL_TRIANGLES, triangleCount_forPlyFiles * 3, GL_UNSIGNED_INT, 0);
 		    //org.lwjgl.opengl.Util.checkGLError();
 		}

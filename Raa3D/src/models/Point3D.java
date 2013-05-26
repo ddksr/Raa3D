@@ -4,31 +4,31 @@ package models;
  * April, 23, 2013
  */
 public class Point3D implements Comparable<Point3D> {
-	double x,y,z;
-	double [] v;
+	float x,y,z;
+	float [] v;
 
-	public Point3D(double x, double y, double z) {
+	public Point3D(float x, float y, float z) {
 		super();
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		v = new double[]{x,y,z};
+		v = new float[]{x,y,z};
 	}
 	/**
 	 * @param p - vector size three or more, but higher dimensions will be ignored
 	 */
-	public Point3D(double[] p) {
+	public Point3D(float[] p) {
 		super();
 		this.x = p[0];
 		this.y = p[1];
 		this.z = p[2];
-		v = new double[]{x,y,z};
+		v = new float[]{x,y,z};
 	}
 	
 	int compareTo(Point3D point, int d){
 		d=d%3;
-		double[] t = this.v;
-		double[] p = point.v;
+		float[] t = this.v;
+		float[] p = point.v;
 		for(int i=0;i<3;i++){
 			if(t[d]>p[d])return 1;
 			else if(t[d]<p[d])return -1;
@@ -37,16 +37,16 @@ public class Point3D implements Comparable<Point3D> {
 		return 0;
 	}
 	
-	double sqDistanceTo(Point3D point){
-		double xDiff = this.x-point.x;
-		double yDiff = this.y-point.y;
-		double zDiff = this.z-point.z;
+	float sqDistanceTo(Point3D point){
+		float xDiff = this.x-point.x;
+		float yDiff = this.y-point.y;
+		float zDiff = this.z-point.z;
 		return xDiff*xDiff+yDiff*yDiff+zDiff*zDiff;
 	}
 	
 	
 	boolean isInBox(Box b){
-		double[][]c=b.c;
+		float[][]c=b.c;
 		if(x>=c[0][0] && x<=c[0][1] &&
 				y>=c[1][0] && y<=c[1][1] &&
 				z>=c[2][0] && z<=c[2][1])return true;
@@ -54,8 +54,8 @@ public class Point3D implements Comparable<Point3D> {
 	}
 	
 	
-	boolean isInRangeOfBox(Box box, double range){
-		double[][] c = box.c;
+	boolean isInRangeOfBox(Box box, float range){
+		float[][] c = box.c;
 		//in most cases the point should be far from box
 		if(x+range<c[0][0] || x-range>c[0][1] ||
 				y+range<c[1][0] || y-range>c[1][1] ||
