@@ -348,7 +348,7 @@ public class MainFrame extends Widget{
 	
 	private static int pinNoteType = PinNote.TEXT_TYPE;
 	
-	public static boolean pinsVisible=true;
+	public static boolean pinsVisible = false;
 	
 	private static double[] lastRay = null;
 	
@@ -452,7 +452,7 @@ public class MainFrame extends Widget{
         additionalContentToggleButton.addCallback(new Runnable(){
            @Override
         public void run(){
-               boolean test = additionalContentToggleButton.isActive();
+               pinsVisible = additionalContentToggleButton.isActive();
            }
         });
         add(additionalContentToggleButton);
@@ -1743,8 +1743,11 @@ public class MainFrame extends Widget{
 	        setCameraAndLight(0);
 	        renderVeins();
 	    }
-	    if(pinsVisible){
-            Bubbles.drawBubble(0f, 0f, 0f);
+	    if(pinsVisible && pinPanel != null){
+            for(PinNote nt : pinPanel.getNotes()) {
+                Bubbles.drawBubble((float) nt.getX(), (float) nt.getY(), (float) nt.getZ());
+            }
+	        
         }
 		//HUD
 		drawHUD();
@@ -2102,7 +2105,7 @@ public class MainFrame extends Widget{
 	    if(pinPanel == null) return;
 	    note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
 	    
-	    if (note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
+	    if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
 	        note = null;
 	    }
 	    

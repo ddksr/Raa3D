@@ -1,4 +1,4 @@
-/* Author of this file: Simon Žagar, 2012, Ljubljana
+/* Author of this file: Simon ï¿½agar, 2012, Ljubljana
  * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/
  * or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
@@ -39,7 +39,7 @@ import tools.Vector;
 
 
 /**
- * @author Simon Žagar
+ * @author Simon ï¿½agar
  *@since 0.2
  *@version 0.2
  */
@@ -369,10 +369,10 @@ public class ObjOrPlyModel {
 		    glColorPointer(4, GL11.GL_FLOAT, vertexSize_forPlyFiles, 24);
 		    
 		    //org.lwjgl.opengl.Util.checkGLError();
-		    Bubbles.getAndSetMatrices();
 		    glDrawElements(GL_TRIANGLES, triangleCount_forPlyFiles * 3, GL_UNSIGNED_INT, 0);
 		    //org.lwjgl.opengl.Util.checkGLError();
 		}
+		Bubbles.getAndSetMatrices();
 		glPopMatrix();
 	}
 	

@@ -108,6 +108,18 @@ public class PinNote {
 		return t >= 0 && t < vals.length ? vals[t] : "def";
 	}
 	
+	public double getX() {
+	    return x;
+	}
+
+	public double getY() {
+        return y;
+    }
+	
+	public double getZ() {
+        return z;
+    }
+	
 	public String getValue() {
 		return value;
 	}
