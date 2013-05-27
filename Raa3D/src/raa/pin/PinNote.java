@@ -41,6 +41,14 @@ public class PinNote {
 		isNew = true;
 	}
 	
+	/**
+	 * Called from PinPanelIndex
+	 * @param x1
+	 * @param y1
+	 * @param z1
+	 * @param typeVal
+	 * @param val
+	 */
 	public PinNote(double x1, double y1, double z1, String typeVal, String val) {
 		x = x1;
 		y = y1;
@@ -51,8 +59,8 @@ public class PinNote {
             value = val;
         }
         else if (type == PinNote.TEXT_TYPE) {
-            textValue = val;
-            value = null;
+            textValue = null;
+            value = val;
             synced = false;
         }
         else if (type == PinNote.ABSOLUTE_TYPE) {

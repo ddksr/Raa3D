@@ -2372,6 +2372,12 @@ public class MainFrame extends Widget{
 	                   else {
 	                       note.setTextValue(text);
 	                       note.markUnsynced();
+	                       try {
+	                           pinPanel.sync();
+                           } catch(IOException e) {
+                               // TODO Auto-generated catch block
+                               e.printStackTrace();
+                           }
 	                   }
 	                   
 	                   removeChild(pinItrPane);
