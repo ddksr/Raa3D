@@ -18,6 +18,8 @@ import static org.lwjgl.opengl.ARBBufferObject.*;
 import static org.lwjgl.opengl.ARBVertexBufferObject.*;
 import static org.lwjgl.opengl.GL11.*;
 
+import main.MainFrame;
+
 import org.lwjgl.BufferUtils;
 
 import tools.Vector;
@@ -404,6 +406,7 @@ public class VeinsModel {
 		}
 		
 		public void constructVBO(){
+		    
 		    maxSubDepth++;
 		    verticesAndNormalsIDs.add(glGenBuffersARB());
 		    verticesCounters.add(vertices.size());
@@ -414,6 +417,8 @@ public class VeinsModel {
 		    glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indicesIDs.get(maxSubDepth));
 		    float[] normals = getNormals(vertices, faces);
 		    FloatBuffer verticesAndNormalsBuffer = BufferUtils.createFloatBuffer(vertices.size()+normals.length);
+		    	    
+		    
 		    for(float f:vertices)verticesAndNormalsBuffer.put(f);
 		    for(float f:normals)verticesAndNormalsBuffer.put(f);
 		    verticesAndNormalsBuffer.rewind();

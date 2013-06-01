@@ -139,6 +139,7 @@ import de.matthiasmann.twl.FolderBrowser;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.ListBox;
+import de.matthiasmann.twl.ProgressBar;
 import de.matthiasmann.twl.ScrollPane;
 import de.matthiasmann.twl.ScrollPane.Fixed;
 import de.matthiasmann.twl.Scrollbar;
@@ -247,8 +248,9 @@ public class MainFrame extends Widget{
     private FileSelector fileSelector;
     
     /**image***/
-    private ImageWidget imageWidget;
+    private static ImageWidget imageWidget;
     /**********/
+    public static ProgressBar progressBar;
     
     private ListBox displayModeListBox;
     private de.matthiasmann.twl.ToggleButton fullscreenToggle;
@@ -269,7 +271,7 @@ public class MainFrame extends Widget{
     private ToggleButton pinTxtToggleButton;
     
     // Pin note iteraction
-    private ScrollPane pinItrPane;
+    private static ScrollPane pinItrPane;
     private EditField textPinField;
     private Label xLabelField;
     private EditField xPinField;
@@ -433,6 +435,11 @@ public class MainFrame extends Widget{
            }
         });
         add(open);
+        /*
+         * progressbar
+         */
+        progressBar = new ProgressBar();
+        add(progressBar);
         
         modeToggleButton = new ToggleButton("Edit mode");
         modeToggleButton.setTheme("togglebutton");
@@ -490,7 +497,7 @@ public class MainFrame extends Widget{
                try {
                    //writePMImageToFile(image, "C:\\slike\\mojaslika.pm");
                    ImageIO.write(image, "PNG", outfile); // "PNG" or "JPG"
-                   JOptionPane.showMessageDialog(null,"Slika " + prtscr_filename + " je bila shranjena", "Slika shranjena", JOptionPane.WARNING_MESSAGE);
+                   alertBox("Image " + prtscr_filename + " was saved.", "Image saved.");
                } catch (IOException e) { 
                    e.printStackTrace(); 
                }        
@@ -1228,6 +1235,10 @@ public class MainFrame extends Widget{
 	    displayModesButton.adjustSize();
 	    stereoToggleButton.adjustSize();
 	    additionalContentToggleButton.adjustSize();
+	    /*
+	     * progressbar
+	     */
+	    progressBar.adjustSize();
 	    
 	    help.adjustSize();
 	    credits.adjustSize();
@@ -1336,8 +1347,14 @@ public class MainFrame extends Widget{
         helpScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
         helpTextArea.setSize(rlWidth, fsHeight);
         
+        /*
+         * Progressbar
+         */
+        progressBar.setSize(settings.resWidth, 30);
+        progressBar.setPosition(0, settings.resHeight-30);
+        
     }
-	
+	float inc = 0;
 	/**
 	 * @since 0.1
 	 * @version 0.4
@@ -1351,7 +1368,8 @@ public class MainFrame extends Widget{
 		fpsToDisplay=0;
 		while(!Display.isCloseRequested() && isRunning){
 			resetView();
-			if (!inputTextMode) pollInput();
+			//if (!inputTextMode) pollInput();
+			pollInput();
 			render();
 			gui.update();
 			Display.update();
@@ -1795,20 +1813,43 @@ public class MainFrame extends Widget{
 
     private static boolean ctrlPressed = false;
 
+    
 	/**
 	 * @since 0.1
 	 * @version 0.4
 	 */
 	private static void pollInput(){
-	    if(inputTextMode) {
+	   /* if(inputTextMode) {
+
+	       return;
+	    }*/
+	    int incZum = Mouse.getDWheel();
+	    if(pinItrPane!=null && incZum != 0) {
 	        
-	        return;
-	    }
+            if(incZum>0) {
+                imageWidget.scrollImage(1.1);
+                pinItrPane.updateScrollbarSizes();
+            } else {
+                imageWidget.scrollImage(0.9);
+                pinItrPane.updateScrollbarSizes();
+            }
+        }
+	    
 		while(Keyboard.next()){
 			if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
 				if(Keyboard.getEventKey()==Keyboard.KEY_TAB){
 					if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
-				}else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
+				}else if(Keyboard.getEventKey()==Keyboard.KEY_P) {
+                    openedModel.changePlainState();    
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_O) {
+                    openedModel.incPlain(0, (float)0.2);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
+                    openedModel.incPlain(0, (float)-0.2);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_I) {
+                    openedModel.rotatePlain(0, 20);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_K) {
+                    openedModel.rotatePlain(0, -20);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
 				    ctrlPressed = true;
 				}else if(Keyboard.getEventKey()==Keyboard.KEY_RCONTROL) {
 				    ctrlPressed = true;
@@ -1863,7 +1904,7 @@ public class MainFrame extends Widget{
 		        ctrlPressed = false;
 		    }
 		}
-
+		
 		int z=Mouse.getDWheel();
         if(z>0){
             cameraX*=0.8;
@@ -1876,7 +1917,6 @@ public class MainFrame extends Widget{
             cameraZ*=1.25;
             zoom*=1/1.25;
         }
-        
 		//moving the camera
 		if(Keyboard.isKeyDown(Keyboard.KEY_W)){
 		  //create a vector representing the rotation axis
@@ -2469,6 +2509,7 @@ public class MainFrame extends Widget{
 	    initPinButtonsEnabled();
     }
 	
+	
 	private void showImage(PinNote n, boolean edit, boolean isNew) {
         imageWidget = new ImageWidget();
         BufferedImage img;
@@ -2481,24 +2522,23 @@ public class MainFrame extends Widget{
             
             di.update(bb, DynamicImage.Format.RGBA);
             
-            int left = img.getWidth() / 2;
-            int up = img.getHeight() / 2;
+            int left = 400 / 2;
+            int up = 400 / 2;
             
-            imageWidget.setImage(di);
+            imageWidget.setImage(di, img);            
             n.clearImage();
             note = n;
             
             //add(imageWidget);
             
             pinItrPane = new ScrollPane(imageWidget);
-            pinItrPane.setFixed(ScrollPane.Fixed.VERTICAL);
+            pinItrPane.setFixed(ScrollPane.Fixed.NONE);
             pinItrPane.setExpandContentSize(true);
             pinItrPane.setTheme("scrollpane");
             pinItrPane.setVisible(true);
             //textPinField.adjustSize();
-            
             pinItrPane.adjustSize();
-            pinItrPane.setSize(img.getWidth(), img.getHeight());
+            pinItrPane.setSize(400, 400);
             pinItrPane.setPosition(cw - left, ch - up - 20);
             
             add(pinItrPane);

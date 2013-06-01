@@ -73,7 +73,12 @@ public class ObjOrPlyModel {
 	RTree rtreeOfTriangles_forPlyFiles;
 	//FloatBuffer verticesNormals_forPlyFiles;
 	//IntBuffer indexes_forPlyFiles;
-	
+	/*
+	 * Plain
+	 */
+	boolean plainVisible=false;
+	float plainX=0, plainY=0, plainZ=0;
+	float rotate = 0;
 	
 	public ObjOrPlyModel(String filepath){
 	    vertices = new ArrayList<Float>();
@@ -374,6 +379,30 @@ public class ObjOrPlyModel {
 		}
 		Bubbles.getAndSetMatrices();
 		glPopMatrix();
+		
+		if(plainVisible) {
+            glPushMatrix();
+
+            glTranslatef(0,0,plainZ);
+            glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
+            glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
+            
+             glBegin(GL11.GL_QUADS);
+                /*glVertex3f(-10000f, -10000f,(float)centerz);
+                glVertex3f(10000f, -10000f,(float)centerz);
+                glVertex3f(10000f, 10000f,(float)centerz);
+                glVertex3f(-10000f, 10000f,(float)centerz);*/
+             
+             glVertex3f(-50f, -50f,(float)centerz);
+             glVertex3f(50f, -50f,(float)centerz);
+             glVertex3f(50f, 50f,(float)centerz);
+             glVertex3f(-50f, 50f,(float)centerz);
+              glEnd();
+            
+            glPopMatrix();
+            
+        }
+		
 	}
 	
 	
@@ -674,6 +703,23 @@ public class ObjOrPlyModel {
 		    LinkedHashSet<Integer> pointsOriginal;//These points are used for changing the original points' positions
 		}
 	}
+	
+	public boolean changePlainState() {
+        if(plainVisible)
+            plainVisible = false;
+        else
+            plainVisible = true;
+        return plainVisible;
+    }
+	
+	public void incPlain(int coordinate, float value){
+	    if(coordinate==0) //z
+	        plainZ+=value;
+	}
+	public void rotatePlain(int coordinate, float value){
+        if(coordinate==0) //z
+            rotate +=value;
+    }
 }
 
 

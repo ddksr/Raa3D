@@ -1,8 +1,13 @@
 package main;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentColorModel;
@@ -27,7 +32,10 @@ import de.matthiasmann.twl.renderer.lwjgl.LWJGLRenderer;
 public class ImageWidget extends de.matthiasmann.twl.Widget
 {
    private de.matthiasmann.twl.renderer.Image img;
+   BufferedImage bimage, original;
    LWJGLRenderer imageRenderer;
+   public double zoom_image = 1;
+   
    /**
     * Creates an empty image object.
     * 
@@ -158,9 +166,13 @@ public class ImageWidget extends de.matthiasmann.twl.Widget
     * 
     * @param image
     */
-   public void setImage(de.matthiasmann.twl.renderer.Image image)
+   public void setImage(de.matthiasmann.twl.renderer.Image image, BufferedImage original)
    {
-      img = image;
+      //img = image;
+      this.original = original;
+      double x = Math.max(original.getWidth(), original.getHeight());
+      double devider = 400 / x;
+      scrollImage(devider);
    }
    
    @Override
@@ -174,6 +186,43 @@ public class ImageWidget extends de.matthiasmann.twl.Widget
    {
       return img.getWidth();
    }
+   
+   private BufferedImage getScaledImage(double scale) {  
+       int w = (int)(scale*original.getWidth());  
+       int h = (int)(scale*original.getHeight()); 
+       //System.out.println("width: "+w+" height: "+h);
+       /*BufferedImage bi = new BufferedImage(w, h, original.getType());  
+       Graphics2D g2 = bi.createGraphics();  
+       g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,  
+                           RenderingHints.VALUE_INTERPOLATION_BICUBIC);  
+       AffineTransform at = AffineTransform.getScaleInstance(scale, scale);  
+       g2.drawRenderedImage(original, at);  
+       g2.dispose(); */
+       BufferedImage bi = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+       AffineTransform at = new AffineTransform();
+       at.scale(scale, scale);
+       AffineTransformOp scaleOp = 
+          new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+       bi = scaleOp.filter(original, bi);
+       
+       return bi;  
+   }  
+   
+   public void scrollImage(double zoom) {
+       zoom_image *= zoom;
+       bimage = getScaledImage(zoom_image);
+       ByteBuffer bb = convertImageData(bimage);
+       try {
+           imageRenderer = new LWJGLRenderer();
+          } catch(LWJGLException e1) {
+              // TODO Auto-generated catch block
+              e1.printStackTrace();
+          }
+       DynamicImage dynamicImage = imageRenderer.createDynamicImage(bimage.getWidth(), bimage.getHeight());
+       dynamicImage.update(bb, DynamicImage.Format.RGBA);
+       img = dynamicImage;
+       
+   }
 
    @Override
    public void paintWidget(GUI gui)
@@ -181,7 +230,7 @@ public class ImageWidget extends de.matthiasmann.twl.Widget
       super.paintWidget(gui);
       if(img != null)
       {
-         img.draw(getAnimationState(), getX(), getY(), getWidth(), getHeight());
+         img.draw(getAnimationState(), getX(), getY(), img.getWidth(), img.getHeight());
       }
    }
 }
