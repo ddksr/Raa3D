@@ -13,6 +13,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import static org.lwjgl.opengl.ARBBufferObject.*;
@@ -78,6 +79,7 @@ public class ObjOrPlyModel {
 	 */
 	boolean plainVisible=false;
 	float plainX=0, plainY=0, plainZ=0;
+	float planeFak = 1;
 	float rotate = 0;
 	
 	public ObjOrPlyModel(String filepath){
@@ -387,16 +389,26 @@ public class ObjOrPlyModel {
             glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
             glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
             
+            GL20.glUseProgram(0);
+            
+            glEnable(GL11.GL_BLEND);
+            glColor4f(0.8f, 0.06667f, 0.0f, 1);
+            glMaterial(GL_FRONT,GL_AMBIENT, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+            glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+            glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 0.f}));
+            glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
+            
+            
              glBegin(GL11.GL_QUADS);
                 /*glVertex3f(-10000f, -10000f,(float)centerz);
                 glVertex3f(10000f, -10000f,(float)centerz);
                 glVertex3f(10000f, 10000f,(float)centerz);
                 glVertex3f(-10000f, 10000f,(float)centerz);*/
              
-             glVertex3f(-50f, -50f,(float)centerz);
-             glVertex3f(50f, -50f,(float)centerz);
-             glVertex3f(50f, 50f,(float)centerz);
-             glVertex3f(-50f, 50f,(float)centerz);
+             glVertex3f(-50f * planeFak, -50f * planeFak,(float)centerz);
+             glVertex3f(50f * planeFak, -50f * planeFak,(float)centerz);
+             glVertex3f(50f * planeFak, 50f * planeFak,(float)centerz);
+             glVertex3f(-50f * planeFak, 50f * planeFak,(float)centerz);
               glEnd();
             
             glPopMatrix();
@@ -719,6 +731,18 @@ public class ObjOrPlyModel {
 	public void rotatePlain(int coordinate, float value){
         if(coordinate==0) //z
             rotate +=value;
+    }
+	
+	public void resizePlane(int coordinate, float value) {
+	    if(coordinate==0) //z
+            planeFak *= value;
+	}
+
+
+    public LinkedList<float[]> planeIntersection() {
+        //rtreeOfTriangles_forPlyFiles;
+        
+        return null;
     }
 }
 

@@ -105,6 +105,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
@@ -1886,6 +1887,8 @@ public class MainFrame extends Widget{
 					if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
 				}else if(Keyboard.getEventKey()==Keyboard.KEY_P) {
                     openedModel.changePlainState();    
+				}else if(Keyboard.getEventKey()==Keyboard.KEY_Z) {
+                    generatePlaneIntersectionImage(openedModel.planeIntersection());
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_O) {
                     openedModel.incPlain(0, (float)0.2);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
@@ -1894,6 +1897,10 @@ public class MainFrame extends Widget{
                     openedModel.rotatePlain(0, 20);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_K) {
                     openedModel.rotatePlain(0, -20);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_U) {
+                    openedModel.resizePlane(0, 1.1f);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
+                    openedModel.resizePlane(0, 0.9f);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
 				    ctrlPressed = true;
 				}else if(Keyboard.getEventKey()==Keyboard.KEY_RCONTROL) {
@@ -2190,7 +2197,11 @@ public class MainFrame extends Widget{
 		
 	}
 	
-	private void editPinNote() {
+	private static void generatePlaneIntersectionImage(LinkedList<float[]> planeIntersection) {
+        // TODO Auto-generated method stub
+        
+    }
+    private void editPinNote() {
 	    if(pinPanel == null) return;
 	    note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
 	    
