@@ -354,6 +354,8 @@ public class MainFrame extends Widget{
 	public static boolean pinsVisible = false;
 	
 	private static double[] lastRay = null;
+
+    private static float[] lightOrigin;
 	
 	/**
      * @since 0.4
@@ -1669,6 +1671,8 @@ public class MainFrame extends Widget{
 		Quaternion worldOrientation = Quaternion.quaternionReciprocal(cameraOrientation);
 		glMultMatrix(worldOrientation.getRotationMatrix(false));
 		glTranslatef(-cameraX+(float)v[0], -cameraY+(float)v[1], -cameraZ+(float)v[2]);
+		
+		lightOrigin = new float[]{0.0f, 1000.0f, 0.0f , 0.0f};
 		
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
