@@ -1820,8 +1820,10 @@ public class MainFrame extends Widget{
 	 */
 	private static void pollInput(){
 	    
+	    // Image zooming
 	    if(pinItrPane!=null && imageWidget != null) {
-	        int incZum = Mouse.getDWheel();
+	        // Note: moved in if statement so that models can work
+	        int incZum = Mouse.getDWheel(); 
 	        if (incZum != 0) {
                 if(incZum>0) {
                     imageWidget.scrollImage(1.1);
@@ -1833,6 +1835,7 @@ public class MainFrame extends Widget{
 	        }
         }
 	    
+	    // Go out when in inputTextMode
 	    if(inputTextMode) {
 	        return;
 	    }
@@ -1895,9 +1898,11 @@ public class MainFrame extends Widget{
 			    ctrlPressed = false;
 			}
 		}
+		
+		// Go out if dialog Opened of menu opened
 		if(dialogOpened || menuOpened )return;
 		
-		//TODO: add CTRL + 1
+		// Note edit 
 		if(Mouse.hasWheel() && Mouse.isButtonDown(2) || ctrlPressed) {
 		    int evnt = Mouse.getEventButton();
 		    if(evnt == MWB || ctrlPressed && evnt == LMB) {
@@ -1908,6 +1913,8 @@ public class MainFrame extends Widget{
 		    }
 		}
 		
+		
+		// Model pan, zoom and rotation
 		int z=Mouse.getDWheel();
         if(z>0){
             cameraX*=0.8;
