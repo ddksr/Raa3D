@@ -1819,21 +1819,24 @@ public class MainFrame extends Widget{
 	 * @version 0.4
 	 */
 	private static void pollInput(){
-	   /* if(inputTextMode) {
-
-	       return;
-	    }*/
-	    int incZum = Mouse.getDWheel();
-	    if(pinItrPane!=null && incZum != 0) {
-	        
-            if(incZum>0) {
-                imageWidget.scrollImage(1.1);
-                pinItrPane.updateScrollbarSizes();
-            } else {
-                imageWidget.scrollImage(0.9);
-                pinItrPane.updateScrollbarSizes();
-            }
+	    
+	    if(pinItrPane!=null && imageWidget != null) {
+	        int incZum = Mouse.getDWheel();
+	        if (incZum != 0) {
+                if(incZum>0) {
+                    imageWidget.scrollImage(1.1);
+                    pinItrPane.updateScrollbarSizes();
+                } else {
+                    imageWidget.scrollImage(0.9);
+                    pinItrPane.updateScrollbarSizes();
+                }
+	        }
         }
+	    
+	    if(inputTextMode) {
+	        return;
+	    }
+
 	    
 		while(Keyboard.next()){
 			if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
