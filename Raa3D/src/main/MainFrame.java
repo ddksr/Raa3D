@@ -255,6 +255,7 @@ public class MainFrame extends Widget{
     private ListBox displayModeListBox;
     private de.matthiasmann.twl.ToggleButton fullscreenToggle;
 
+    private static Widget draggableWidget;
     private TextArea msgBoxContent;
     private TextArea msgBoxTitle;
     private EditField msgBoxInput;
@@ -1812,7 +1813,9 @@ public class MainFrame extends Widget{
 	private static boolean isAAEnabled=false, wireframe=false;
 
     private static boolean ctrlPressed = false;
-
+    private static boolean mouseDown = false;
+    private static int dragDialogX = -1;
+    private static int dragDialogY = -1;
     
 	/**
 	 * @since 0.1
@@ -1834,6 +1837,38 @@ public class MainFrame extends Widget{
                 }
 	        }
         }
+	    
+	    
+	    if (dialogOpened && draggableWidget != null && Mouse.isButtonDown(LMB)) {
+	        int x = Mouse.getX();
+            int y = settings.resHeight - Mouse.getY();
+
+            if (dragDialogX < 0 || dragDialogY < 0) {
+	            int lx = draggableWidget.getX();
+	            int ty = draggableWidget.getY();
+	            int rx = draggableWidget.getWidth() + lx;
+	            int by = draggableWidget.getHeight() + ty;
+	            System.out.println(lx + " - " + rx + ", " + ty + " - " + by);
+	            System.out.println(x + ", " + y);
+	            if (x >= lx && x <= rx && y >= ty && y <= by) {
+	                dragDialogX = x;
+                    dragDialogY = y; 
+	            }
+	        }
+	        else {
+    	        int dirX = (x - dragDialogX);
+    	        int dirY = (y - dragDialogY);
+    	        
+    	        dragDialogX = x;
+    	        dragDialogY = y;
+    	        gameUI.moveDialogs(dirX, dirY);
+	        }
+	        
+	    } else if(dialogOpened && draggableWidget != null && !Mouse.isButtonDown(LMB)) {
+	        dragDialogX = -1;
+	        dragDialogY = -1;   
+	    }
+	    
 	    
 	    // Go out when in inputTextMode
 	    if(inputTextMode) {
@@ -2166,6 +2201,7 @@ public class MainFrame extends Widget{
         int ch = settings.resHeight/2;
 	    // TODO: determine if note OK
 	    EditFieldModel efm;
+	    SimpleTextAreaModel stmTit;
 	    switch (note == null ? pinNoteType : note.getType()) {
 	        case PinNote.ABSOLUTE_TYPE:
 	            pinItrBg = new TextArea();
@@ -2174,6 +2210,16 @@ public class MainFrame extends Widget{
 	            pinItrBg.setSize(150, 100);
 	            pinItrBg.setPosition(cw - 75, ch - 60);
 	            add(pinItrBg);
+	            
+	            msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(150, 20);
+                msgBoxTitle.setPosition(cw - 75, ch - 80);
+                add(msgBoxTitle);
 	            
 	            // Init
 	            efm = new DefaultEditFieldModel();
@@ -2277,6 +2323,11 @@ public class MainFrame extends Widget{
                        dialogOpened = false;
                        inputTextMode = false;
                        
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        initPinButtonsEnabled();
                    }
                 });
@@ -2311,6 +2362,11 @@ public class MainFrame extends Widget{
                        pinItrDelButton.destroy();
                        removeChild(pinItrBg);
                        pinItrBg.destroy();
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                        
                        dialogOpened = false;
                        inputTextMode = false;
@@ -2348,6 +2404,11 @@ public class MainFrame extends Widget{
                        pinItrDelButton.destroy();
                        removeChild(pinItrBg);
                        pinItrBg.destroy();
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                        
                        confirmBox("Delete note", "Are you sure you wish to delete the note?", new Runnable() {
                             @Override
@@ -2400,6 +2461,16 @@ public class MainFrame extends Widget{
 	            pinItrPane.setSize(400, 400);
 	            pinItrPane.setPosition(cw - 200, ch - 200);
 	            
+	            msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(400, 20);
+                msgBoxTitle.setPosition(cw - 200, ch - 220);
+                add(msgBoxTitle);
+	            
 	            add(pinItrPane);
 	            
 	            pinItrOkButton = new Button("OK");
@@ -2441,6 +2512,11 @@ public class MainFrame extends Widget{
                        dialogOpened = false;
                        inputTextMode = false;
                        
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        initPinButtonsEnabled();
 	               }
 	            });
@@ -2465,6 +2541,11 @@ public class MainFrame extends Widget{
                        pinItrDelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2488,6 +2569,15 @@ public class MainFrame extends Widget{
                        removeChild(pinItrDelButton);
                        pinItrDelButton.destroy();
                        
+
+                       dialogOpened = false;
+                       inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        confirmBox("Delete note", "Are you sure you wish to delete the note?", new Runnable() {
                             @Override
                             public void run() {
@@ -2495,8 +2585,6 @@ public class MainFrame extends Widget{
                                 initPinButtonsEnabled();
                             }
                        }, null);
-                       dialogOpened = false;
-                       inputTextMode = false;
                    }
                 });
                 pinItrDelButton.adjustSize();
@@ -2541,6 +2629,16 @@ public class MainFrame extends Widget{
             
             //add(imageWidget);
             
+            msgBoxTitle = new TextArea();
+            draggableWidget = msgBoxTitle;
+            SimpleTextAreaModel stmTit = new SimpleTextAreaModel("Note");
+            msgBoxTitle.setModel(stmTit);
+            msgBoxTitle.adjustSize();
+            msgBoxTitle.setTheme("msgbox-title");
+            msgBoxTitle.setSize(150, 20);
+            msgBoxTitle.setPosition(cw - left, ch - up - 40);
+            add(msgBoxTitle);
+            
             pinItrPane = new ScrollPane(imageWidget);
             pinItrPane.setFixed(ScrollPane.Fixed.NONE);
             pinItrPane.setExpandContentSize(true);
@@ -2579,6 +2677,11 @@ public class MainFrame extends Widget{
                        dialogOpened = false;
                        inputTextMode = false;
                        
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        initPinButtonsEnabled();
                    }
                 });
@@ -2604,6 +2707,11 @@ public class MainFrame extends Widget{
                        pinItrDelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2683,7 +2791,7 @@ public class MainFrame extends Widget{
         
         int cw = settings.resWidth/2;
         int ch = settings.resHeight/2;
-        
+        SimpleTextAreaModel stmTit;
         switch (note.getType()) {
             case PinNote.ABSOLUTE_TYPE:
                 pinItrBg = new TextArea();
@@ -2692,6 +2800,16 @@ public class MainFrame extends Widget{
                 pinItrBg.setSize(150, 100);
                 pinItrBg.setPosition(cw - 75, ch - 60);
                 add(pinItrBg);
+                
+                msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(150, 20);
+                msgBoxTitle.setPosition(cw - 75, ch - 80);
+                add(msgBoxTitle);
                 
                 // Init
                 
@@ -2738,6 +2856,11 @@ public class MainFrame extends Widget{
                        
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2760,6 +2883,16 @@ public class MainFrame extends Widget{
                 textPinField.adjustSize();
                 textPinField.setReadOnly(true);
                 textPinField.setCanAcceptKeyboardFocus(true);
+                
+                msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(400, 20);
+                msgBoxTitle.setPosition(cw - 200, ch - 220);
+                add(msgBoxTitle);
                 
                 pinItrPane = new ScrollPane(textPinField);
                 pinItrPane.setFixed(ScrollPane.Fixed.VERTICAL);
@@ -2785,6 +2918,11 @@ public class MainFrame extends Widget{
                        pinItrCancelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2966,6 +3104,7 @@ public class MainFrame extends Widget{
 	    
 	    msgBoxContent = new TextArea();
 	    msgBoxTitle = new TextArea();
+	    draggableWidget = msgBoxTitle;
 	    
 	    SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
 	    SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
@@ -3009,6 +3148,7 @@ public class MainFrame extends Widget{
 	    
 	    msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
         
         SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
@@ -3061,6 +3201,7 @@ public class MainFrame extends Widget{
 	    
 	    msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
         
         SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
@@ -3126,6 +3267,7 @@ public class MainFrame extends Widget{
         EditFieldModel stmInput = new DefaultEditFieldModel();
         msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
         msgBoxInput = new EditField(null, stmInput);
         msgBoxInput.setText(inInput == null ? "" : inInput);
         msgBoxContent.setModel(stmMsg);
@@ -3228,7 +3370,53 @@ public class MainFrame extends Widget{
             msgBoxCancelButton.destroy();
             msgBoxCancelButton = null;
         }
+        draggableWidget = null;
     }
+	
+	public void moveDialogs(int dX, int dY) {
+	    draggableWidget.setPosition(draggableWidget.getX() + dX, draggableWidget.getY() + dY);
+	    
+	    if (pinItrPane != null) 
+	        pinItrPane.setPosition(pinItrPane.getX() + dX, pinItrPane.getY() + dY);
+	    if (msgBoxContent != null) 
+	        msgBoxContent.setPosition(msgBoxContent.getX() + dX, msgBoxContent.getY() + dY);
+	    if (msgBoxInput != null) 
+	        msgBoxInput.setPosition(msgBoxInput.getX() + dX, msgBoxInput.getY() + dY);
+	    if (msgBoxOkButton != null) 
+	        msgBoxOkButton.setPosition(msgBoxOkButton.getX() + dX, msgBoxOkButton.getY() + dY);
+	    if (msgBoxCloseButton != null) 
+	        msgBoxCloseButton.setPosition(msgBoxCloseButton.getX() + dX, msgBoxCloseButton.getY() + dY);
+	    if (msgBoxCancelButton != null) 
+	        msgBoxCancelButton.setPosition(msgBoxCancelButton.getX() + dX, msgBoxCancelButton.getY() + dY);
+	    if (textPinField != null && false) 
+	        textPinField.setPosition(textPinField.getX() + dX, textPinField.getY() + dY);
+	    if (xLabelField != null) 
+	        xLabelField.setPosition(xLabelField.getX() + dX, xLabelField.getY() + dY);
+	    if (xPinField != null) 
+	        xPinField.setPosition(xPinField.getX() + dX, xPinField.getY() + dY);
+	    if (yLabelField != null) 
+	        yLabelField.setPosition(yLabelField.getX() + dX, yLabelField.getY() + dY);
+	    if (yPinField != null) 
+	        yPinField.setPosition(yPinField.getX() + dX, yPinField.getY() + dY);
+	    if (zLabelField != null) 
+	        zLabelField.setPosition(zLabelField.getX() + dX, zLabelField.getY() + dY);
+        if (zPinField != null) 
+            zPinField.setPosition(zPinField.getX() + dX, zPinField.getY() + dY);
+        if (pinItrOkButton != null) 
+            pinItrOkButton.setPosition(pinItrOkButton.getX() + dX, pinItrOkButton.getY() + dY);
+        if (pinItrDelButton != null) 
+            pinItrDelButton.setPosition(pinItrDelButton.getX() + dX, pinItrDelButton.getY() + dY);
+        if (pinItrCancelButton != null) 
+            pinItrCancelButton.setPosition(pinItrCancelButton.getX() + dX, pinItrCancelButton.getY() + dY);
+        if (pinItrBg != null) 
+            pinItrBg.setPosition(pinItrBg.getX() + dX, pinItrBg.getY() + dY);
+        
+        
+        if (msgBoxTitle != null && msgBoxTitle != draggableWidget) {
+	        msgBoxTitle.setPosition(msgBoxTitle.getX() + dX, msgBoxTitle.getY() + dY);
+	    }
+	    
+	}
 	
 public void displayImage(String title, String message) {
         
