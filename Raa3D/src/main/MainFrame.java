@@ -1384,6 +1384,9 @@ public class MainFrame extends Widget{
 		timePastFrame=(Sys.getTime()*1000)/Sys.getTimerResolution();
 		timePastFps=timePastFrame;
 		fpsToDisplay=0;
+		
+		boolean restart = false;
+		
 		while(!Display.isCloseRequested() && isRunning){
 			resetView();
 			//if (!inputTextMode) pollInput();
@@ -1395,8 +1398,15 @@ public class MainFrame extends Widget{
 			Display.sync(settings.frequency);
 			
 			if(loadAsyncModel) {
-			    loadModel(defaultPath + modelName);
-			    loadAsyncModel = false;
+			    if(restart) {    
+    			    loadModel(defaultPath + modelName);
+    			    restart = false;
+    			    loadAsyncModel = false;
+			    }
+			    else {
+			        restart = true;
+			    }
+			    
 			}
 		}
 	}

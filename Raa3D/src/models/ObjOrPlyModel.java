@@ -7,7 +7,9 @@ package models;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -91,8 +93,17 @@ public class ObjOrPlyModel {
 	    maxX=Float.MIN_VALUE; maxY=Float.MIN_VALUE; maxZ=Float.MIN_VALUE;
 	    minX=Float.MAX_VALUE; minY=Float.MAX_VALUE; minZ=Float.MAX_VALUE;
 	    centerx=0; centery=0; centerz=0;
-	    float progress = (float)0.000001;
+	    
+	    float progress = (float)0;
+	    float increment = 0.001f;
+	    try {
+            increment = 1/(float)countLines(filepath);
+        } catch(IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
 	    int progress1 = 0;
+	    
 	    if(filepath.endsWith(".obj")){
 	        meshes=new ArrayList<ObjOrPlyModel.Mesh>();
 	        fileFormat=FILE_FORMAT_OBJ;
@@ -107,7 +118,7 @@ public class ObjOrPlyModel {
 	            String type;
 	            String line;
 	            while(scanner.hasNext()){
-	                progress = progress+ (float)0.000001;
+	                progress = progress+ increment;
 	                MainFrame.progressBar.setValue(progress);
 	                if((++progress1)%5000 == 0) {
 	                    MainFrame.gui.update();
@@ -317,7 +328,16 @@ public class ObjOrPlyModel {
 	    }
 	    
 	}
-	
+	public int countLines(String filename) throws IOException {
+	    LineNumberReader reader  = new LineNumberReader(new FileReader(filename));
+    	int cnt = 0;
+    	String lineRead = "";
+    	while ((lineRead = reader.readLine()) != null) {}
+    
+    	cnt = reader.getLineNumber(); 
+    	reader.close();
+    	return cnt;
+	}
 	
 	public void increaseSubdivisionDepth() {
 	    numberOfSubdivisions=Math.min(aplicationSubdivisionLimit, numberOfSubdivisions+1);
