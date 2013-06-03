@@ -1899,7 +1899,7 @@ public class MainFrame extends Widget{
                     openedModel.rotatePlain(0, -20);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_U) {
                     openedModel.resizePlane(0, 1.1f);
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_J) {
                     openedModel.resizePlane(0, 0.9f);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
 				    ctrlPressed = true;
