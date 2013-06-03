@@ -13,6 +13,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import static org.lwjgl.opengl.ARBBufferObject.*;
@@ -35,6 +36,7 @@ import org.smurn.jply.util.NormalizingPlyReader;
 import org.smurn.jply.util.TesselationMode;
 import org.smurn.jply.util.TextureMode;
 
+import tools.Quaternion;
 import tools.Vector;
 
 
@@ -78,6 +80,7 @@ public class ObjOrPlyModel {
 	 */
 	boolean plainVisible=false;
 	float plainX=0, plainY=0, plainZ=0;
+	float planeFak = 1;
 	float rotate = 0;
 	
 	public ObjOrPlyModel(String filepath){
@@ -382,6 +385,7 @@ public class ObjOrPlyModel {
 		    
 		}
 		Bubbles.getAndSetMatrices();
+
 		glPopMatrix();		
 	}
 	
@@ -409,6 +413,7 @@ public class ObjOrPlyModel {
           glEnd();
         
         glPopMatrix();
+
 	}
 	
 	
@@ -729,6 +734,20 @@ public class ObjOrPlyModel {
 	public void rotatePlain(int coordinate, float value){
         if(coordinate==0) //z
             rotate +=value;
+    }
+	
+	public void resizePlane(int coordinate, float value) {
+	    if(coordinate==0) //z
+            planeFak *= value;
+	}
+
+
+    public LinkedList<float[]> planeIntersection() {
+        double[] norm = {0, 0, 1};
+        Quaternion q = Quaternion.quaternionFromAngleAndRotationAxis(rotate, new double[]{0,1,0});
+        double[] vec = q.rotateVector3d(norm);
+        float d = -plainZ;
+        return rtreeOfTriangles_forPlyFiles.getPlaneIntersection((float)vec[0], (float)vec[1], (float)vec[2], d);
     }
 }
 
