@@ -744,8 +744,9 @@ public class ObjOrPlyModel {
 
     public LinkedList<float[]> planeIntersection() {
         double[] norm = {0, 0, 1};
+        
         Quaternion q = Quaternion.quaternionFromAngleAndRotationAxis(rotate, new double[]{0,1,0});
-        double[] vec = q.rotateVector3d(norm);
+        double[] vec = Vector.normalize(q.rotateVector3d(norm));
         float d = -plainZ;
         return rtreeOfTriangles_forPlyFiles.getPlaneIntersection((float)vec[0], (float)vec[1], (float)vec[2], d);
     }
