@@ -88,8 +88,11 @@ import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
 import static tools.Tools.allocFloats;
 
+import java.awt.AWTException;
 import java.awt.Panel;
+import java.awt.Robot;
 import java.awt.color.ColorSpace;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
 import java.io.BufferedReader;
@@ -1813,7 +1816,8 @@ public class MainFrame extends Widget{
 
     private static boolean ctrlPressed = false;
 
-    
+    static int flagRotate = 0; // flag for rotating plain
+    static int flagLowerUpperPlain = 0; //flag for moving plain up and down
 	/**
 	 * @since 0.1
 	 * @version 0.4
@@ -1823,10 +1827,10 @@ public class MainFrame extends Widget{
 
 	       return;
 	    }*/
-	    int incZum = Mouse.getDWheel();
-	    if(pinItrPane!=null && incZum != 0) {
-	        
-            if(incZum>0) {
+	    int z=Mouse.getDWheel();
+        
+        if(pinItrPane!=null && z != 0) {
+            if(z>0) {
                 imageWidget.scrollImage(1.1);
                 pinItrPane.updateScrollbarSizes();
             } else {
@@ -1834,21 +1838,23 @@ public class MainFrame extends Widget{
                 pinItrPane.updateScrollbarSizes();
             }
         }
-	    
+        
+        
+        if(Keyboard.getEventKey() == Keyboard.KEY_I) {if(Keyboard.getEventKeyState()){flagRotate = 1;}else{flagRotate = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_K) {if(Keyboard.getEventKeyState()){flagRotate = -1;}else{flagRotate = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_O) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = 1;}else{flagLowerUpperPlain = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_L) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = -1;}else{flagLowerUpperPlain = 0;}}
+        
+        if(flagRotate!=0) {openedModel.rotatePlain(0, flagRotate*40);}
+        if(flagLowerUpperPlain!=0) {openedModel.incPlain(0, (float)(flagLowerUpperPlain*0.2));}
+        
 		while(Keyboard.next()){
+		    
 			if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
 				if(Keyboard.getEventKey()==Keyboard.KEY_TAB){
 					if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
 				}else if(Keyboard.getEventKey()==Keyboard.KEY_P) {
-                    openedModel.changePlainState();    
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_O) {
-                    openedModel.incPlain(0, (float)0.2);
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
-                    openedModel.incPlain(0, (float)-0.2);
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_I) {
-                    openedModel.rotatePlain(0, 20);
-                }else if(Keyboard.getEventKey()==Keyboard.KEY_K) {
-                    openedModel.rotatePlain(0, -20);
+                    openedModel.changePlainState();   
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
 				    ctrlPressed = true;
 				}else if(Keyboard.getEventKey()==Keyboard.KEY_RCONTROL) {
@@ -1905,7 +1911,8 @@ public class MainFrame extends Widget{
 		    }
 		}
 		
-		int z=Mouse.getDWheel();
+		
+        
         if(z>0){
             cameraX*=0.8;
             cameraY*=0.8;

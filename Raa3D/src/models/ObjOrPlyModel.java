@@ -376,33 +376,39 @@ public class ObjOrPlyModel {
 		    //org.lwjgl.opengl.Util.checkGLError();
 		    glDrawElements(GL_TRIANGLES, triangleCount_forPlyFiles * 3, GL_UNSIGNED_INT, 0);
 		    //org.lwjgl.opengl.Util.checkGLError();
+		    if(plainVisible) {
+		        drawPlain(1);
+		    }
+		    
 		}
 		Bubbles.getAndSetMatrices();
-		glPopMatrix();
-		
-		if(plainVisible) {
-            glPushMatrix();
-
-            glTranslatef(0,0,plainZ);
-            glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
-            glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
-            
-             glBegin(GL11.GL_QUADS);
-                /*glVertex3f(-10000f, -10000f,(float)centerz);
-                glVertex3f(10000f, -10000f,(float)centerz);
-                glVertex3f(10000f, 10000f,(float)centerz);
-                glVertex3f(-10000f, 10000f,(float)centerz);*/
-             
-             glVertex3f(-50f, -50f,(float)centerz);
-             glVertex3f(50f, -50f,(float)centerz);
-             glVertex3f(50f, 50f,(float)centerz);
-             glVertex3f(-50f, 50f,(float)centerz);
-              glEnd();
-            
-            glPopMatrix();
-            
-        }
-		
+		glPopMatrix();		
+	}
+	
+	public void drawPlain(int i) {
+	    glPushMatrix();
+	    glTranslatef((float)centerx,(float)centery,(float)centerz);
+	    glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
+	    glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
+	    
+	    float maxxx = Float.MIN_VALUE;
+	    if(minX>maxxx) maxxx=minX;
+        if(maxX>maxxx) maxxx=maxX;
+        if(minY>maxxx) maxxx=minY;
+        if(maxY>maxxx) maxxx=maxY;
+        if(minZ>maxxx) maxxx=minZ;
+        if(maxZ>maxxx) maxxx=maxZ;
+	    
+        glTranslatef(0,0,(float)plainZ);
+        
+         glBegin(GL11.GL_QUADS);
+         glVertex3f(-maxxx, -maxxx,(float)centerz);
+         glVertex3f(maxxx, -maxxx,(float)centerz);
+         glVertex3f(maxxx, maxxx,(float)centerz);
+         glVertex3f(-maxxx, maxxx,(float)centerz);
+          glEnd();
+        
+        glPopMatrix();
 	}
 	
 	
@@ -687,6 +693,10 @@ public class ObjOrPlyModel {
 			glNormalPointer(GL_FLOAT, 0, (4*verticesCounters.get(subDepth)));
 			
 			glDrawElements(GL_TRIANGLES, facesCounters.get(subDepth), GL_UNSIGNED_INT, 0);
+			
+			if(plainVisible) {
+                drawPlain(1);
+            }
 		}
 		
 		class FaceEdgePoints{
