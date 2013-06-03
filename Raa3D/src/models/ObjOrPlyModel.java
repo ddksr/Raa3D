@@ -379,43 +379,41 @@ public class ObjOrPlyModel {
 		    //org.lwjgl.opengl.Util.checkGLError();
 		    glDrawElements(GL_TRIANGLES, triangleCount_forPlyFiles * 3, GL_UNSIGNED_INT, 0);
 		    //org.lwjgl.opengl.Util.checkGLError();
+		    if(plainVisible) {
+		        drawPlain(1);
+		    }
+		    
 		}
 		Bubbles.getAndSetMatrices();
-		glPopMatrix();
-		
-		if(plainVisible) {
-            glPushMatrix();
 
-            glTranslatef(0,0,plainZ);
-            glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
-            glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
-            
-            GL20.glUseProgram(0);
-            
-            glEnable(GL11.GL_BLEND);
-            glColor4f(0.8f, 0.06667f, 0.0f, 1);
-            glMaterial(GL_FRONT,GL_AMBIENT, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
-            glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
-            glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 0.f}));
-            glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
-            
-            
-             glBegin(GL11.GL_QUADS);
-                /*glVertex3f(-10000f, -10000f,(float)centerz);
-                glVertex3f(10000f, -10000f,(float)centerz);
-                glVertex3f(10000f, 10000f,(float)centerz);
-                glVertex3f(-10000f, 10000f,(float)centerz);*/
-             
-             glVertex3f(-50f * planeFak, -50f * planeFak,(float)centerz);
-             glVertex3f(50f * planeFak, -50f * planeFak,(float)centerz);
-             glVertex3f(50f * planeFak, 50f * planeFak,(float)centerz);
-             glVertex3f(-50f * planeFak, 50f * planeFak,(float)centerz);
-              glEnd();
-            
-            glPopMatrix();
-            
-        }
-		
+		glPopMatrix();		
+	}
+	
+	public void drawPlain(int i) {
+	    glPushMatrix();
+	    glTranslatef((float)centerx,(float)centery,(float)centerz);
+	    glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
+	    glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
+	    
+	    float maxxx = Float.MIN_VALUE;
+	    if(minX>maxxx) maxxx=minX;
+        if(maxX>maxxx) maxxx=maxX;
+        if(minY>maxxx) maxxx=minY;
+        if(maxY>maxxx) maxxx=maxY;
+        if(minZ>maxxx) maxxx=minZ;
+        if(maxZ>maxxx) maxxx=maxZ;
+	    
+        glTranslatef(0,0,(float)plainZ);
+        
+         glBegin(GL11.GL_QUADS);
+         glVertex3f(-maxxx, -maxxx,(float)centerz);
+         glVertex3f(maxxx, -maxxx,(float)centerz);
+         glVertex3f(maxxx, maxxx,(float)centerz);
+         glVertex3f(-maxxx, maxxx,(float)centerz);
+          glEnd();
+        
+        glPopMatrix();
+
 	}
 	
 	
@@ -700,6 +698,10 @@ public class ObjOrPlyModel {
 			glNormalPointer(GL_FLOAT, 0, (4*verticesCounters.get(subDepth)));
 			
 			glDrawElements(GL_TRIANGLES, facesCounters.get(subDepth), GL_UNSIGNED_INT, 0);
+			
+			if(plainVisible) {
+                drawPlain(1);
+            }
 		}
 		
 		class FaceEdgePoints{
