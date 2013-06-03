@@ -484,7 +484,7 @@ public class MainFrame extends Widget{
         
         
              
-        prtscr = new Button("Screen shot...");
+        prtscr = new Button("Screen shot ...");
         prtscr.setTheme("button");
         prtscr.setTooltipContent("Create screenshot.");
         prtscr.addCallback(new Runnable(){
@@ -2205,51 +2205,30 @@ public class MainFrame extends Widget{
                 }
 		    }else if(Mouse.isButtonDown(1)){ // When user clicks and moves right mouse button
 		        
-                // Moving mouse left
-                if (Mouse.getX() < mouse_x) {
-                    double v[]= new double[]{-0.1 / zoom, 0, 0};
+		        int mouse_diff_x = Mouse.getX() - mouse_x;
+		        int mouse_diff_y = Mouse.getY() - mouse_y;
+		        double model_size_ratio = veinsRadius/425;
+		        
+                // Moving mouse left - move object left - camera right (and vice versa)		        
+		        // Moving mouse up   - move object up -   camera down (and vice versa)
+                if (mouse_diff_x != 0 || mouse_diff_y != 0) {
+                    double v[]= new double[]{-mouse_diff_x * model_size_ratio / zoom, -mouse_diff_y * model_size_ratio / zoom, 0};
                     v=cameraOrientation.rotateVector3d(v);
                     cameraX+=(float)v[0];
                     cameraY+=(float)v[1];
                     cameraZ+=(float)v[2];   
                 }
-                
-                // Moving mouse right
-                if (Mouse.getX() > mouse_x) {
-                    double v[]= new double[]{0.1 / zoom, 0, 0};
-                    v=cameraOrientation.rotateVector3d(v);
-                    cameraX+=(float)v[0];
-                    cameraY+=(float)v[1];
-                    cameraZ+=(float)v[2];
-                }
-                
-                // Moving mouse up
-                if (Mouse.getY() < mouse_y) {
-                 double v[]= new double[]{0, -0.1 / zoom, 0};
-                 v=cameraOrientation.rotateVector3d(v);
-                 cameraX+=(float)v[0];
-                 cameraY+=(float)v[1];
-                 cameraZ+=(float)v[2];   
-                }
-                
-                // Moving mouse down
-                if (Mouse.getY() > mouse_y) {
-                 double v[]= new double[]{0, 0.1 / zoom, 0};
-                 v=cameraOrientation.rotateVector3d(v);
-                 cameraX+=(float)v[0];
-                 cameraY+=(float)v[1];
-                 cameraZ+=(float)v[2];
-                }
-                
-                mouse_x = Mouse.getX();
-                mouse_y = Mouse.getY();
-
+   
 		    }else{
 		        clickedOn=CLICKED_ON_NOTHING;
 		        veinsGrabbedAt=null;
 		        currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
 		        addedModelOrientation=new Quaternion();
 		    }
+		    
+		    // Remember last mouse position
+		    mouse_x = Mouse.getX();
+            mouse_y = Mouse.getY();
 		}
 		
 		
