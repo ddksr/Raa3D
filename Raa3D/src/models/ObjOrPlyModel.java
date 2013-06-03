@@ -23,6 +23,8 @@ import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glUniform4f;
 import static tools.Tools.allocFloats;
 
+import main.MainFrame;
+
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -39,7 +41,7 @@ import org.smurn.jply.util.TextureMode;
 import tools.Quaternion;
 import tools.Vector;
 
-
+import org.lwjgl.opengl.Display;
 /**
  * @author Simon �agar
  *@since 0.2
@@ -89,7 +91,8 @@ public class ObjOrPlyModel {
 	    maxX=Float.MIN_VALUE; maxY=Float.MIN_VALUE; maxZ=Float.MIN_VALUE;
 	    minX=Float.MAX_VALUE; minY=Float.MAX_VALUE; minZ=Float.MAX_VALUE;
 	    centerx=0; centery=0; centerz=0;
-	    
+	    float progress = (float)0.000001;
+	    int progress1 = 0;
 	    if(filepath.endsWith(".obj")){
 	        meshes=new ArrayList<ObjOrPlyModel.Mesh>();
 	        fileFormat=FILE_FORMAT_OBJ;
@@ -104,6 +107,12 @@ public class ObjOrPlyModel {
 	            String type;
 	            String line;
 	            while(scanner.hasNext()){
+	                progress = progress+ (float)0.000001;
+	                MainFrame.progressBar.setValue(progress);
+	                if((++progress1)%5000 == 0) {
+	                    MainFrame.gui.update();
+	                    Display.update();
+	                }
 	                line=scanner.nextLine();
 	                StringTokenizer strTokenizer= new StringTokenizer(line);
 	                type=strTokenizer.nextToken();
@@ -395,6 +404,15 @@ public class ObjOrPlyModel {
 	    glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
 	    glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
 	    
+	    GL20.glUseProgram(0);
+        
+        glEnable(GL11.GL_BLEND);
+        glColor4f(0.8f, 0.06667f, 0.0f, 1);
+        glMaterial(GL_FRONT,GL_AMBIENT, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+        glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+        glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 0.f}));
+        glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
+        
 	    float maxxx = Float.MIN_VALUE;
 	    if(minX>maxxx) maxxx=minX;
         if(maxX>maxxx) maxxx=maxX;
@@ -403,7 +421,7 @@ public class ObjOrPlyModel {
         if(minZ>maxxx) maxxx=minZ;
         if(maxZ>maxxx) maxxx=maxZ;
 	    
-        glTranslatef(0,0,(float)plainZ);
+        glTranslatef((float)centerx,(float)centery,(float)plainZ);
         
          glBegin(GL11.GL_QUADS);
          glVertex3f(-maxxx, -maxxx,(float)centerz);

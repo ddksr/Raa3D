@@ -299,7 +299,7 @@ public class MainFrame extends Widget{
 	static String title="Raa3D";
 	////global variables
 	//GUI and display modes
-	static GUI gui;
+	public static GUI gui;
 	static LWJGLRenderer renderer;
 	static DisplayMode[] displayModes;
 	static DisplayMode currentDisplayMode;
@@ -1361,7 +1361,7 @@ public class MainFrame extends Widget{
         progressBar.setPosition(0, settings.resHeight-30);
         
     }
-	float inc = 0;
+	float inc = 0.001f;
 	/**
 	 * @since 0.1
 	 * @version 0.4
@@ -1394,6 +1394,7 @@ public class MainFrame extends Widget{
 	    System.gc();
 	    openedModel = new ObjOrPlyModel(fileName);
 	    System.gc();
+	    
 	    //Calculate the appropriate camera distance:
 	    //The following code takes the most extreme values on each coordinate
 	    //of all the specified vertices in the .obj file.
