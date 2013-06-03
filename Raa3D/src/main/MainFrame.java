@@ -89,6 +89,7 @@ import static org.lwjgl.opengl.GL20.glValidateProgram;
 import static tools.Tools.allocFloats;
 
 import java.awt.AWTException;
+import java.awt.Graphics2D;
 import java.awt.Panel;
 import java.awt.Robot;
 import java.awt.color.ColorSpace;
@@ -228,6 +229,9 @@ public class MainFrame extends Widget{
     
     private static NeckVeinsSettings settings;
     public static MainFrame gameUI;
+
+    public static boolean loadAsyncModel;
+    
     
     //Widgets
     private static ThemeManager themeManager;
@@ -366,6 +370,13 @@ public class MainFrame extends Widget{
      * @version 0.4
      */
 	public MainFrame(){
+	    // Create tmp
+	    File tmp = new File("tmp");
+	    if(! tmp.exists()) {
+	        tmp.mkdir();
+	    }
+	    
+	    
 	    double[] ray = {0., 0. ,0.};
 	    lastRay = ray;
 	    ray = null;
@@ -395,7 +406,7 @@ public class MainFrame extends Widget{
                   		defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
                         modelName = file.getName();
                         infoBox("Info", "Loading model ... ");
-                        loadModel(file.getAbsolutePath());
+                        loadAsyncModel = true;
                         String ppFile = path + "." + PinPanel.EXT;
                         if(new File(ppFile).exists()) {
                             System.out.println("Pin panel for model " + modelName + " exists. Loading pin panel ...");
@@ -1382,6 +1393,11 @@ public class MainFrame extends Widget{
 			Display.update();
 			logic();
 			Display.sync(settings.frequency);
+			
+			if(loadAsyncModel) {
+			    loadModel(defaultPath + modelName);
+			    loadAsyncModel = false;
+			}
 		}
 	}
 	
@@ -2658,6 +2674,7 @@ public class MainFrame extends Widget{
 	private void showImage(PinNote n, boolean edit, boolean isNew) {
         imageWidget = new ImageWidget();
         BufferedImage img;
+        
         int cw = settings.resWidth/2;
         int ch = settings.resHeight/2;
         try {

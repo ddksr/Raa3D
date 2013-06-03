@@ -171,7 +171,10 @@ public class RTree {
 	public LinkedList<float[]> getPlaneIntersection(Node node, float a, float b, float c, float d) {
 	    LinkedList<float[]> pts = new LinkedList<float[]>();
 	    for(Node child : node.children) {
-	        if(child.box.isIntersectingPlane(a, b, c, d)) {
+	        if(child == null) {
+	            System.out.println("AAAA");
+	        }
+	        else if(child.box.isIntersectingPlane(a, b, c, d)) {
 	            if(child.box.triangleIndices != null) {
 	                for (int ind : child.box.triangleIndices) {
 	                    // check if triangle intersects plane
