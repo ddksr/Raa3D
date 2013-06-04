@@ -2012,7 +2012,6 @@ public class MainFrame extends Widget{
                         
                         float[] pointOnModelClickedUpon = getClickedPointOnLoadedModel();
                         if(pointOnModelClickedUpon!=null){
-                            System.out.println("sdfknsd");
                             bubbles_absolutePoints.add(pointOnModelClickedUpon); 
                             bubbles_images.add(pointOnModelClickedUpon);
                             bubbles_text.add(pointOnModelClickedUpon);
