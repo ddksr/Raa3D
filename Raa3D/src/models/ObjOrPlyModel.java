@@ -70,7 +70,7 @@ public class ObjOrPlyModel {
 	private int vertexSize_forPlyFiles;
 	int triangleSize_forPlyFiles;
 	
-	RTree rtreeOfTriangles_forPlyFiles;
+	public RTree rtreeOfTriangles_forPlyFiles;
 	//FloatBuffer verticesNormals_forPlyFiles;
 	//IntBuffer indexes_forPlyFiles;
 	
@@ -204,15 +204,6 @@ public class ObjOrPlyModel {
                             float b = (float)vertex.getDouble("blue")/255f;
                             float a = (float)vertex.getDouble("alpha")/255f;
                             
-                            //System.out.println(r+", "+g+", "+b+", "+a);
-                            /*
-                            verticesNormals_forPlyFiles.put((float)x);
-                            verticesNormals_forPlyFiles.put((float)y);
-                            verticesNormals_forPlyFiles.put((float)z);
-                            verticesNormals_forPlyFiles.put((float)nx);
-                            verticesNormals_forPlyFiles.put((float)ny);
-                            verticesNormals_forPlyFiles.put((float)nz);
-                            */
                             vertexBuffer.put(x);
                             vertexBuffer.put(y);
                             vertexBuffer.put(z);
@@ -224,16 +215,6 @@ public class ObjOrPlyModel {
                             vertexBuffer.put(b);
                             vertexBuffer.put(a);
                             
-                            /*
-                            trianglesForRTree[trianglesForRTreeIdx++]=x;
-                            trianglesForRTree[trianglesForRTreeIdx++]=y;
-                            trianglesForRTree[trianglesForRTreeIdx++]=z;
-                            */
-                            /*
-                            vertices.add((float)x);//TODO: remove if not necessary
-                            vertices.add((float)y);//TODO: remove if not necessary
-                            vertices.add((float)z);//TODO: remove if not necessary
-                             */
                             minX = Math.min(minX, x);
                             minY = Math.min(minY, y);
                             minZ = Math.min(minZ, z);
@@ -332,6 +313,8 @@ public class ObjOrPlyModel {
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
+		
+		
 		glDisable(GL11.GL_CULL_FACE);
 		if(fileFormat==FILE_FORMAT_OBJ){
 		    for(Mesh vbo:meshes){
@@ -675,11 +658,3 @@ public class ObjOrPlyModel {
 		}
 	}
 }
-
-
-/**
-TODO: add Apache License, whatever you must for 
-    - file:///C:/Users/SkullMage/Desktop/LWJGLDemo.html
-    - http://jply.smurn.org/lwjgldemo/xref/org/smurn/jply/lwjgldemo/RectBounds.html
-    - jply library
-*/

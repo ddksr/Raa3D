@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.TreeSet;
 
+import tools.Vector;
+
 
 
 /**
@@ -23,27 +25,6 @@ public class RTree {
 	float[] triangleVertices;
 	
 	
-	/*public RTree(ArrayList<double[]> input, int degree){
-		treeDegree=degree;
-		hanger = new Node(null);
-		treeDepth=0;
-		ArrayList<Node> boxes = new ArrayList<Node>(input.size());
-		TreeSet<double[]> temp = new TreeSet<double[]>(new Comparator<double[]>() {
-			@Override
-			public int compare(double[] arg0, double[] arg1) {
-				for(int i=0;i<3;i++){
-					if(arg0[i]>arg1[i])return 1;
-					else if(arg0[i]<arg1[i])return -1;
-				}
-				return 0;
-			}
-		});
-		for(double[] p : input)temp.add(p);
-		for(double[] p : temp)boxes.add(  new Node(new Box(p), null)  );
-		treeDepth=1;
-		hanger.children[0] = XNearestBulkInsert(boxes).get(0);
-		hanger.children[0].parent=hanger;
-	}*/
 	
 	public RTree(float[] inputTriangleVertices, IntBuffer triangleIndices, int degree){
 	    triangleVertices=inputTriangleVertices;
@@ -51,7 +32,6 @@ public class RTree {
         hanger = new Node(null);
         treeDepth=0;
         ArrayList<Node> boxes = new ArrayList<Node>(inputTriangleVertices.length/3);
-        //TODO: put boxes in some kind of an order (necessary)
         int[] tempTriangleIndices;
         while(triangleIndices.hasRemaining()){
             tempTriangleIndices=new int[]{triangleIndices.get(),triangleIndices.get(),triangleIndices.get()};
@@ -150,6 +130,47 @@ public class RTree {
 		}
 	}
 	
+	public float[] findAllIntersectedPoints(float[] e, float[] d){
+	    float[] ret = null;
+	    ArrayList<Node> foundNodes = new ArrayList<Node>();
+        hanger.children[0].fillNodesIntersected(e,d,foundNodes);
+        if(foundNodes.size()==0)return ret;
+        double smallestT=Double.POSITIVE_INFINITY;
+        for(Node n:foundNodes){
+            double[]A=new double[]{triangleVertices[n.box.triangleIndices[0]*3+0],triangleVertices[n.box.triangleIndices[0]*3+1],triangleVertices[n.box.triangleIndices[0]*3+2]};
+            double[]B=new double[]{triangleVertices[n.box.triangleIndices[1]*3+0],triangleVertices[n.box.triangleIndices[1]*3+1],triangleVertices[n.box.triangleIndices[1]*3+2]};
+            double[]C=new double[]{triangleVertices[n.box.triangleIndices[2]*3+0],triangleVertices[n.box.triangleIndices[2]*3+1],triangleVertices[n.box.triangleIndices[2]*3+2]};
+            
+            double[]AB=Vector.subtraction(B, A);
+            double[]AC=Vector.subtraction(C, A);
+            double[]normal=Vector.crossProduct(AB, AC);
+            normal=Vector.normalize(normal);
+            
+            double planeD=normal[0]*A[0]+normal[1]*A[1]+normal[2]*A[2];
+            double t=(planeD-normal[0]*e[0]-normal[1]*e[1]-normal[2]*e[2])/(normal[0]*d[0]+normal[1]*d[1]+normal[2]*d[2]);
+            
+            double[] p = new double[]{e[0]+t*d[0], e[1]+t*d[1], e[2]+t*d[2]};
+            
+            
+            //source http://www.blackpawn.com/texts/pointinpoly/ (4.6.2013)
+            if(sameSide(A,B,C,p) && sameSide(B,C,A,p) && sameSide(C,A,B,p)){
+                if(t<smallestT){
+                    smallestT=t;
+                    ret = new float[]{(float)p[0], (float)p[1], (float)p[2]};
+                }
+            }
+            
+        }
+        return ret;
+    }
+	
+	public static boolean sameSide(double[] A, double[] B, double[] C, double[] p){
+	    double[] cross1 = Vector.crossProduct(Vector.subtraction(A, C), Vector.subtraction(C, B));
+	    double[] cross2 = Vector.crossProduct(Vector.subtraction(A, C), Vector.subtraction(C, p));
+	    if(Vector.dotProduct(cross1, cross2)>=0)return true;
+	    else return false;
+	}
+	
 	
 	public Point3D findHighestInBox(Box b, int coordinate){
 		if(hanger.children[0]==null)return null;
@@ -172,7 +193,19 @@ public class RTree {
 			this.parent = parent;
 			children = new Node[treeDegree];
 		}
-		public Node(Node parent) {
+		public void fillNodesIntersected(float[] e, float[] d, ArrayList<Node> foundNodes) {
+		    if(this.box.isIntersectedByRay(e, d)){
+                if(children[0]==null)foundNodes.add(this);
+                else{
+                    for(int i=0;i<treeDegree;i++){
+                        if(children[i]!=null){
+                            children[i].fillNodesIntersected(e, d, foundNodes);
+                        }
+                    }
+                }
+            }
+        }
+        public Node(Node parent) {
 			super();
 			float[][] bx = new float[][]{{Float.MAX_VALUE, Float.MIN_VALUE},
 					{Float.MAX_VALUE, Float.MIN_VALUE},
@@ -183,6 +216,9 @@ public class RTree {
 		}
 
 		public void resetMBB() {
+		    this.box.c=new float[][]{{Float.MAX_VALUE, Float.MIN_VALUE},
+                    {Float.MAX_VALUE, Float.MIN_VALUE},
+                    {Float.MAX_VALUE, Float.MIN_VALUE}};
 			for(int i=0;i<treeDegree;i++){
 				for(int d=0;d<3;d++){
 					if(children[i]!=null){

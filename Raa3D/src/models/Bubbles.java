@@ -58,11 +58,10 @@ public class Bubbles {
         bubbleTexture=texture;
     }
     
-    public static void drawBubble(float x, float y, float z){
+    public static void drawBubble(float x, float y, float z, String color){
         //find the location of the point on the screen
         float[] xyzAfterTransform = Matrix.transformXYZ(modelMatrix, x, x, z);
         if(xyzAfterTransform[2]>0)return;
-        float[] xyzAfterBothTransforms = Matrix.transformXYZ(projMatrix, xyzAfterTransform[0], xyzAfterTransform[1], xyzAfterTransform[2]);
         
         glDisable(GL_LIGHTING);
         GL11.glBindTexture(GL_TEXTURE_2D, bubbleTexture.getTextureID());
@@ -87,12 +86,14 @@ public class Bubbles {
         glTranslatef(screenPosition.get(0), screenPosition.get(1), cameraZ);
         glEnable(GL11.GL_DEPTH_TEST);
         
-        /*System.out.println("------------");
-        System.out.println((xyzAfterTransform[0])*viewport.get(2)+viewport.get(2)/2+", "+xyzAfterTransform[1]+", "+cameraZ);
-        System.out.println(screenPosition.get(0)+", "+screenPosition.get(1)+", "+xyzAfterTransform[2]);*/
+        
+        switch(color){
+            case "red":glColor4f(1,0.5f,0.5f,1.0f);break;
+            case "green":glColor4f(0.5f,1,0.5f,1.0f);break;
+            case "blue":glColor4f(0.5f,0.5f,1,1.0f);break;
+        }
         
         glEnable(GL11.GL_DEPTH_TEST);
-        glColor4f(1,0.5f,0.5f,1.0f);
         glBegin(GL_QUADS);
         glTexCoord2f(1, 0);
         glVertex3f(20, 20, 0f);
@@ -110,7 +111,6 @@ public class Bubbles {
         glDisable(GL11.GL_DEPTH_TEST);
         
         //draw
-        glColor4f(1,0.5f,0.5f,0.5f);
         glBegin(GL_QUADS);
         glTexCoord2f(1, 0);
         glVertex3f(20, 20, 0f);

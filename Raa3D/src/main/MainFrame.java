@@ -105,6 +105,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -1406,11 +1407,8 @@ public class MainFrame extends Widget{
         screenPlaneInitialLowerRight=new double[]{screenPlaneX, -screenPlaneY, screenPlaneZ};
 	    
         veinsGrabbedAt=null;
-        double angle1= Math.PI*-90/180;
-        double angle2= Math.PI*180/180;
-        currentModelOrientation = Quaternion.quaternionFromAngleAndRotationAxis(angle1, new double[]{1,0,0});
-        double[] v = Quaternion.quaternionReciprocal(currentModelOrientation).rotateVector3d(new double[]{0,1,0});
-        currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, Quaternion.quaternionFromAngleAndRotationAxis(angle2, v));
+        
+        currentModelOrientation = new Quaternion();
 	    addedModelOrientation = new Quaternion();
 	    
 	    
@@ -1520,8 +1518,6 @@ public class MainFrame extends Widget{
         glVertex3f(x+1.5f*r, y-r, -1.0f);
         glEnd();
         
-        
-        
         GL11.glBindTexture(GL_TEXTURE_2D, movementElipse.getTextureID());
         glBegin(GL_QUADS);
         glTexCoord2f(1, 0);
@@ -1533,8 +1529,6 @@ public class MainFrame extends Widget{
         glTexCoord2f(1, 1);
         glVertex3f(x2+1.5f*r, y2-r, -1.0f);
         glEnd();
-        
-        
         
         if(clickedOn==CLICKED_ON_MOVE_ELLIPSE || clickedOn==CLICKED_ON_ROTATION_ELLIPSE){
             float x3=x, y3=y;
@@ -1708,6 +1702,7 @@ public class MainFrame extends Widget{
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             Quaternion compositeOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
+            
             FloatBuffer fb= compositeOrientation.getRotationMatrix(false);
             GL11.glMultMatrix(fb);
             
@@ -1717,6 +1712,7 @@ public class MainFrame extends Widget{
             glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 1}));
             glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 1f}));
             glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
+            
             openedModel.render(shaderPrograms[activeShaderProgram-1]);
             GL20.glUseProgram(0);
             glPopMatrix();
@@ -1742,13 +1738,35 @@ public class MainFrame extends Widget{
 	    else{
 	        setCameraAndLight(0);
 	        renderVeins();
-	    }
-	    if(pinsVisible && pinPanel != null){
-            for(PinNote nt : pinPanel.getNotes()) {
-                Bubbles.drawBubble((float) nt.getX(), (float) nt.getY(), (float) nt.getZ());
-            }
 	        
-        }
+	        
+	        
+	        //TODO move to if pins visible
+	        if(pinsVisible && pinPanel != null){
+	            for(PinNote nt : pinPanel.getNotes()) {
+	            }
+	            
+	        }
+	        ////////////////////// XXXXXX
+	        if(bubbles_absolutePoints.size()>0){
+	            for(float[] bubble:bubbles_absolutePoints){
+	                Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "red");
+	            }
+            }
+	        if(bubbles_images.size()>0){
+                for(float[] bubble:bubbles_images){
+                    Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "green");
+                }
+            }
+	        if(bubbles_text.size()>0){
+                for(float[] bubble:bubbles_text){
+                    Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "blue");
+                }
+            }
+	        ///////////////////// XXXXXX
+	    }
+	    
+	    
 		//HUD
 		drawHUD();
 		if(settings.isFpsShown)Display.setTitle(title+" - FPS: "+fpsToDisplay);else	Display.setTitle(title);
@@ -1795,6 +1813,12 @@ public class MainFrame extends Widget{
 
     private static boolean ctrlPressed = false;
 
+    
+    
+    public static ArrayList<float[]> bubbles_absolutePoints=new ArrayList<float[]>();
+    public static ArrayList<float[]> bubbles_images=new ArrayList<float[]>();
+    public static ArrayList<float[]> bubbles_text=new ArrayList<float[]>();
+    
 	/**
 	 * @since 0.1
 	 * @version 0.4
@@ -1945,6 +1969,14 @@ public class MainFrame extends Widget{
             cameraY+=(float)v[1];
             cameraZ+=(float)v[2];
         }
+		if(Keyboard.isKeyDown(Keyboard.KEY_RETURN)){
+            cameraOrientation=new Quaternion();
+            cameraX=0;
+            cameraY=0;
+            cameraZ=0;
+            addedModelOrientation=new Quaternion();
+            currentModelOrientation=new Quaternion();
+        }
 		
 		if(openedModel!=null){
 		    if(Mouse.isButtonDown(0)){
@@ -1977,6 +2009,15 @@ public class MainFrame extends Widget{
                     }else if(distanceToMoveFoci<=r*3f){
                         clickedOn=CLICKED_ON_MOVE_ELLIPSE;
                     }else{
+                        
+                        float[] pointOnModelClickedUpon = getClickedPointOnLoadedModel();
+                        if(pointOnModelClickedUpon!=null){
+                            System.out.println("sdfknsd");
+                            bubbles_absolutePoints.add(pointOnModelClickedUpon); 
+                            bubbles_images.add(pointOnModelClickedUpon);
+                            bubbles_text.add(pointOnModelClickedUpon);
+                        }
+                        
                         veinsGrabbedAt=getRaySphereIntersection(Mouse.getX(), Mouse.getY());
                         addedModelOrientation=new Quaternion();
                         if(veinsGrabbedAt!=null)clickedOn=CLICKED_ON_VEINS_MODEL;
@@ -2101,6 +2142,25 @@ public class MainFrame extends Widget{
 		
 	}
 	
+	public static float[] getClickedPointOnLoadedModel(){
+	    Quaternion compositeOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
+        Quaternion q = Quaternion.quaternionReciprocal(compositeOrientation);
+        double[] d = new double[]{0,0,-1};
+        double angleY = Math.atan(   ((2*Mouse.getY()-settings.resHeight)/(double)settings.resHeight)*Math.tan(fovy*Math.PI/360d)  );
+        double fovx = Math.atan(2*((double)settings.resWidth/(double)settings.resHeight) * Math.tan(fovy*Math.PI/360d));
+        double angleX = Math.atan(   ((2*Mouse.getX()-settings.resWidth)/(double)settings.resWidth)*Math.tan(fovx)/2  );
+        double[] d1=Quaternion.quaternionFromAngleAndRotationAxis(angleY, new double[]{1,0,0}).rotateVector3d(d);
+        double[] d2=Quaternion.quaternionFromAngleAndRotationAxis(angleX, new double[]{0,-1,0}).rotateVector3d(d);
+        d=Vector.subtraction(Vector.sum(Vector.vScale(d1, Math.abs(1/d1[2])), Vector.vScale(d2, Math.abs(1/d2[2]))), new double[]{0,0,-1});
+        d=cameraOrientation.rotateVector3d(d);
+        double[] e=new double[]{cameraX, cameraY, cameraZ};
+        d=q.rotateVector3d(d);
+        e=q.rotateVector3d(e);
+        double[] c=new double[]{-(float)openedModel.centerx,-(float)openedModel.centery,-(float)openedModel.centerz};
+        double[] eSc=Vector.subtraction(e, c);
+        return openedModel.rtreeOfTriangles_forPlyFiles.findAllIntersectedPoints(new float[]{(float)eSc[0], (float)eSc[1], (float)eSc[2]}, new float[]{(float)d[0], (float)d[1], (float)d[2]});
+	}
+	
 	private void editPinNote() {
 	    if(pinPanel == null) return;
 	    note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
@@ -2128,7 +2188,7 @@ public class MainFrame extends Widget{
 	            // Init
 	            efm = new DefaultEditFieldModel();
                 xPinField = new EditField(null, efm);
-                xPinField.setText(note != null ? (note.getAbsXVal()+"") : ""); //TODO: read from pinNote
+                xPinField.setText(note != null ? (note.getAbsXVal()+"") : "");
                 xPinField.setMultiLine(true);
                 xPinField.adjustSize();
                 xPinField.setSize(95, 15);

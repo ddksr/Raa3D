@@ -25,7 +25,7 @@ public class Box {
             c[i][1]=points[indices[0]*3+i];
         }
         this.triangleIndices=indices;
-        for(int i=1;i<3;i++){//for each point (except for the one already takin into account)
+        for(int i=1;i<3;i++){//for each point (except for the one already taken into account)
             for(int j=0;j<3;j++){//for each coordinate (x,y,z)
                 c[j][0]=Math.min(points[indices[i]*3+j], c[j][0]);
                 c[j][1]=Math.max(points[indices[i]*3+j], c[j][1]);
@@ -60,4 +60,64 @@ public class Box {
 		}
 		return true;
 	}
+	public boolean isIntersectedByRay(float[] e, float[] d){
+	    //where is crossing upper bound
+	    //
+	    //get rid of perpendicular cases
+	    for(int i=0;i<3;i++){
+	        if(d[i]==0){
+	            if(e[i]<c[i][0])return false;
+	            if(e[i]>c[i][1])return false;
+	            for(int j=0;j<3;j++)if(j!=i){
+	                if(d[j]==0){
+	                    if(e[j]<c[j][0])return false;
+	                    if(e[j]>c[j][1])return false;
+	                    return true;
+	                }
+	            }
+	            //parallel to exactly one case
+	            int j=0;while(j==i)j++;
+	            int k=0;while(k==i || k==j)k++;
+	            
+	            float t = (c[j][0]-e[j])/d[j];
+	            if(t>0){
+	                float pk=e[k]+t*d[k];
+	                if(pk<=c[k][1] && pk>=c[k][0])return true;
+	            }
+	            t = (c[j][1]-e[j])/d[j];
+                if(t>0){
+                    float pk=e[k]+t*d[k];
+                    if(pk<=c[k][1] && pk>=c[k][0])return true;
+                }
+                int l=k;k=j;j=l;
+                t = (c[j][0]-e[j])/d[j];
+                if(t>0){
+                    float pk=e[k]+t*d[k];
+                    if(pk<=c[k][1] && pk>=c[k][0])return true;
+                }
+                t = (c[j][1]-e[j])/d[j];
+                if(t>0){
+                    float pk=e[k]+t*d[k];
+                    if(pk<=c[k][1] && pk>=c[k][0])return true;
+                }
+	        }
+	    }
+	    //there were no perpendicular cases, division should be safe at this point
+	    for(int i=0;i<3;i++){
+	        for(int fb=0;fb<2;fb++){
+	            float t = (c[i][fb]-e[i])/d[i];
+	            if(t>0){
+	                int j=0;while(j==i)j++;
+	                int k=0;while(k==i || k==j)k++;
+	                float pk=e[k]+t*d[k];
+	                float pj=e[j]+t*d[j];
+	                
+	                if(c[j][0]<=pj && c[j][1]>=pj && c[k][0]<=pk && c[k][1]>=pk)return true;
+	            }
+	        }
+	    }
+	    return false;
+	}
+	
 }
+
