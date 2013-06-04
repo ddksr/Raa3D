@@ -363,7 +363,12 @@ public class MainFrame extends Widget{
 	
 	private static double[] lastRay = null;
 
-    private static float[] lightOrigin;
+	// Set the source of light
+    private static float[] lightOrigin = new float[]{0.0f, 1000.0f, 0.0f , 0.0f};
+    private static int lightOriginAngleX = -90;
+    private static int lightOriginAngleY = 0;
+    private static int lightDistance = 1000;
+    
 	
 	/**
      * @since 0.4
@@ -1701,13 +1706,10 @@ public class MainFrame extends Widget{
 		GL11.glLoadIdentity();
 		Quaternion worldOrientation = Quaternion.quaternionReciprocal(cameraOrientation);
 		glMultMatrix(worldOrientation.getRotationMatrix(false));
-		glTranslatef(-cameraX+(float)v[0], -cameraY+(float)v[1], -cameraZ+(float)v[2]);
-		
-		lightOrigin = new float[]{0.0f, 1000.0f, 0.0f , 0.0f};
-		
+		glTranslatef(-cameraX+(float)v[0], -cameraY+(float)v[1], -cameraZ+(float)v[2]);	
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
-		glLight(GL_LIGHT0,GL_POSITION,allocFloats(new float[]{0.0f, 1000.0f, 0.0f , 0.0f}));
+		glLight(GL_LIGHT0,GL_POSITION,allocFloats(lightOrigin)); // Set light source
 		glLight(GL_LIGHT0,GL_DIFFUSE,allocFloats(new float[]{1f,1f,1f,1}));
 		glLight(GL_LIGHT0,GL_AMBIENT,allocFloats(new float[]{0.3f,0.3f,0.3f,1}));
 		glLight(GL_LIGHT0,GL_SPECULAR,allocFloats(new float[]{1.0f, 1.0f, 1.0f, 1.0f}));
@@ -1955,7 +1957,38 @@ public class MainFrame extends Widget{
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_I) {
                     openedModel.rotatePlain(0, 20);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_K) {
-                    openedModel.rotatePlain(0, -20);
+                    openedModel.rotatePlain(0, -20);                
+                    
+                    
+                    
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_H) { // Next 4 are for changing light origin
+                    //lightOrigin = new float[]{1000.0f, 0.0f, 0.0f , 0.0f};
+                    if (lightOriginAngleY > -180) {
+                        lightOriginAngleY -= 10;
+                        lightOrigin[1] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleY)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleY)));
+                    }
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_N) {                    
+                    if (lightOriginAngleY < 0) {
+                        lightOriginAngleY += 10;
+                        lightOrigin[1] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleY)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleY)));
+                    }
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_B) {
+                    if (lightOriginAngleX < 0) {
+                        lightOriginAngleX += 10;
+                        lightOrigin[0] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleX)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleX)));
+                    }
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_M) {                    
+                    if (lightOriginAngleX > -180) {
+                        lightOriginAngleX -= 10;
+                        lightOrigin[0] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleX)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleX)));
+                    }
+                    
+                    
+
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
 				    ctrlPressed = true;
 				}else if(Keyboard.getEventKey()==Keyboard.KEY_RCONTROL) {
@@ -2100,6 +2133,7 @@ public class MainFrame extends Widget{
         }
 		
 		if(openedModel!=null){
+		    
 		    if(Mouse.isButtonDown(0)){
 		        //figure out if clicked on the HUD first
 		        float w=settings.resWidth;
