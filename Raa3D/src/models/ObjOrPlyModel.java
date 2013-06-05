@@ -51,9 +51,9 @@ import org.lwjgl.opengl.Display;
  */
 public class ObjOrPlyModel {
 	// file formats for objects
-	private static final int FILE_FORMAT_OBJ=0;
-	private static final int FILE_FORMAT_PLY=1;
-	private int fileFormat=-1;
+	public static final int FILE_FORMAT_OBJ=0;
+	public static final int FILE_FORMAT_PLY=1;
+	public int fileFormat=-1;
 	
 	//global variables
 	//     used for both .obj and .ply formats

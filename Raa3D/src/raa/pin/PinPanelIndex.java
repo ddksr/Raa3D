@@ -7,7 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PinPanelIndex {
-	public static final String pattern = "(def|img|text|abs) (\\d\\.\\d) (\\d\\.\\d) (\\d\\.\\d) \"(.+)\""; 
+	public static final String pattern = "(def|img|text|abs) (\\-*\\d*\\.\\d*) (\\-*\\d*\\.\\d*) (\\-*\\d*\\.\\d*) \"(.+)\""; 
 	private LinkedList<PinNote> notes; // internal list
 	
 	private int[] counter;
