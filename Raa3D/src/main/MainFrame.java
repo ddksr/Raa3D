@@ -2014,7 +2014,7 @@ public class MainFrame extends Widget{
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_P) {
                     openedModel.changePlainState();    
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_Z) {
-                    generatePlaneIntersectionImage(openedModel.planeIntersection());
+                    //generatePlaneIntersectionImage(openedModel.planeIntersection());
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_O) {
                     openedModel.incPlain(0, (float)0.2);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
