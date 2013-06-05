@@ -222,7 +222,7 @@ public class MainFrame extends Widget{
         }
     }
     
-    static double MAX_RAY_DISTANCE = 10.; // set to lower when ray works
+    static double MAX_RAY_DISTANCE = 40.; // set to lower when ray works
     
     static final int LMB = 0;
     static final int RMB = 1;
@@ -1475,7 +1475,7 @@ public class MainFrame extends Widget{
         currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, Quaternion.quaternionFromAngleAndRotationAxis(angle2, v));
         addedModelOrientation = new Quaternion();
         
-        
+        gameUI.initPinButtonsEnabled();
     }
     private static void loadPinPanel(String filePath) {
         try {
@@ -1808,6 +1808,9 @@ public class MainFrame extends Widget{
           //TODO move to if pins visible
             if(pinPanel != null){
                 if(pinPanel.pointsChanged) {
+                    bubbles_absolutePoints.clear();
+                    bubbles_images.clear();
+                    bubbles_text.clear();
                     for(PinNote nt : pinPanel.getNotes()) {
                         if(nt.getType() == PinNote.ABSOLUTE_TYPE) {
                             bubbles_absolutePoints.add(new float[] {
@@ -1816,13 +1819,13 @@ public class MainFrame extends Widget{
                                     (float)nt.getZ()
                             });
                         } else if (nt.getType() == PinNote.IMAGE_TYPE) {
-                            bubbles_absolutePoints.add(new float[] {
+                            bubbles_images.add(new float[] {
                                     (float)nt.getX(), 
                                     (float)nt.getY(), 
                                     (float)nt.getZ()
                             });
                         } else if (nt.getType() == PinNote.TEXT_TYPE) {
-                            bubbles_absolutePoints.add(new float[] {
+                            bubbles_text.add(new float[] {
                                     (float)nt.getX(), 
                                     (float)nt.getY(), 
                                     (float)nt.getZ()
@@ -1834,9 +1837,9 @@ public class MainFrame extends Widget{
             }
             else {
                 // Clear arrays
-                bubbles_absolutePoints = new ArrayList<float[]>();
-                bubbles_images = new ArrayList<float[]>();
-                bubbles_text = new ArrayList<float[]>();
+                bubbles_absolutePoints.clear();
+                bubbles_images.clear();
+                bubbles_text.clear();
             }
             
             ////////////////////// XXXXXX
@@ -1984,7 +1987,7 @@ public class MainFrame extends Widget{
                     //bubbles_text.add(pointOnModelClickedUpon);
                 }
                 
-                
+                MAX_RAY_DISTANCE = 40.*(veinsRadius/425) / zoom;
                 if(editMode) gameUI.editPinNote();
                 else gameUI.showPinNote();
                 ctrlPressed = false;
@@ -2359,9 +2362,11 @@ public class MainFrame extends Widget{
         if(pinPanel == null) return;
         note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
         System.out.println(lastRay[0] + " " + lastRay[1] + " " + lastRay[2]);
+        if(note != null) System.out.println(note.getName());
         if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE/zoom) {
             note = null;
         }
+       
         dialogOpened = true; 
         inputTextMode = true;
 

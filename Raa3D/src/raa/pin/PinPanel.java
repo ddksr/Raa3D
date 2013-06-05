@@ -249,6 +249,7 @@ public class PinPanel {
 		dirTxt.delete();
 		new File(loc + File.separator + "index").delete();
 		new File(loc).delete();
+		pointsChanged = true;
 	}
 	
 	public boolean close() throws Exception {
@@ -306,9 +307,9 @@ public class PinPanel {
     public PinNote getNearest(double x, double y, double z) {
         if(index.size() == 0) return null;
         PinNote nearest = index.getFirst();
-        double min = Double.MAX_VALUE;
+        double min = nearest.distanceTo(x, y, z);
         for(PinNote note : index.getNotes()) {
-            double min1 = nearest.distanceToNote(note);
+            double min1 = note.distanceTo(x,y,z);
             if (min1 < min) {
                 min = min1;
                 nearest = note;
