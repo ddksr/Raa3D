@@ -23,6 +23,8 @@ public class PinPanel {
 	private String id;
 	private boolean hasChanges;
 	
+	public boolean pointsChanged = true;
+	
 	public PinPanelIndex index;
 	
 	public PinPanel() { // used for new
@@ -261,6 +263,7 @@ public class PinPanel {
 	}
 	
 	public void addNew(PinNote note) throws Exception {
+	    pointsChanged = true;
 	    String loc = tmpLoc + File.separator + id;
 	    switch(note.getType()) {
             case PinNote.TEXT_TYPE:

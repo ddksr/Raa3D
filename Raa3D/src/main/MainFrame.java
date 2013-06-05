@@ -222,7 +222,7 @@ public class MainFrame extends Widget{
         }
     }
     
-    static double MAX_RAY_DISTANCE = Double.MAX_VALUE; // set to lower when ray works
+    static double MAX_RAY_DISTANCE = 10.; // set to lower when ray works
     
     static final int LMB = 0;
     static final int RMB = 1;
@@ -360,9 +360,10 @@ public class MainFrame extends Widget{
     
     private static int pinNoteType = PinNote.TEXT_TYPE;
     
+    public static boolean clickAnyWhereOnModel = false;
     public static boolean pinsVisible = false;
     
-    private static double[] lastRay = null;
+    private static float[] lastRay = null;
 
     // Set the source of light
     private static float[] lightOrigin = new float[]{0.0f, 1000.0f, 0.0f , 0.0f};
@@ -386,9 +387,7 @@ public class MainFrame extends Widget{
         }
         
         
-        double[] ray = {0., 0. ,0.};
-        lastRay = ray;
-        ray = null;
+        lastRay = new float[] {0f, 0f ,0f};
         
         fileSelector = new FileSelector();
         fileSelector.setTheme("fileselector");
@@ -1804,25 +1803,55 @@ public class MainFrame extends Widget{
             renderVeins();
             
           //TODO move to if pins visible
-            if(pinsVisible && pinPanel != null){
-                for(PinNote nt : pinPanel.getNotes()) {
+            if(pinPanel != null){
+                if(pinPanel.pointsChanged) {
+                    for(PinNote nt : pinPanel.getNotes()) {
+                        if(nt.getType() == PinNote.ABSOLUTE_TYPE) {
+                            bubbles_absolutePoints.add(new float[] {
+                                    (float)nt.getX(), 
+                                    (float)nt.getY(), 
+                                    (float)nt.getZ()
+                            });
+                        } else if (nt.getType() == PinNote.IMAGE_TYPE) {
+                            bubbles_absolutePoints.add(new float[] {
+                                    (float)nt.getX(), 
+                                    (float)nt.getY(), 
+                                    (float)nt.getZ()
+                            });
+                        } else if (nt.getType() == PinNote.TEXT_TYPE) {
+                            bubbles_absolutePoints.add(new float[] {
+                                    (float)nt.getX(), 
+                                    (float)nt.getY(), 
+                                    (float)nt.getZ()
+                            });
+                        }
+                    }
+                    pinPanel.pointsChanged = false;
                 }
-                
             }
+            else {
+                // Clear arrays
+                bubbles_absolutePoints = new ArrayList<float[]>();
+                bubbles_images = new ArrayList<float[]>();
+                bubbles_text = new ArrayList<float[]>();
+            }
+            
             ////////////////////// XXXXXX
-            if(bubbles_absolutePoints.size()>0){
-                for(float[] bubble:bubbles_absolutePoints){
-                    Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "red");
+            if (pinsVisible) {
+                if(bubbles_absolutePoints.size()>0){
+                    for(float[] bubble:bubbles_absolutePoints){
+                        Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "red");
+                    }
                 }
-            }
-            if(bubbles_images.size()>0){
-                for(float[] bubble:bubbles_images){
-                    Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "green");
+                if(bubbles_images.size()>0){
+                    for(float[] bubble:bubbles_images){
+                        Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "green");
+                    }
                 }
-            }
-            if(bubbles_text.size()>0){
-                for(float[] bubble:bubbles_text){
-                    Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "blue");
+                if(bubbles_text.size()>0){
+                    for(float[] bubble:bubbles_text){
+                        Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "blue");
+                    }
                 }
             }
             ///////////////////// XXXXXX
@@ -1873,12 +1902,11 @@ public class MainFrame extends Widget{
     private static boolean isAAEnabled=false, wireframe=false;
 
     private static boolean ctrlPressed = false;
-
+    private static boolean calcPoint = false;
 
     static int flagRotate = 0; // flag for rotating plain
     static int flagLowerUpperPlain = 0; //flag for moving plain up and down
 
-    private static boolean mouseDown = false;
     private static int dragDialogX = -1;
     private static int dragDialogY = -1;
     
@@ -1893,7 +1921,7 @@ public class MainFrame extends Widget{
         }*/
         int z=Mouse.getDWheel();
         
-        if(pinItrPane!=null && z != 0) {
+        if(pinItrPane!=null && imageWidget != null && z != 0) {
             if(z>0) {
                 imageWidget.scrollImage(1.1);
                 pinItrPane.updateScrollbarSizes();
@@ -1903,30 +1931,6 @@ public class MainFrame extends Widget{
             }
         }
         
-        // Image zooming
-        if(pinItrPane!=null && imageWidget != null) {
-            // Note: moved in if statement so that models can work
-            int incZum = Mouse.getDWheel(); 
-            if (incZum != 0) {
-                if(incZum>0) {
-                    imageWidget.scrollImage(1.1);
-                    pinItrPane.updateScrollbarSizes();
-                } else {
-                    imageWidget.scrollImage(0.9);
-                    pinItrPane.updateScrollbarSizes();
-                }
-            }
-        }
-        
-        
-        if(Keyboard.getEventKey() == Keyboard.KEY_I) {if(Keyboard.getEventKeyState()){flagRotate = 1;}else{flagRotate = 0;}}
-        if(Keyboard.getEventKey() == Keyboard.KEY_K) {if(Keyboard.getEventKeyState()){flagRotate = -1;}else{flagRotate = 0;}}
-        if(Keyboard.getEventKey() == Keyboard.KEY_O) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = 1;}else{flagLowerUpperPlain = 0;}}
-        if(Keyboard.getEventKey() == Keyboard.KEY_L) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = -1;}else{flagLowerUpperPlain = 0;}}
-        
-        if(flagRotate!=0) {openedModel.rotatePlain(0, flagRotate*40);}
-        if(flagLowerUpperPlain!=0) {openedModel.incPlain(0, (float)(flagLowerUpperPlain*0.2));}
-           
         if (dialogOpened && draggableWidget != null && Mouse.isButtonDown(LMB)) {
             int x = Mouse.getX();
             int y = settings.resHeight - Mouse.getY();
@@ -1936,8 +1940,7 @@ public class MainFrame extends Widget{
                 int ty = draggableWidget.getY();
                 int rx = draggableWidget.getWidth() + lx;
                 int by = draggableWidget.getHeight() + ty;
-                System.out.println(lx + " - " + rx + ", " + ty + " - " + by);
-                System.out.println(x + ", " + y);
+
                 if (x >= lx && x <= rx && y >= ty && y <= by) {
                     dragDialogX = x;
                     dragDialogY = y; 
@@ -1957,6 +1960,43 @@ public class MainFrame extends Widget{
             dragDialogY = -1;   
         }
         
+        // Go out if dialog Opened of menu opened
+        if(dialogOpened || menuOpened ) return;
+        
+    
+        if(! calcPoint && Mouse.hasWheel() && Mouse.isButtonDown(MWB) || ctrlPressed) {
+            int evnt = Mouse.getEventButton();
+            if(evnt == MWB || ctrlPressed && evnt == LMB) {
+                // mouse wheel clicked
+                calcPoint = true;
+                float[] pointOnModelClickedUpon = getClickedPointOnLoadedModel();
+                if(pointOnModelClickedUpon!=null){
+                    lastRay = pointOnModelClickedUpon;
+                    
+                    //bubbles_absolutePoints.add(pointOnModelClickedUpon); 
+                    //bubbles_images.add(pointOnModelClickedUpon);
+                    //bubbles_text.add(pointOnModelClickedUpon);
+                }
+                
+                
+                if(editMode) gameUI.editPinNote();
+                else gameUI.showPinNote();
+                ctrlPressed = false;
+                calcPoint = false;
+            }
+        }
+        
+        
+        if(Keyboard.getEventKey() == Keyboard.KEY_I) {if(Keyboard.getEventKeyState()){flagRotate = 1;}else{flagRotate = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_K) {if(Keyboard.getEventKeyState()){flagRotate = -1;}else{flagRotate = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_O) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = 1;}else{flagLowerUpperPlain = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_L) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = -1;}else{flagLowerUpperPlain = 0;}}
+        
+        if(flagRotate!=0) {openedModel.rotatePlain(0, flagRotate*40);}
+        if(flagLowerUpperPlain!=0) {openedModel.incPlain(0, (float)(flagLowerUpperPlain*0.2));}
+           
+        
+        
         
         // Go out when in inputTextMode
         if(inputTextMode) {
@@ -1965,7 +2005,6 @@ public class MainFrame extends Widget{
 
         
         while(Keyboard.next()){
-            
             if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
                 if(Keyboard.getEventKey()==Keyboard.KEY_TAB){
                     if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
@@ -2056,21 +2095,7 @@ public class MainFrame extends Widget{
             }
         }
         
-        // Go out if dialog Opened of menu opened
-        if(dialogOpened || menuOpened )return;
-        
-        // Note edit 
-        if(Mouse.hasWheel() && Mouse.isButtonDown(2) || ctrlPressed) {
-            int evnt = Mouse.getEventButton();
-            if(evnt == MWB || ctrlPressed && evnt == LMB) {
-                // mouse wheel clicked
-                if(editMode) gameUI.editPinNote();
-                else gameUI.showPinNote();
-                ctrlPressed = false;
-            }
-        }
-        
-        
+
 
         // Model pan, zoom and rotation
 //      //int z=Mouse.getDWheel();
@@ -2156,8 +2181,7 @@ public class MainFrame extends Widget{
         }
         
         if(openedModel!=null){
-            
-            if(Mouse.isButtonDown(0)){
+            if(Mouse.isButtonDown(LMB)){
                 //figure out if clicked on the HUD first
                 float w=settings.resWidth;
                 float h=settings.resHeight;
@@ -2186,14 +2210,17 @@ public class MainFrame extends Widget{
                         clickedOn=CLICKED_ON_ROTATION_ELLIPSE;
                     }else if(distanceToMoveFoci<=r*3f){
                         clickedOn=CLICKED_ON_MOVE_ELLIPSE;
-                    }else{
-                        
+                    }else {
+                        /*
                         float[] pointOnModelClickedUpon = getClickedPointOnLoadedModel();
                         if(pointOnModelClickedUpon!=null){
-                            bubbles_absolutePoints.add(pointOnModelClickedUpon); 
-                            bubbles_images.add(pointOnModelClickedUpon);
-                            bubbles_text.add(pointOnModelClickedUpon);
+                            lastRay = pointOnModelClickedUpon;
+                            newLastRay = true;
+                            //bubbles_absolutePoints.add(pointOnModelClickedUpon); 
+                            //bubbles_images.add(pointOnModelClickedUpon);
+                            //bubbles_text.add(pointOnModelClickedUpon);
                         }
+                        */
                         
                         veinsGrabbedAt=getRaySphereIntersection(Mouse.getX(), Mouse.getY());
                         addedModelOrientation=new Quaternion();
@@ -2268,6 +2295,8 @@ public class MainFrame extends Widget{
                     cameraY+=(float)v[1];
                     cameraZ+=(float)v[2];
                 }
+                
+                
             }else if(Mouse.isButtonDown(1)){ // When user clicks and moves right mouse button
                 
                 int mouse_diff_x = Mouse.getX() - mouse_x;
@@ -2323,11 +2352,10 @@ public class MainFrame extends Widget{
     private void editPinNote() {
         if(pinPanel == null) return;
         note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
-        
+        System.out.println(lastRay[0] + " " + lastRay[1] + " " + lastRay[2]);
         if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
             note = null;
         }
-        
         dialogOpened = true; 
         inputTextMode = true;
 
@@ -2347,7 +2375,7 @@ public class MainFrame extends Widget{
                 
                 msgBoxTitle = new TextArea();
                 draggableWidget = msgBoxTitle;
-                stmTit = new SimpleTextAreaModel("Note");
+                stmTit = new SimpleTextAreaModel("New absolute point note");
                 msgBoxTitle.setModel(stmTit);
                 msgBoxTitle.adjustSize();
                 msgBoxTitle.setTheme("msgbox-title");
@@ -2597,7 +2625,7 @@ public class MainFrame extends Widget{
                 
                 msgBoxTitle = new TextArea();
                 draggableWidget = msgBoxTitle;
-                stmTit = new SimpleTextAreaModel("Note");
+                stmTit = new SimpleTextAreaModel("New text note");
                 msgBoxTitle.setModel(stmTit);
                 msgBoxTitle.adjustSize();
                 msgBoxTitle.setTheme("msgbox-title");
@@ -2766,7 +2794,7 @@ public class MainFrame extends Widget{
             
             msgBoxTitle = new TextArea();
             draggableWidget = msgBoxTitle;
-            SimpleTextAreaModel stmTit = new SimpleTextAreaModel("Note");
+            SimpleTextAreaModel stmTit = new SimpleTextAreaModel(note.getName());
             msgBoxTitle.setModel(stmTit);
             msgBoxTitle.adjustSize();
             msgBoxTitle.setTheme("msgbox-title");
@@ -2919,9 +2947,15 @@ public class MainFrame extends Widget{
     }
     private void showPinNote() {
         if(pinPanel == null) return;
-        note = pinPanel.getNearest(0, 0, 0); // TODO: get nearest
+        note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); 
+        
+        if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
+            note = null;
+        }
         if (note == null) return;
-        dialogOpened = true; // TODO: dont forget to set it to FALSE
+        
+        dialogOpened = true; 
+
         inputTextMode = true;
         
         int cw = settings.resWidth/2;
@@ -2938,7 +2972,7 @@ public class MainFrame extends Widget{
                 
                 msgBoxTitle = new TextArea();
                 draggableWidget = msgBoxTitle;
-                stmTit = new SimpleTextAreaModel("Note");
+                stmTit = new SimpleTextAreaModel(note.getName());
                 msgBoxTitle.setModel(stmTit);
                 msgBoxTitle.adjustSize();
                 msgBoxTitle.setTheme("msgbox-title");
@@ -3021,7 +3055,7 @@ public class MainFrame extends Widget{
                 
                 msgBoxTitle = new TextArea();
                 draggableWidget = msgBoxTitle;
-                stmTit = new SimpleTextAreaModel("Note");
+                stmTit = new SimpleTextAreaModel(note.getName());
                 msgBoxTitle.setModel(stmTit);
                 msgBoxTitle.adjustSize();
                 msgBoxTitle.setTheme("msgbox-title");

@@ -116,6 +116,18 @@ public class PinNote {
 		return t >= 0 && t < vals.length ? vals[t] : "def";
 	}
 	
+	public String getName() {
+	    String name = new String("Default note");
+	    if(type == PinNote.TEXT_TYPE) {
+	        name = new String("Text note");
+	    } else if(type==PinNote.ABSOLUTE_TYPE) {
+	        name = new String("Absolute point note");
+	    } else if (type == PinNote.IMAGE_TYPE) {
+	        name = new String("Image note");
+	    }
+	    return String.format("%s <%f; %f; %f>", name, x, y, z);
+	}
+	
 	public double getX() {
 	    return x;
 	}
