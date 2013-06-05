@@ -1997,9 +1997,6 @@ public class MainFrame extends Widget{
         
         if(flagRotate!=0) {openedModel.rotatePlain(0, flagRotate*40);}
         if(flagLowerUpperPlain!=0) {openedModel.incPlain(0, (float)(flagLowerUpperPlain*0.2));}
-           
-        
-        
         
         // Go out when in inputTextMode
         if(inputTextMode) {
