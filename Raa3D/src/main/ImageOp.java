@@ -14,6 +14,8 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
+import tools.Vector;
+
 public class ImageOp {
     
     /*
@@ -124,6 +126,52 @@ public class ImageOp {
         byteBuffer.flip();
 
         return byteBuffer;
+    }
+    
+    public static BufferedImage createImageFromLines(double[][] lines3D, double[] normal) {
+        int width, height;
+        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, 
+                minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        int[][] lines = new int[lines3D.length][4];
+        
+        float factor = 1F;
+        
+        for(int i = 0; i < lines.length; i++) {
+            
+            // generate two base vectors for the plane
+            double[] a = {2., 3., -(2.*normal[1] + 2.*normal[1])/normal[2]}; // generate perpendicular vector
+            double[] b = Vector.crossProduct(a, normal); // get another perpendicular vector
+
+            // generate 2d lines from 3d lines (project on plane)
+            lines[i] = new int[] {
+                    (int)(factor * Vector.dotProduct(a, new double[]{lines3D[i][0], lines3D[i][1], lines3D[i][2]})),
+                    (int)(factor * Vector.dotProduct(b, new double[]{lines3D[i][0], lines3D[i][1], lines3D[i][2]})),
+                    (int)(factor * Vector.dotProduct(a, new double[]{lines3D[i][3], lines3D[i][4], lines3D[i][5]})),
+                    (int)(factor * Vector.dotProduct(b, new double[]{lines3D[i][3], lines3D[i][4], lines3D[i][5]}))
+            };
+            
+            // reset bounds
+            minX = Math.min(Math.min(lines[i][0], lines[i][2]), minX);
+            maxX = Math.max(Math.max(lines[i][0], lines[i][2]), maxX);
+            minY = Math.min(Math.min(lines[i][1], lines[i][3]), minY);
+            maxY = Math.max(Math.max(lines[i][1], lines[i][3]), maxY);
+        }
+        lines3D = null; // remove from RAM
+        
+        // get width and height
+        width = maxX - minX;
+        height = maxY - minY;
+        // generate image
+        BufferedImage out = new BufferedImage(width, height, BufferedImage.TYPE_INT_BGR);
+        
+        // prepare canvas
+        Graphics2D canvas = out.createGraphics();
+        
+        // draw on canvas
+        for(int i = 0; i < lines.length; i++) {
+            canvas.drawLine(minX + lines[i][0], minY + lines[i][1], minX + lines[i][2], minY + lines[i][3]);
+        }
+        return out;
     }
     
 }
