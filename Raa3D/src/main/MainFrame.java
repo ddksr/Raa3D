@@ -1373,7 +1373,7 @@ public class MainFrame extends Widget{
          */
         progressBar.setSize(settings.resWidth, 30);
         progressBar.setPosition(0, settings.resHeight-30);
-        
+        progressBar.setVisible(true);
     }
     float inc = 0.001f;
     /**
@@ -1408,7 +1408,6 @@ public class MainFrame extends Widget{
                         System.out.println("Pin panel for model " + modelName + " exists. Loading pin panel ...");
                         loadPinPanel(ppFile);
                         System.out.println(pinPanel.getNotes().size());
-                        gameUI.initPinButtonsEnabled();
                     }
                     else pinPanel = null; // set to null!
                     restart = false;
@@ -1481,6 +1480,7 @@ public class MainFrame extends Widget{
     private static void loadPinPanel(String filePath) {
         try {
             pinPanel = PinPanel.open(filePath);
+            gameUI.initPinButtonsEnabled();
         } catch(IOException e) {
             // TODO error message if pin could not be opened
             e.printStackTrace();
@@ -2303,7 +2303,7 @@ public class MainFrame extends Widget{
                 }
                 
                 
-            }else if(Mouse.isButtonDown(1)){ // When user clicks and moves right mouse button
+            }else if(Mouse.isButtonDown(RMB)){ // When user clicks and moves right mouse button
                 
                 int mouse_diff_x = Mouse.getX() - mouse_x;
                 int mouse_diff_y = Mouse.getY() - mouse_y;
@@ -2359,7 +2359,7 @@ public class MainFrame extends Widget{
         if(pinPanel == null) return;
         note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
         System.out.println(lastRay[0] + " " + lastRay[1] + " " + lastRay[2]);
-        if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
+        if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE/zoom) {
             note = null;
         }
         dialogOpened = true; 
@@ -2955,7 +2955,7 @@ public class MainFrame extends Widget{
         if(pinPanel == null) return;
         note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); 
         
-        if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
+        if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE/zoom) {
             note = null;
         }
         if (note == null) return;

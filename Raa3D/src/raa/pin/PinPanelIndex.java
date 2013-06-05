@@ -48,9 +48,7 @@ public class PinPanelIndex {
 			String ref = line.split("#")[0];
 			Pattern rgx = Pattern.compile(pattern);
 			Matcher m = rgx.matcher(ref);
-			System.out.println("baa");
 			if(m.find()) {
-			    System.out.println("buuu");
 				try {
 					String typ = m.group(1);
 					String x = m.group(2);
