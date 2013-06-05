@@ -86,7 +86,9 @@ public class ObjOrPlyModel {
 	boolean plainVisible=false;
 	float plainX=0, plainY=0, plainZ=0;
 	float planeFak = 1;
-	float rotate = 0;
+	float rotateX = 0, rotateY = 0, rotateZ = 0;
+	double[] norm = {1, 1, 1};
+	double[] vec = new double[3];
 	
 	public ObjOrPlyModel(String filepath){
 	    vertices = new ArrayList<Float>();
@@ -119,6 +121,12 @@ public class ObjOrPlyModel {
 	            String type;
 	            String line;
 	            while(scanner.hasNext()){
+	                progress = progress+ increment;
+	                MainFrame.progressBar.setValue(progress);
+	                if((++progress1)%5000 == 0) {
+	                    MainFrame.gui.update();
+	                    Display.update();
+	                }
 	                line=scanner.nextLine();
 	                StringTokenizer strTokenizer= new StringTokenizer(line);
 	                type=strTokenizer.nextToken();
@@ -192,8 +200,23 @@ public class ObjOrPlyModel {
                 PlyReader plyReader = new PlyReaderFile(file);
                 // normalizes the data in the PLY file to ensure only triangles are gotten and that normals are assigned
                 plyReader = new NormalizingPlyReader(plyReader, TesselationMode.TRIANGLES, NormalMode.ADD_NORMALS_CCW, TextureMode.PASS_THROUGH);
+                // UPDATE PROGRESSBAR/////////////////
+                MainFrame.progressBar.setValue(0.01f);
+                MainFrame.gui.update();
+                Display.update();
+                //////////////////////////////////////
                 int vertexCount = plyReader.getElementCount("vertex");
+             // UPDATE PROGRESSBAR/////////////////
+                MainFrame.progressBar.setValue(0.21f);
+                MainFrame.gui.update();
+                Display.update();
+                //////////////////////////////////////
                 triangleCount_forPlyFiles = plyReader.getElementCount("face");
+             // UPDATE PROGRESSBAR/////////////////
+                MainFrame.progressBar.setValue(0.56f);
+                MainFrame.gui.update();
+                Display.update();
+                //////////////////////////////////////
                 vertexSize_forPlyFiles = 3*4 + 3*4 + 4*4;// 32 bit float per each: location coordinate, normal coordinates and color component
                 triangleSize_forPlyFiles = 3*4;// indexes to vertices as 32 bit integers
                 
@@ -263,6 +286,11 @@ public class ObjOrPlyModel {
                     reader.close();
                     reader = plyReader.nextElementReader();
                 }
+                // UPDATE PROGRESSBAR/////////////////
+                MainFrame.progressBar.setValue(0.60f);
+                MainFrame.gui.update();
+                Display.update();
+                //////////////////////////////////////
                 // unmap buffers
                 glUnmapBufferARB(GL_ARRAY_BUFFER_ARB);
                 glUnmapBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB);
@@ -302,7 +330,7 @@ public class ObjOrPlyModel {
                 e.printStackTrace();
             }
 	    }
-	    
+	    MainFrame.progressBar.setValue(0);
 	}
 	
 	public int countLines(String filename) throws IOException {
@@ -394,10 +422,57 @@ public class ObjOrPlyModel {
 		}
 		Bubbles.getAndSetMatrices();
 		glPopMatrix();
+		if(plainVisible) {
+		       /* float cx1 = (float)-(vec[0] * (-100) + vec[1] * (-100)); 
+		        float cx2 = (float)-(vec[0] * (100) + vec[1] * (-100)); 
+		        float cx3 = (float)-(vec[0] * (100) + vec[1] * (100)); 
+		        float cx4 = (float)-(vec[0] * (-100) + vec[1] * (100)); 
+		        GL20.glUseProgram(0);
+		        
+		        glEnable(GL11.GL_BLEND);
+		        glColor4f(0.8f, 0.06667f, 0.0f, 1);
+		        glMaterial(GL_FRONT,GL_AMBIENT, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+		        glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+		        glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 0.f}));
+		        glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));*/
+		//?dela
+		float maxxx = Float.MIN_VALUE;
+		        if(minX>maxxx) maxxx=minX;
+		        if(maxX>maxxx) maxxx=maxX;
+		        if(minY>maxxx) maxxx=minY;
+		        if(maxY>maxxx) maxxx=maxY;
+		        if(minZ>maxxx) maxxx=minZ;
+		        if(maxZ>maxxx) maxxx=maxZ;
+		        
+		glPushMatrix();
+		GL20.glUseProgram(0);
+		        
+		        glEnable(GL11.GL_BLEND);
+		        glDisable(GL11.GL_LIGHTING);
+		        glColor4f(0.8f, 0.06667f, 0.0f, 0.5f);
+		        glMaterial(GL_FRONT,GL_AMBIENT, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+		        glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+		        glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 0.f}));
+		        glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
+		        glTranslatef(0.0f, 0.0f, plainZ); 
+		        glRotatef((float)(rotateZ*Math.PI/180), 0,0,1);
+		        glRotatef((float)(rotateX*Math.PI/180), 1,0,0);
+		        glRotatef((float)(rotateY*Math.PI/180), 0,1,0);
+		        
+		        glBegin(GL11.GL_QUADS);
+		        glVertex3f(-maxxx, -maxxx,0);
+		        glVertex3f(maxxx, -maxxx,0);
+		        glVertex3f(maxxx, maxxx,0);
+		        glVertex3f(-maxxx, maxxx,0);
+		        glEnd();
+		        glEnable(GL11.GL_LIGHTING);
+		        glPopMatrix();
+		       /////
+		}
 	}
 	
 	public void drawPlain(int i) {
-	    glPushMatrix();
+	   /* glPushMatrix();
 	    glTranslatef((float)centerx,(float)centery,(float)centerz);
 	    glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
 	    glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
@@ -428,7 +503,7 @@ public class ObjOrPlyModel {
          glVertex3f(-maxxx, maxxx,(float)centerz);
           glEnd();
         
-        glPopMatrix();
+        glPopMatrix();*/
 
 	}
 	
@@ -746,9 +821,20 @@ public class ObjOrPlyModel {
 	        plainZ+=value;
 	}
 	public void rotatePlain(int coordinate, float value){
-        if(coordinate==0) //z
-            rotate +=value;
+        if(coordinate==1) //z
+            rotateX +=value;
+        if(coordinate==2) //z
+            rotateY +=value;
+        if(coordinate==3) //z
+            rotateZ +=value;
+        
+        //System.out.println(rotateZ);
+       /* Quaternion q = Quaternion.quaternionFromAngleAndRotationAxis(rotateX*Math.PI/180, new double[]{0,1,0});
+        vec = q.rotateVector3d(norm);
+       */
+        
     }
+
 	
 	public void resizePlane(int coordinate, float value) {
 	    if(coordinate==0) //z
@@ -758,7 +844,7 @@ public class ObjOrPlyModel {
 
     public LinkedList<float[]> planeIntersection() {
         double[] norm = {0, 0, 1};
-        Quaternion q = Quaternion.quaternionFromAngleAndRotationAxis(rotate, new double[]{0,1,0});
+        Quaternion q = Quaternion.quaternionFromAngleAndRotationAxis(rotateX, new double[]{0,1,0});
         double[] vec = q.rotateVector3d(norm);
         float d = -plainZ;
         return rtreeOfTriangles_forPlyFiles.getPlaneIntersection((float)vec[0], (float)vec[1], (float)vec[2], d);

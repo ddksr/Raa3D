@@ -1907,8 +1907,11 @@ public class MainFrame extends Widget{
     private static boolean ctrlPressed = false;
     private static boolean calcPoint = false;
 
-    static int flagRotate = 0; // flag for rotating plain
-    static int flagLowerUpperPlain = 0; //flag for moving plain up and down
+    static int flagRotateZ = 0; // flag for rotating plain
+    static int flagRotateX = 0;
+    static int flagRotateY = 0;
+    
+    static int flagLowerUpperPlain = 0; 
 
     private static int dragDialogX = -1;
     private static int dragDialogY = -1;
@@ -1990,12 +1993,15 @@ public class MainFrame extends Widget{
         }
         
         
-        if(Keyboard.getEventKey() == Keyboard.KEY_I) {if(Keyboard.getEventKeyState()){flagRotate = 1;}else{flagRotate = 0;}}
-        if(Keyboard.getEventKey() == Keyboard.KEY_K) {if(Keyboard.getEventKeyState()){flagRotate = -1;}else{flagRotate = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_I) {if(Keyboard.getEventKeyState()){flagRotateZ = 1;}else{flagRotateZ = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_K) {if(Keyboard.getEventKeyState()){flagRotateX = -1;}else{flagRotateX = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_M) {if(Keyboard.getEventKeyState()){flagRotateY = -1;}else{flagRotateY = 0;}}
         if(Keyboard.getEventKey() == Keyboard.KEY_O) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = 1;}else{flagLowerUpperPlain = 0;}}
         if(Keyboard.getEventKey() == Keyboard.KEY_L) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = -1;}else{flagLowerUpperPlain = 0;}}
         
-        if(flagRotate!=0) {openedModel.rotatePlain(0, flagRotate*40);}
+        if(flagRotateX!=0) {openedModel.rotatePlain(1, flagRotateX*20);}
+        if(flagRotateY!=0) {openedModel.rotatePlain(2, flagRotateY*20);}
+        if(flagRotateZ!=0) {openedModel.rotatePlain(3, flagRotateZ*20);}
         if(flagLowerUpperPlain!=0) {openedModel.incPlain(0, (float)(flagLowerUpperPlain*0.2));}
         
         // Go out when in inputTextMode
