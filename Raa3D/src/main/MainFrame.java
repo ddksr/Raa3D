@@ -415,12 +415,7 @@ public class MainFrame extends Widget{
                         modelName = file.getName();
                         infoBox("Info", "Loading model ... ");
                         loadAsyncModel = true;
-                        String ppFile = path + "." + PinPanel.EXT;
-                        if(new File(ppFile).exists()) {
-                            System.out.println("Pin panel for model " + modelName + " exists. Loading pin panel ...");
-                            loadPinPanel(ppFile);
-                        }
-                        else pinPanel = null; // set to null!
+                        
                         msgBoxDestroy();
     
                         // TODO: open pin panel if exists
@@ -1079,7 +1074,7 @@ public class MainFrame extends Widget{
 
     }
 
-    protected void initPinButtonsEnabled() {
+    public void initPinButtonsEnabled() {
         // always enabled
         openPinButton.setEnabled(openedModel != null); 
         newPinButton.setEnabled(openedModel != null);
@@ -1408,6 +1403,14 @@ public class MainFrame extends Widget{
             if(loadAsyncModel) {
                 if(restart) {    
                     loadModel(defaultPath + modelName);
+                    String ppFile = defaultPath + modelName + "." + PinPanel.EXT;
+                    if(new File(ppFile).exists()) {
+                        System.out.println("Pin panel for model " + modelName + " exists. Loading pin panel ...");
+                        loadPinPanel(ppFile);
+                        System.out.println(pinPanel.getNotes().size());
+                        gameUI.initPinButtonsEnabled();
+                    }
+                    else pinPanel = null; // set to null!
                     restart = false;
                     loadAsyncModel = false;
                 }

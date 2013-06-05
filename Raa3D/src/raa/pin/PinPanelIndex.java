@@ -56,6 +56,7 @@ public class PinPanelIndex {
 					String z = m.group(4);
 					String val = m.group(5);
 					PinNote note = new PinNote(Double.parseDouble(x), Double.parseDouble(y), Double.parseDouble(z), typ, val);
+					//System.out.println(note.getName());
 					note.isNew = false;
 					if(note.getType() == PinNote.TEXT_TYPE) {
 					    note.markUnsynced();

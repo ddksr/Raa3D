@@ -357,6 +357,7 @@ public class PinPanel {
         String noteFile = getNoteFilePath(note);
         if(noteFile != null) new File(noteFile).delete();
         hasChanges = true;
+        pointsChanged = true;
     }
     
     public String getNoteFilePath(PinNote note) {
