@@ -130,5 +130,6 @@ public class Bubbles {
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
+        
     }
 }

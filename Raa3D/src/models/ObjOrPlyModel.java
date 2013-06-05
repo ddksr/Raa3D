@@ -7,12 +7,15 @@ package models;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import static org.lwjgl.opengl.ARBBufferObject.*;
@@ -21,6 +24,8 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.glGetUniformLocation;
 import static org.lwjgl.opengl.GL20.glUniform4f;
 import static tools.Tools.allocFloats;
+
+import main.MainFrame;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -35,9 +40,10 @@ import org.smurn.jply.util.NormalizingPlyReader;
 import org.smurn.jply.util.TesselationMode;
 import org.smurn.jply.util.TextureMode;
 
+import tools.Quaternion;
 import tools.Vector;
 
-
+import org.lwjgl.opengl.Display;
 /**
  * @author Simon �agar
  *@since 0.2
@@ -74,6 +80,13 @@ public class ObjOrPlyModel {
 	//FloatBuffer verticesNormals_forPlyFiles;
 	//IntBuffer indexes_forPlyFiles;
 	
+		/*
+	 * Plain
+	 */
+	boolean plainVisible=false;
+	float plainX=0, plainY=0, plainZ=0;
+	float planeFak = 1;
+	float rotate = 0;
 	
 	public ObjOrPlyModel(String filepath){
 	    vertices = new ArrayList<Float>();
@@ -81,6 +94,16 @@ public class ObjOrPlyModel {
 	    maxX=Float.MIN_VALUE; maxY=Float.MIN_VALUE; maxZ=Float.MIN_VALUE;
 	    minX=Float.MAX_VALUE; minY=Float.MAX_VALUE; minZ=Float.MAX_VALUE;
 	    centerx=0; centery=0; centerz=0;
+	    
+	    float progress = (float)0;
+	    float increment = 0.001f;
+	    try {
+            increment = 1/(float)countLines(filepath);
+        } catch(IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+	    int progress1 = 0;
 	    
 	    if(filepath.endsWith(".obj")){
 	        meshes=new ArrayList<ObjOrPlyModel.Mesh>();
@@ -282,6 +305,17 @@ public class ObjOrPlyModel {
 	    
 	}
 	
+	public int countLines(String filename) throws IOException {
+	    LineNumberReader reader  = new LineNumberReader(new FileReader(filename));
+    	int cnt = 0;
+    	String lineRead = "";
+    	while ((lineRead = reader.readLine()) != null) {}
+    
+    	cnt = reader.getLineNumber(); 
+    	reader.close();
+    	return cnt;
+	}
+	
 	
 	public void increaseSubdivisionDepth() {
 	    numberOfSubdivisions=Math.min(aplicationSubdivisionLimit, numberOfSubdivisions+1);
@@ -354,11 +388,49 @@ public class ObjOrPlyModel {
 		    //org.lwjgl.opengl.Util.checkGLError();
 		    glDrawElements(GL_TRIANGLES, triangleCount_forPlyFiles * 3, GL_UNSIGNED_INT, 0);
 		    //org.lwjgl.opengl.Util.checkGLError();
+		    if(plainVisible) {
+		        drawPlain(1);
+		    }
 		}
 		Bubbles.getAndSetMatrices();
 		glPopMatrix();
 	}
 	
+	public void drawPlain(int i) {
+	    glPushMatrix();
+	    glTranslatef((float)centerx,(float)centery,(float)centerz);
+	    glRotatef((float)(rotate*Math.PI/180), 0, 1, 0);
+	    glTranslatef(-(float)centerx,-(float)centery,-(float)centerz);
+	    
+	    GL20.glUseProgram(0);
+        
+        glEnable(GL11.GL_BLEND);
+        glColor4f(0.8f, 0.06667f, 0.0f, 1);
+        glMaterial(GL_FRONT,GL_AMBIENT, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+        glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 0.5f}));
+        glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 0.f}));
+        glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
+        
+	    float maxxx = Float.MIN_VALUE;
+	    if(minX>maxxx) maxxx=minX;
+        if(maxX>maxxx) maxxx=maxX;
+        if(minY>maxxx) maxxx=minY;
+        if(maxY>maxxx) maxxx=maxY;
+        if(minZ>maxxx) maxxx=minZ;
+        if(maxZ>maxxx) maxxx=maxZ;
+	    
+        glTranslatef((float)centerx,(float)centery,(float)plainZ);
+        
+         glBegin(GL11.GL_QUADS);
+         glVertex3f(-maxxx, -maxxx,(float)centerz);
+         glVertex3f(maxxx, -maxxx,(float)centerz);
+         glVertex3f(maxxx, maxxx,(float)centerz);
+         glVertex3f(-maxxx, maxxx,(float)centerz);
+          glEnd();
+        
+        glPopMatrix();
+
+	}
 	
 	public static float[] getNormals(ArrayList<Float> vertices, ArrayList<Integer> faces){
 	    float[] normals= new float[vertices.size()];
@@ -641,6 +713,9 @@ public class ObjOrPlyModel {
 			glNormalPointer(GL_FLOAT, 0, (4*verticesCounters.get(subDepth)));
 			
 			glDrawElements(GL_TRIANGLES, facesCounters.get(subDepth), GL_UNSIGNED_INT, 0);
+			if(plainVisible) {
+                drawPlain(1);
+            }
 		}
 		
 		class FaceEdgePoints{
@@ -657,4 +732,35 @@ public class ObjOrPlyModel {
 		    LinkedHashSet<Integer> pointsOriginal;//These points are used for changing the original points' positions
 		}
 	}
+	
+	public boolean changePlainState() {
+        if(plainVisible)
+            plainVisible = false;
+        else
+            plainVisible = true;
+        return plainVisible;
+    }
+	
+	public void incPlain(int coordinate, float value){
+	    if(coordinate==0) //z
+	        plainZ+=value;
+	}
+	public void rotatePlain(int coordinate, float value){
+        if(coordinate==0) //z
+            rotate +=value;
+    }
+	
+	public void resizePlane(int coordinate, float value) {
+	    if(coordinate==0) //z
+            planeFak *= value;
+	}
+
+
+    public LinkedList<float[]> planeIntersection() {
+        double[] norm = {0, 0, 1};
+        Quaternion q = Quaternion.quaternionFromAngleAndRotationAxis(rotate, new double[]{0,1,0});
+        double[] vec = q.rotateVector3d(norm);
+        float d = -plainZ;
+        return rtreeOfTriangles_forPlyFiles.getPlaneIntersection((float)vec[0], (float)vec[1], (float)vec[2], d);
+    }
 }

@@ -119,5 +119,24 @@ public class Box {
 	    return false;
 	}
 	
+	public boolean isIntersectingPlane(float ap, float bp, float cp, float dp) {
+	    boolean positive = false;
+	    boolean negative = false;
+	    // build verteces
+	    for (int i = 0; i < 8; i++) {
+	        float x = (i % 2 == 0) ? c[0][0] : c[0][1]; // minX, maxX, minX, maxX, ... 
+	        float y = (i % 4 < 2) ? c[1][0] : c[1][1]; // minY, minY, maxY, maxY, ...
+	        float z = (i < 4) ? c[2][0] : c[2][1]; // first four times minZ, then maxZ
+	        float res = (ap*x + bp*y + cp*z + dp);
+	        if (res > 0) {
+	            positive = true;
+	        } else if (res < 0) {
+	            negative = true;
+	        }
+	        else return true; // point lies on the plain
+	    }
+	    return positive ^ negative; // xor, all must be positive or all negative, othervise no intersection
+	}
+	
 }
 
