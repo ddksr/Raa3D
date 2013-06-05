@@ -88,8 +88,12 @@ import static org.lwjgl.opengl.GL20.glShaderSource;
 import static org.lwjgl.opengl.GL20.glValidateProgram;
 import static tools.Tools.allocFloats;
 
+import java.awt.AWTException;
+import java.awt.Graphics2D;
 import java.awt.Panel;
+import java.awt.Robot;
 import java.awt.color.ColorSpace;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
 import java.io.BufferedReader;
@@ -106,6 +110,7 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
@@ -140,6 +145,7 @@ import de.matthiasmann.twl.FolderBrowser;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Label;
 import de.matthiasmann.twl.ListBox;
+import de.matthiasmann.twl.ProgressBar;
 import de.matthiasmann.twl.ScrollPane;
 import de.matthiasmann.twl.ScrollPane.Fixed;
 import de.matthiasmann.twl.Scrollbar;
@@ -224,6 +230,9 @@ public class MainFrame extends Widget{
     
     private static NeckVeinsSettings settings;
     public static MainFrame gameUI;
+
+    public static boolean loadAsyncModel;
+    
     
     //Widgets
     private static ThemeManager themeManager;
@@ -248,12 +257,14 @@ public class MainFrame extends Widget{
     private FileSelector fileSelector;
     
     /**image***/
-    private ImageWidget imageWidget;
+    private static ImageWidget imageWidget;
     /**********/
+    public static ProgressBar progressBar;
     
     private ListBox displayModeListBox;
     private de.matthiasmann.twl.ToggleButton fullscreenToggle;
 
+    private static Widget draggableWidget;
     private TextArea msgBoxContent;
     private TextArea msgBoxTitle;
     private EditField msgBoxInput;
@@ -270,7 +281,7 @@ public class MainFrame extends Widget{
     private ToggleButton pinTxtToggleButton;
     
     // Pin note iteraction
-    private ScrollPane pinItrPane;
+    private static ScrollPane pinItrPane;
     private EditField textPinField;
     private Label xLabelField;
     private EditField xPinField;
@@ -286,83 +297,100 @@ public class MainFrame extends Widget{
 
     private static boolean dialogOpened = false;
     private static boolean menuOpened = false;
-	//parameters
-	static float fovy=45;
-	static float zNear=1;
-	static float zFar=10000;
-	static String title="Raa3D";
-	////global variables
-	//GUI and display modes
-	static GUI gui;
-	static LWJGLRenderer renderer;
-	static DisplayMode[] displayModes;
-	static DisplayMode currentDisplayMode;
-	static String[]displayModeStrings;
-	static int selectedResolution=-1;
-	//veins model and shaders
-	static ObjOrPlyModel openedModel;
-	static Quaternion currentModelOrientation, addedModelOrientation;
-	static int[] shaderPrograms, vertexShaders, fragmentShaders;
-	static final int NUMBER_OF_SHADER_PROGRAMS=9;
-	static int activeShaderProgram=6;
-	//HUD
-	static Texture rotationCircle, circleGlow, movementCircle, rotationElipse, movementElipse, ellipseGlow, bubbleTexture;
-	//window variables
-	private static boolean isRunning;
-	private static long timePastFrame, fps, timePastFps, fpsToDisplay;
-	//camera pose
-	static Quaternion cameraOrientation;
-	static float cameraX=0, cameraY=0, cameraZ=0, cameraMoveSpeed=1.667f;
-	//mouse position
-	static int mouse_x = Mouse.getX();
-	static int mouse_y = Mouse.getY();
-	//zoom
-	static double zoom = 1;
+    //parameters
+    static float fovy=45;
+    static float zNear=1;
+    static float zFar=10000;
+    static String title="Raa3D";
+    ////global variables
+    //GUI and display modes
+    public static GUI gui;
+    static LWJGLRenderer renderer;
+    static DisplayMode[] displayModes;
+    static DisplayMode currentDisplayMode;
+    static String[]displayModeStrings;
+    static int selectedResolution=-1;
+    //veins model and shaders
+    static ObjOrPlyModel openedModel;
+    static Quaternion currentModelOrientation, addedModelOrientation;
+    static int[] shaderPrograms, vertexShaders, fragmentShaders;
+    static final int NUMBER_OF_SHADER_PROGRAMS=9;
+    static int activeShaderProgram=6;
+    //HUD
+    static Texture rotationCircle, circleGlow, movementCircle, rotationElipse, movementElipse, ellipseGlow, bubbleTexture;
+    //window variables
+    private static boolean isRunning;
+    private static long timePastFrame, fps, timePastFps, fpsToDisplay;
+    //camera pose
+    static Quaternion cameraOrientation;
+    static float cameraX=0, cameraY=0, cameraZ=0, cameraMoveSpeed=1.667f;
+    //mouse position
+    static int mouse_x = Mouse.getX();
+    static int mouse_y = Mouse.getY();
+    //zoom
+    static double zoom = 1;
 
-	static double cameraRotationSpeed=(float)(72*Math.PI/180/60);
-	//variables for rotating the veins
-	static double[] screenPlaneInitialUpperLeft, screenPlaneInitialUpperRight, screenPlaneInitialLowerLeft, screenPlaneInitialLowerRight;
-	static double veinsRadius;
-	static double[] veinsGrabbedAt=null;
-	static int clickedOn=0;
-	static float rotationCircleAngle=0, rotationCircleDistance=0, ellipseSide=0;
-	//constants
-	static final int CLICKED_ON_NOTHING=0, CLICKED_ON_VEINS_MODEL=1, CLICKED_ON_ROTATION_CIRCLE=2, CLICKED_ON_MOVE_CIRCLE=3,
-	CLICKED_ON_ROTATION_ELLIPSE=4, CLICKED_ON_MOVE_ELLIPSE=5, CLICKED_ON_BUTTONS=6;
-	static final float ellipsef=1.1180339887498948482045868343656f;
-	
-	// PinPanel related variables
-	private static boolean loadingPinPanel = false;
-	private static boolean loadingImage = false;
-	private static PinPanel pinPanel;
-	
-	
-	//private static TextArea keyboardInputText = null;
-	//private static String inputContent = null;
-	private static boolean inputTextMode = false;
-	
-	// String containing default path of the model
-	private static String defaultPath = null;
-	private static String modelName = null;
-	
-	private static boolean editMode = false;
-	
-	private static int pinNoteType = PinNote.TEXT_TYPE;
-	
-	public static boolean pinsVisible = false;
-	
-	private static double[] lastRay = null;
-	
-	/**
+    static double cameraRotationSpeed=(float)(72*Math.PI/180/60);
+    //variables for rotating the veins
+    static double[] screenPlaneInitialUpperLeft, screenPlaneInitialUpperRight, screenPlaneInitialLowerLeft, screenPlaneInitialLowerRight;
+    static double veinsRadius;
+    static double[] veinsGrabbedAt=null;
+    static int clickedOn=0;
+    static float rotationCircleAngle=0, rotationCircleDistance=0, ellipseSide=0;
+    //constants
+    static final int CLICKED_ON_NOTHING=0, CLICKED_ON_VEINS_MODEL=1, CLICKED_ON_ROTATION_CIRCLE=2, CLICKED_ON_MOVE_CIRCLE=3,
+    CLICKED_ON_ROTATION_ELLIPSE=4, CLICKED_ON_MOVE_ELLIPSE=5, CLICKED_ON_BUTTONS=6;
+    static final float ellipsef=1.1180339887498948482045868343656f;
+    
+    // PinPanel related variables
+    private static boolean loadingPinPanel = false;
+    private static boolean loadingImage = false;
+    private static PinPanel pinPanel;
+    
+    
+    //private static TextArea keyboardInputText = null;
+    //private static String inputContent = null;
+    private static boolean inputTextMode = false;
+    
+    // String containing default path of the model
+    private static String defaultPath = null;
+    private static String modelName = null;
+    
+    private static boolean editMode = false;
+    
+    private static int pinNoteType = PinNote.TEXT_TYPE;
+    
+    public static boolean pinsVisible = false;
+    
+    private static double[] lastRay = null;
+
+    // Set the source of light
+    private static float[] lightOrigin = new float[]{0.0f, 1000.0f, 0.0f , 0.0f};
+    private static int lightOriginAngleX = -90;
+    private static int lightOriginAngleY = 0;
+    private static int lightDistance = 1000;
+    
+    public static ArrayList<float[]> bubbles_absolutePoints=new ArrayList<float[]>();
+    public static ArrayList<float[]> bubbles_images=new ArrayList<float[]>();
+    public static ArrayList<float[]> bubbles_text=new ArrayList<float[]>();
+    
+    /**
      * @since 0.4
      * @version 0.4
      */
-	public MainFrame(){
-	    double[] ray = {0., 0. ,0.};
-	    lastRay = ray;
-	    ray = null;
-	    
-	    fileSelector = new FileSelector();
+    public MainFrame(){
+        // Create tmp
+        File tmp = new File("tmp");
+        if(! tmp.exists()) {
+            tmp.mkdir();
+        }
+        
+        
+        double[] ray = {0., 0. ,0.};
+        lastRay = ray;
+        ray = null;
+        
+        fileSelector = new FileSelector();
         fileSelector.setTheme("fileselector");
         fileSelector.setVisible(false);
         de.matthiasmann.twl.model.JavaFileSystemModel fsm= JavaFileSystemModel.getInstance();
@@ -384,10 +412,10 @@ public class MainFrame extends Widget{
                         initPinButtonsEnabled();
                     }
                     else {
-                  		defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
+                        defaultPath = path.substring(0, path.lastIndexOf(File.separatorChar)) + File.separatorChar;
                         modelName = file.getName();
                         infoBox("Info", "Loading model ... ");
-                        loadModel(file.getAbsolutePath());
+                        loadAsyncModel = true;
                         String ppFile = path + "." + PinPanel.EXT;
                         if(new File(ppFile).exists()) {
                             System.out.println("Pin panel for model " + modelName + " exists. Loading pin panel ...");
@@ -434,6 +462,11 @@ public class MainFrame extends Widget{
            }
         });
         add(open);
+        /*
+         * progressbar
+         */
+        progressBar = new ProgressBar();
+        add(progressBar);
         
         modeToggleButton = new ToggleButton("Edit mode");
         modeToggleButton.setTheme("togglebutton");
@@ -460,7 +493,7 @@ public class MainFrame extends Widget{
         
         
              
-        prtscr = new Button("Screen shot...");
+        prtscr = new Button("Screen shot ...");
         prtscr.setTheme("button");
         prtscr.setTooltipContent("Create screenshot.");
         prtscr.addCallback(new Runnable(){
@@ -491,7 +524,7 @@ public class MainFrame extends Widget{
                try {
                    //writePMImageToFile(image, "C:\\slike\\mojaslika.pm");
                    ImageIO.write(image, "PNG", outfile); // "PNG" or "JPG"
-                   JOptionPane.showMessageDialog(null,"Slika " + prtscr_filename + " je bila shranjena", "Slika shranjena", JOptionPane.WARNING_MESSAGE);
+                   alertBox("Image " + prtscr_filename + " was saved.", "Image saved.");
                } catch (IOException e) { 
                    e.printStackTrace(); 
                }        
@@ -623,12 +656,12 @@ public class MainFrame extends Widget{
         "If the picture drawn for the right eye is shown to your left eye and vice versa, \n" +
         "try moving the slider on the other side of it's middle point.";
         String creditsString="Author(s):\n" +
-        		" - Simon �agar\n" +
-        		" - 3rd party libraries used, their respective licenses can be seen below.\n\n" +
-        		"This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.\n" +
-        		"To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/\n" +
-        		" or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.\n" +
-        		"\n" +
+                " - Simon �agar\n" +
+                " - 3rd party libraries used, their respective licenses can be seen below.\n\n" +
+                "This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.\n" +
+                "To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/\n" +
+                " or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.\n" +
+                "\n" +
                 "This software uses LWJGL (Lightweight Java Game Library).\n" +
                 "LWJGL's license is quoted below between the two lines drawn with minus signs:\n" +
                 "-------------------------------------- LWJGL License: --------------------------------------\n" +
@@ -687,33 +720,33 @@ public class MainFrame extends Widget{
                 "SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\"\n"+
                 "--------------------------------------------------------------------------------------------\n\n\n\n"+
                 
-        		"This software uses TWL (Themable Widget Library).\n" +
-        		"TWL's license is quoted below between the two lines drawn with minus signs:\n" +
-        		"--------------------------------------- TWL License: ---------------------------------------\n" +
-        		"\"Copyright (c) 2008-2009, Matthias Mann\n\n" +
-        		"All rights reserved.\n\n" +
-        		"Redistribution and use in source and binary forms, with or without\n" +
-        		"modification, are permitted provided that the following conditions are met:\n\n" +
-        		"     * Redistributions of source code must retain the above copyright notice,\n" +
-        		"       this list of conditions and the following disclaimer.\n" +
-        		"     * Redistributions in binary form must reproduce the above copyright\n" +
-        		"       notice, this list of conditions and the following disclaimer in the\n" +
-        		"       documentation and/or other materials provided with the distribution.\n" +
-        		"     * Neither the name of Matthias Mann nor the names of its contributors may\n" +
-        		"       be used to endorse or promote products derived from this software\n" +
-        		"       without specific prior written permission.\n\n" +
-        		"THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n" +
-        		"\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n" +
-        		"LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n" +
-        		"A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR\n" +
-        		"CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,\n" +
-        		"EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\n" +
-        		"PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR\n" +
-        		"PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF\n" +
-        		"LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\n" +
-        		"NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n" +
-        		"SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\"\n" +
-        		"--------------------------------------------------------------------------------------------\n\n\n"+
+                "This software uses TWL (Themable Widget Library).\n" +
+                "TWL's license is quoted below between the two lines drawn with minus signs:\n" +
+                "--------------------------------------- TWL License: ---------------------------------------\n" +
+                "\"Copyright (c) 2008-2009, Matthias Mann\n\n" +
+                "All rights reserved.\n\n" +
+                "Redistribution and use in source and binary forms, with or without\n" +
+                "modification, are permitted provided that the following conditions are met:\n\n" +
+                "     * Redistributions of source code must retain the above copyright notice,\n" +
+                "       this list of conditions and the following disclaimer.\n" +
+                "     * Redistributions in binary form must reproduce the above copyright\n" +
+                "       notice, this list of conditions and the following disclaimer in the\n" +
+                "       documentation and/or other materials provided with the distribution.\n" +
+                "     * Neither the name of Matthias Mann nor the names of its contributors may\n" +
+                "       be used to endorse or promote products derived from this software\n" +
+                "       without specific prior written permission.\n\n" +
+                "THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS\n" +
+                "\"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT\n" +
+                "LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR\n" +
+                "A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR\n" +
+                "CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,\n" +
+                "EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\n" +
+                "PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR\n" +
+                "PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF\n" +
+                "LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING\n" +
+                "NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS\n" +
+                "SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.\"\n" +
+                "--------------------------------------------------------------------------------------------\n\n\n"+
                 "TWL uses XML Pull Parser 3 (XPP3).\n" +
                 "It's license requests the following two lines to be quoted:\n" +
                 "  \"This product includes software developed by the Indiana University \n" +
@@ -868,13 +901,13 @@ public class MainFrame extends Widget{
         
         displayModeListBox.setModel(scListModel);
         if(selectedResolution!=-1)displayModeListBox.setSelected(selectedResolution);
-	}
-	
-	
-	
-	protected void safeExit() {
-	    System.out.println("Safe exit");
-	    if (pinPanel != null) {
+    }
+    
+    
+    
+    protected void safeExit() {
+        System.out.println("Safe exit");
+        if (pinPanel != null) {
             try {
                 boolean success = pinPanel.close();
                 if (success) {
@@ -902,8 +935,8 @@ public class MainFrame extends Widget{
         else exitProgram(0);
     }
     /**
-	 * Init pin related swings
-	 */
+     * Init pin related swings
+     */
     private void pinInit() {
         pinPanelToggleButton = new ToggleButton("Pin panel");
         pinPanelToggleButton.setTheme("togglebutton");
@@ -1056,7 +1089,7 @@ public class MainFrame extends Widget{
         pinTypToggleButton.setEnabled(openedModel != null && pinPanel != null && editMode);
     }
     protected void setPinPanelButtonsVisible(boolean visible) {
-	    openPinButton.setVisible(visible);
+        openPinButton.setVisible(visible);
         savePinButton.setVisible(visible);
         saveAsPinButton.setVisible(visible);
         newPinButton.setVisible(visible);
@@ -1067,30 +1100,30 @@ public class MainFrame extends Widget{
         pinImgToggleButton.setVisible(visible);
         pinAbsToggleButton.setVisible(visible);
     }
-	
+    
     public void setButtonsEnabled(boolean enabled){
-	    open.setEnabled(enabled);
-	    pinPanelToggleButton.setEnabled(enabled);
+        open.setEnabled(enabled);
+        pinPanelToggleButton.setEnabled(enabled);
         pinTypToggleButton.setEnabled(enabled && editMode);
         displayModesButton.setEnabled(enabled);
         help.setEnabled(enabled);
         credits.setEnabled(enabled);
         prtscr.setEnabled(enabled);
-	}
-	
-	/**
+    }
+    
+    /**
      * @since 0.4
      * @version 0.4
      */
-	public void openAFile(){ 
+    public void openAFile(){ 
         fileSelector.setVisible(true);
         setButtonsEnabled(false);
     }
-	
+    
 
-	/**
-	 * Opens a pin panel file
-	 */
+    /**
+     * Opens a pin panel file
+     */
     public void openAPinPanelFile(){ 
         fileSelector.setVisible(true);
         setButtonsEnabled(false);
@@ -1122,7 +1155,7 @@ public class MainFrame extends Widget{
 
         initPinButtonsEnabled();
     }
-	
+    
     /**
      * Saves a new pin panel if possible.
      */
@@ -1163,7 +1196,7 @@ public class MainFrame extends Widget{
         }
     }
     
-	/**
+    /**
      * @since 0.4
      * @version 0.4
      */
@@ -1213,27 +1246,31 @@ public class MainFrame extends Widget{
         fullscreenToggle.setVisible(false);
         setButtonsEnabled(true);
     }
-	
-	/**
+    
+    /**
      * @since 0.4
      * @version 0.4
      */
-	@Override
+    @Override
     protected void layout(){
-	    open.adjustSize();
-	    pinPanelToggleButton.adjustSize();
-	    openPinButton.adjustSize();
-	    newPinButton.adjustSize();
-	    savePinButton.adjustSize();
-	    saveAsPinButton.adjustSize();
-	    displayModesButton.adjustSize();
-	    stereoToggleButton.adjustSize();
-	    additionalContentToggleButton.adjustSize();
-	    
-	    help.adjustSize();
-	    credits.adjustSize();
-	    prtscr.adjustSize();
-	    exit.adjustSize();
+        open.adjustSize();
+        pinPanelToggleButton.adjustSize();
+        openPinButton.adjustSize();
+        newPinButton.adjustSize();
+        savePinButton.adjustSize();
+        saveAsPinButton.adjustSize();
+        displayModesButton.adjustSize();
+        stereoToggleButton.adjustSize();
+        additionalContentToggleButton.adjustSize();
+        /*
+         * progressbar
+         */
+        progressBar.adjustSize();
+        
+        help.adjustSize();
+        credits.adjustSize();
+        prtscr.adjustSize();
+        exit.adjustSize();
         int openHeight=Math.max(25,settings.resHeight/18);
         
         int buttonWidth=settings.resWidth/11+1;
@@ -1337,67 +1374,90 @@ public class MainFrame extends Widget{
         helpScrollPane.setPosition(settings.resWidth/2-rlWidth/2, settings.resHeight/6);
         helpTextArea.setSize(rlWidth, fsHeight);
         
+        /*
+         * Progressbar
+         */
+        progressBar.setSize(settings.resWidth, 30);
+        progressBar.setPosition(0, settings.resHeight-30);
+        
     }
-	
-	/**
-	 * @since 0.1
-	 * @version 0.4
-	 */
-	private static void mainLoop(){
-		init();
-		setupView();
-		fps=0;
-		timePastFrame=(Sys.getTime()*1000)/Sys.getTimerResolution();
-		timePastFps=timePastFrame;
-		fpsToDisplay=0;
-		while(!Display.isCloseRequested() && isRunning){
-			resetView();
-			if (!inputTextMode) pollInput();
-			render();
-			gui.update();
-			Display.update();
-			logic();
-			Display.sync(settings.frequency);
-		}
-	}
-	
-	/**
+    float inc = 0.001f;
+    /**
+     * @since 0.1
+     * @version 0.4
+     */
+    private static void mainLoop(){
+        init();
+        setupView();
+        fps=0;
+        timePastFrame=(Sys.getTime()*1000)/Sys.getTimerResolution();
+        timePastFps=timePastFrame;
+        fpsToDisplay=0;
+        
+        boolean restart = false;
+        
+        while(!Display.isCloseRequested() && isRunning){
+            resetView();
+            //if (!inputTextMode) pollInput();
+            pollInput();
+            render();
+            gui.update();
+            Display.update();
+            logic();
+            Display.sync(settings.frequency);
+            
+            if(loadAsyncModel) {
+                if(restart) {    
+                    loadModel(defaultPath + modelName);
+                    restart = false;
+                    loadAsyncModel = false;
+                }
+                else {
+                    restart = true;
+                }
+                
+            }
+        }
+    }
+    
+    /**
      * @since 0.4
      * @version 0.4
      */
-	private static void loadModel(String fileName){
-	    openedModel = null;
-	    System.gc();
-	    openedModel = new ObjOrPlyModel(fileName);
-	    System.gc();
-	    //Calculate the appropriate camera distance:
-	    //The following code takes the most extreme values on each coordinate
-	    //of all the specified vertices in the .obj file.
-	    //It uses the bigger distance (of two) from the average location on each axis
-	    //to calculate the radius of a circle that would surely enclose every vertex,
-	    //although allowing the radius to be slightly bigger than necessary.
-	    double d1=openedModel.minX-openedModel.centerx;
-	    double d2=openedModel.maxX-openedModel.centerx;
-	    double d3=openedModel.minY-openedModel.centery;
-	    double d4=openedModel.maxY-openedModel.centery;
-	    double d5=openedModel.minZ-openedModel.centerz;
-	    double d6=openedModel.maxZ-openedModel.centerz;
-	    d1*=d1;d2*=d2;d3*=d3;d4*=d4;d5*=d5;d6*=d6;
-	    d1=Math.max(d1, d2);
-	    d2=Math.max(d3, d4);
-	    d3=Math.max(d5, d6);
-	    d1=Math.sqrt(Math.max(Math.max(d1+d2, d2+d3), d1+d3));
-	    //
-	    double fovMin;//The smaller angle of view of the horizontal and vertical ones.
-	    if(settings.resWidth<settings.resHeight)fovMin=fovy*settings.resWidth/(double)settings.resHeight;else fovMin=fovy;
-	    fovMin=Math.PI*fovMin/180;//To radians.
-	    veinsRadius=d1/Math.sqrt(2);
-	    cameraZ=(float)(d1/Math.tan(fovMin/2));
-	    cameraX=0;cameraY=0;
-	    cameraOrientation=new Quaternion();
-	    
-	    double yAngle=Math.PI*fovy/360d;
-	    double xAngle=yAngle*settings.resWidth/settings.resHeight;
+    private static void loadModel(String fileName){
+        openedModel = null;
+        System.gc();
+        openedModel = new ObjOrPlyModel(fileName);
+        System.gc();
+        
+        //Calculate the appropriate camera distance:
+        //The following code takes the most extreme values on each coordinate
+        //of all the specified vertices in the .obj file.
+        //It uses the bigger distance (of two) from the average location on each axis
+        //to calculate the radius of a circle that would surely enclose every vertex,
+        //although allowing the radius to be slightly bigger than necessary.
+        double d1=openedModel.minX-openedModel.centerx;
+        double d2=openedModel.maxX-openedModel.centerx;
+        double d3=openedModel.minY-openedModel.centery;
+        double d4=openedModel.maxY-openedModel.centery;
+        double d5=openedModel.minZ-openedModel.centerz;
+        double d6=openedModel.maxZ-openedModel.centerz;
+        d1*=d1;d2*=d2;d3*=d3;d4*=d4;d5*=d5;d6*=d6;
+        d1=Math.max(d1, d2);
+        d2=Math.max(d3, d4);
+        d3=Math.max(d5, d6);
+        d1=Math.sqrt(Math.max(Math.max(d1+d2, d2+d3), d1+d3));
+        //
+        double fovMin;//The smaller angle of view of the horizontal and vertical ones.
+        if(settings.resWidth<settings.resHeight)fovMin=fovy*settings.resWidth/(double)settings.resHeight;else fovMin=fovy;
+        fovMin=Math.PI*fovMin/180;//To radians.
+        veinsRadius=d1/Math.sqrt(2);
+        cameraZ=(float)(d1/Math.tan(fovMin/2));
+        cameraX=0;cameraY=0;
+        cameraOrientation=new Quaternion();
+        
+        double yAngle=Math.PI*fovy/360d;
+        double xAngle=yAngle*settings.resWidth/settings.resHeight;
         double screenPlaneZ=-d1/Math.tan(fovMin/2);
         double screenPlaneY=Math.tan(yAngle)*(-screenPlaneZ);
         double screenPlaneX=Math.tan(xAngle)*(-screenPlaneZ);
@@ -1405,30 +1465,33 @@ public class MainFrame extends Widget{
         screenPlaneInitialUpperRight=new double[]{screenPlaneX, screenPlaneY, screenPlaneZ};
         screenPlaneInitialLowerLeft=new double[]{-screenPlaneX, -screenPlaneY, screenPlaneZ};
         screenPlaneInitialLowerRight=new double[]{screenPlaneX, -screenPlaneY, screenPlaneZ};
-	    
-        veinsGrabbedAt=null;
         
-        currentModelOrientation = new Quaternion();
-	    addedModelOrientation = new Quaternion();
-	    
-	    
-	}
+        veinsGrabbedAt=null;
+        double angle1= Math.PI*-90/180;
+        double angle2= Math.PI*180/180;
+        currentModelOrientation = Quaternion.quaternionFromAngleAndRotationAxis(angle1, new double[]{1,0,0});
+        double[] v = Quaternion.quaternionReciprocal(currentModelOrientation).rotateVector3d(new double[]{0,1,0});
+        currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, Quaternion.quaternionFromAngleAndRotationAxis(angle2, v));
+        addedModelOrientation = new Quaternion();
+        
+        
+    }
     private static void loadPinPanel(String filePath) {
-	    try {
+        try {
             pinPanel = PinPanel.open(filePath);
         } catch(IOException e) {
             // TODO error message if pin could not be opened
             e.printStackTrace();
         }
-	}
-	
-	/**
-	 * @since 0.1
-	 * @version 0.4
-	 */
-	private static void init(){
-	    //load textures
-	    try {
+    }
+    
+    /**
+     * @since 0.1
+     * @version 0.4
+     */
+    private static void init(){
+        //load textures
+        try {
             rotationCircle = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream("main/rotationCircle.png"));
         } catch(IOException e) {
             System.err.println("Loading texture main/rotationCircle.png unsuccessful");
@@ -1471,16 +1534,16 @@ public class MainFrame extends Widget{
             System.err.println("Loading texture main/bubble.png unsuccessful");
             e.printStackTrace();
         }
-	}
-	
-	/**
+    }
+    
+    /**
      * @since 0.1
      * @version 0.1
      */
-	private static void drawHUD(){
-	    
-	    GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
-	    //prepare
+    private static void drawHUD(){
+        
+        GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
+        //prepare
         glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
@@ -1490,13 +1553,13 @@ public class MainFrame extends Widget{
         glPushMatrix();
         glLoadIdentity();
         glDisable(GL_LIGHTING);
-	    glEnable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_2D);
         glClearColor(0f, 0f, 0f, 0f);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         
         //begin drawing
-	    float w=settings.resWidth;
+        float w=settings.resWidth;
         float h=settings.resHeight;
         float r=w/18;
         float offset=r*2/3;
@@ -1518,6 +1581,8 @@ public class MainFrame extends Widget{
         glVertex3f(x+1.5f*r, y-r, -1.0f);
         glEnd();
         
+        
+        
         GL11.glBindTexture(GL_TEXTURE_2D, movementElipse.getTextureID());
         glBegin(GL_QUADS);
         glTexCoord2f(1, 0);
@@ -1529,6 +1594,8 @@ public class MainFrame extends Widget{
         glTexCoord2f(1, 1);
         glVertex3f(x2+1.5f*r, y2-r, -1.0f);
         glEnd();
+        
+        
         
         if(clickedOn==CLICKED_ON_MOVE_ELLIPSE || clickedOn==CLICKED_ON_ROTATION_ELLIPSE){
             float x3=x, y3=y;
@@ -1606,54 +1673,53 @@ public class MainFrame extends Widget{
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
-	}
-	
-	/**
-	 * @since 0.1
-	 * @version 0.2
-	 */
-	private static void setupView(){
-		glEnable(GL_CULL_FACE);
-		glEnable(GL_DEPTH_TEST);
-		glViewport(0, 0, settings.resWidth, settings.resHeight);
-	    GL11.glMatrixMode(GL11.GL_PROJECTION);
-	    GL11.glLoadIdentity();
-	    GLU.gluPerspective(fovy, settings.resWidth/(float)settings.resHeight, zNear, zFar);
-		glShadeModel(GL_SMOOTH);
-		setCameraAndLight(0);
-	}
-	
-	/**
-	 * @since 0.1
-	 * @version 0.1
-	 */
-	private static void resetView(){
-	    glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-	}
-	
-	/**
-	 * @since 0.1
-	 * @version 0.1
-	 */
-	private static void setCameraAndLight(float offset){
-	    double v[]= new double[]{offset, 0, 0};
+    }
+    
+    /**
+     * @since 0.1
+     * @version 0.2
+     */
+    private static void setupView(){
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glViewport(0, 0, settings.resWidth, settings.resHeight);
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity();
+        GLU.gluPerspective(fovy, settings.resWidth/(float)settings.resHeight, zNear, zFar);
+        glShadeModel(GL_SMOOTH);
+        setCameraAndLight(0);
+    }
+    
+    /**
+     * @since 0.1
+     * @version 0.1
+     */
+    private static void resetView(){
+        glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+    }
+    
+    /**
+     * @since 0.1
+     * @version 0.1
+     */
+    private static void setCameraAndLight(float offset){
+        double v[]= new double[]{offset, 0, 0};
         v=cameraOrientation.rotateVector3d(v);
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glLoadIdentity();
-		Quaternion worldOrientation = Quaternion.quaternionReciprocal(cameraOrientation);
-		glMultMatrix(worldOrientation.getRotationMatrix(false));
-		glTranslatef(-cameraX+(float)v[0], -cameraY+(float)v[1], -cameraZ+(float)v[2]);
-		
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		glLight(GL_LIGHT0,GL_POSITION,allocFloats(new float[]{0.0f, 1000.0f, 0.0f , 0.0f}));
-		glLight(GL_LIGHT0,GL_DIFFUSE,allocFloats(new float[]{1f,1f,1f,1}));
-		glLight(GL_LIGHT0,GL_AMBIENT,allocFloats(new float[]{0.3f,0.3f,0.3f,1}));
-		glLight(GL_LIGHT0,GL_SPECULAR,allocFloats(new float[]{1.0f, 1.0f, 1.0f, 1.0f}));
-	}
-	
-	public static void initStencil(){
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glLoadIdentity();
+        Quaternion worldOrientation = Quaternion.quaternionReciprocal(cameraOrientation);
+        glMultMatrix(worldOrientation.getRotationMatrix(false));
+        glTranslatef(-cameraX+(float)v[0], -cameraY+(float)v[1], -cameraZ+(float)v[2]); 
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+        glLight(GL_LIGHT0,GL_POSITION,allocFloats(lightOrigin)); // Set light source
+        glLight(GL_LIGHT0,GL_DIFFUSE,allocFloats(new float[]{1f,1f,1f,1}));
+        glLight(GL_LIGHT0,GL_AMBIENT,allocFloats(new float[]{0.3f,0.3f,0.3f,1}));
+        glLight(GL_LIGHT0,GL_SPECULAR,allocFloats(new float[]{1.0f, 1.0f, 1.0f, 1.0f}));
+    }
+    
+    public static void initStencil(){
         //Stencil
         glStencilMask(0x01);
         GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
@@ -1696,13 +1762,12 @@ public class MainFrame extends Widget{
         glDepthMask(true);
         glStencilMask(0x00);
     }
-	
-	private static void renderVeins(){
-	    if(openedModel!=null){
+    
+    private static void renderVeins(){
+        if(openedModel!=null){
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             Quaternion compositeOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
-            
             FloatBuffer fb= compositeOrientation.getRotationMatrix(false);
             GL11.glMultMatrix(fb);
             
@@ -1712,68 +1777,64 @@ public class MainFrame extends Widget{
             glMaterial(GL_FRONT,GL_DIFFUSE, allocFloats(new float[]{0.8f, 0.06667f, 0.0f, 1}));
             glMaterial(GL_FRONT,GL_SPECULAR, allocFloats(new float[]{0.0f, 0.0f, 0.0f, 1f}));
             glMaterial(GL_FRONT, GL_SHININESS, allocFloats(new float[]{0.5f, 0.25f, 0.25f, 0.25f}));
-            
             openedModel.render(shaderPrograms[activeShaderProgram-1]);
             GL20.glUseProgram(0);
             glPopMatrix();
         }
-	}
-	
-	/**
-	 * @since 0.1
-	 * @version 0.4
-	 */
-	private static void render(){
-	    if(settings.stereoEnabled){
-	        float offset=settings.stereoValue/10f;
-	        initStencil();
-	        glStencilFunc(GL_EQUAL, 0, 0x01);
-	        setCameraAndLight(offset);
+    }
+    
+    /**
+     * @since 0.1
+     * @version 0.4
+     */
+    private static void render(){
+        if(settings.stereoEnabled){
+            float offset=settings.stereoValue/10f;
+            initStencil();
+            glStencilFunc(GL_EQUAL, 0, 0x01);
+            setCameraAndLight(offset);
             renderVeins();
             glStencilFunc(GL_EQUAL, 1, 0x01);
             setCameraAndLight(-offset);
             renderVeins();
             glDisable(GL_STENCIL_TEST);
-	    }
-	    else{
-	        setCameraAndLight(0);
-	        renderVeins();
-	        
-	        
-	        
-	        //TODO move to if pins visible
-	        if(pinsVisible && pinPanel != null){
-	            for(PinNote nt : pinPanel.getNotes()) {
-	            }
-	            
-	        }
-	        ////////////////////// XXXXXX
-	        if(bubbles_absolutePoints.size()>0){
-	            for(float[] bubble:bubbles_absolutePoints){
-	                Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "red");
-	            }
+        }
+        else{
+            setCameraAndLight(0);
+            renderVeins();
+            
+          //TODO move to if pins visible
+            if(pinsVisible && pinPanel != null){
+                for(PinNote nt : pinPanel.getNotes()) {
+                }
+                
             }
-	        if(bubbles_images.size()>0){
+            ////////////////////// XXXXXX
+            if(bubbles_absolutePoints.size()>0){
+                for(float[] bubble:bubbles_absolutePoints){
+                    Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "red");
+                }
+            }
+            if(bubbles_images.size()>0){
                 for(float[] bubble:bubbles_images){
                     Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "green");
                 }
             }
-	        if(bubbles_text.size()>0){
+            if(bubbles_text.size()>0){
                 for(float[] bubble:bubbles_text){
                     Bubbles.drawBubble(bubble[0], bubble[1], bubble[2], "blue");
                 }
             }
-	        ///////////////////// XXXXXX
-	    }
-	    
-	    
-		//HUD
-		drawHUD();
-		if(settings.isFpsShown)Display.setTitle(title+" - FPS: "+fpsToDisplay);else	Display.setTitle(title);
-	}
-	
-	private static double[] getRaySphereIntersection(int x, int y){
-	    //figure out if the click on the screen intersects the circle that surrounds the veins model
+            ///////////////////// XXXXXX
+            
+        }
+        //HUD
+        drawHUD();
+        if(settings.isFpsShown)Display.setTitle(title+" - FPS: "+fpsToDisplay);else Display.setTitle(title);
+    }
+    
+    private static double[] getRaySphereIntersection(int x, int y){
+        //figure out if the click on the screen intersects the circle that surrounds the veins model
         double[] d=getRayDirection(x, y);//get the direction of the "ray" cast from the camera location
         double[] e=new double[]{cameraX, cameraY, cameraZ};//a vector representing the camera location
         double[] c=new double[3];//the location of the sphere is the zero vector
@@ -1791,51 +1852,170 @@ public class MainFrame extends Widget{
             
             if(t2<0)return Vector.sum(e, Vector.vScale(d, t1));else return Vector.sum(e, Vector.vScale(d, t2));
         }
-	}
-	private static double[] getRayDirection(int x, int y){
-	    double[] tempUpperLeft=cameraOrientation.rotateVector3d(screenPlaneInitialUpperLeft);
-	    double[] tempLowerLeft=cameraOrientation.rotateVector3d(screenPlaneInitialLowerLeft);
-	    double[] tempLowerRight=cameraOrientation.rotateVector3d(screenPlaneInitialLowerRight);
-	    
-	    double[] leftToRight=Vector.subtraction(tempLowerRight, tempLowerLeft);
-	    leftToRight=Vector.vScale(leftToRight, (0.5d+x)/settings.resWidth);
-	    double[]rayD=Vector.sum(tempLowerLeft,leftToRight);
-	    
-	    double[] downToUp=Vector.subtraction(tempUpperLeft, tempLowerLeft);
-	    downToUp=Vector.vScale(downToUp, (0.5d+y)/settings.resHeight);
-	    
-	    rayD=Vector.sum(rayD,downToUp);
-	    
-	    return rayD;
-	}
-	
-	private static boolean isAAEnabled=false, wireframe=false;
+    }
+    private static double[] getRayDirection(int x, int y){
+        double[] tempUpperLeft=cameraOrientation.rotateVector3d(screenPlaneInitialUpperLeft);
+        double[] tempLowerLeft=cameraOrientation.rotateVector3d(screenPlaneInitialLowerLeft);
+        double[] tempLowerRight=cameraOrientation.rotateVector3d(screenPlaneInitialLowerRight);
+        
+        double[] leftToRight=Vector.subtraction(tempLowerRight, tempLowerLeft);
+        leftToRight=Vector.vScale(leftToRight, (0.5d+x)/settings.resWidth);
+        double[]rayD=Vector.sum(tempLowerLeft,leftToRight);
+        
+        double[] downToUp=Vector.subtraction(tempUpperLeft, tempLowerLeft);
+        downToUp=Vector.vScale(downToUp, (0.5d+y)/settings.resHeight);
+        
+        rayD=Vector.sum(rayD,downToUp);
+        
+        return rayD;
+    }
+    
+    private static boolean isAAEnabled=false, wireframe=false;
 
     private static boolean ctrlPressed = false;
 
+
+    static int flagRotate = 0; // flag for rotating plain
+    static int flagLowerUpperPlain = 0; //flag for moving plain up and down
+
+    private static boolean mouseDown = false;
+    private static int dragDialogX = -1;
+    private static int dragDialogY = -1;
     
-    
-    public static ArrayList<float[]> bubbles_absolutePoints=new ArrayList<float[]>();
-    public static ArrayList<float[]> bubbles_images=new ArrayList<float[]>();
-    public static ArrayList<float[]> bubbles_text=new ArrayList<float[]>();
-    
-	/**
-	 * @since 0.1
-	 * @version 0.4
-	 */
-	private static void pollInput(){
-	    if(inputTextMode) {
-	        
-	        return;
-	    }
-		while(Keyboard.next()){
-			if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
-				if(Keyboard.getEventKey()==Keyboard.KEY_TAB){
-					if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
-				}else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
-				    ctrlPressed = true;
-				}else if(Keyboard.getEventKey()==Keyboard.KEY_RCONTROL) {
-				    ctrlPressed = true;
+    /**
+     * @since 0.1
+     * @version 0.4
+     */
+    private static void pollInput(){
+       /* if(inputTextMode) {
+
+           return;
+        }*/
+        int z=Mouse.getDWheel();
+        
+        if(pinItrPane!=null && z != 0) {
+            if(z>0) {
+                imageWidget.scrollImage(1.1);
+                pinItrPane.updateScrollbarSizes();
+            } else {
+                imageWidget.scrollImage(0.9);
+                pinItrPane.updateScrollbarSizes();
+            }
+        }
+        
+        // Image zooming
+        if(pinItrPane!=null && imageWidget != null) {
+            // Note: moved in if statement so that models can work
+            int incZum = Mouse.getDWheel(); 
+            if (incZum != 0) {
+                if(incZum>0) {
+                    imageWidget.scrollImage(1.1);
+                    pinItrPane.updateScrollbarSizes();
+                } else {
+                    imageWidget.scrollImage(0.9);
+                    pinItrPane.updateScrollbarSizes();
+                }
+            }
+        }
+        
+        
+        if(Keyboard.getEventKey() == Keyboard.KEY_I) {if(Keyboard.getEventKeyState()){flagRotate = 1;}else{flagRotate = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_K) {if(Keyboard.getEventKeyState()){flagRotate = -1;}else{flagRotate = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_O) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = 1;}else{flagLowerUpperPlain = 0;}}
+        if(Keyboard.getEventKey() == Keyboard.KEY_L) {if(Keyboard.getEventKeyState()){flagLowerUpperPlain = -1;}else{flagLowerUpperPlain = 0;}}
+        
+        if(flagRotate!=0) {openedModel.rotatePlain(0, flagRotate*40);}
+        if(flagLowerUpperPlain!=0) {openedModel.incPlain(0, (float)(flagLowerUpperPlain*0.2));}
+           
+        if (dialogOpened && draggableWidget != null && Mouse.isButtonDown(LMB)) {
+            int x = Mouse.getX();
+            int y = settings.resHeight - Mouse.getY();
+
+            if (dragDialogX < 0 || dragDialogY < 0) {
+                int lx = draggableWidget.getX();
+                int ty = draggableWidget.getY();
+                int rx = draggableWidget.getWidth() + lx;
+                int by = draggableWidget.getHeight() + ty;
+                System.out.println(lx + " - " + rx + ", " + ty + " - " + by);
+                System.out.println(x + ", " + y);
+                if (x >= lx && x <= rx && y >= ty && y <= by) {
+                    dragDialogX = x;
+                    dragDialogY = y; 
+                }
+            }
+            else {
+                int dirX = (x - dragDialogX);
+                int dirY = (y - dragDialogY);
+                
+                dragDialogX = x;
+                dragDialogY = y;
+                gameUI.moveDialogs(dirX, dirY);
+            }
+            
+        } else if(dialogOpened && draggableWidget != null && !Mouse.isButtonDown(LMB)) {
+            dragDialogX = -1;
+            dragDialogY = -1;   
+        }
+        
+        
+        // Go out when in inputTextMode
+        if(inputTextMode) {
+            return;
+        }
+
+        
+        while(Keyboard.next()){
+            
+            if(Keyboard.getEventKeyState()){//if a key was pressed (vs. released)
+                if(Keyboard.getEventKey()==Keyboard.KEY_TAB){
+                    if(settings.isFpsShown)settings.isFpsShown=false;else settings.isFpsShown=true;
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_P) {
+                    openedModel.changePlainState();    
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_Z) {
+                    generatePlaneIntersectionImage(openedModel.planeIntersection());
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_O) {
+                    openedModel.incPlain(0, (float)0.2);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
+                    openedModel.incPlain(0, (float)-0.2);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_I) {
+                    openedModel.rotatePlain(0, 20);
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_K) {
+                    openedModel.rotatePlain(0, -20);                
+                    
+                    
+                    
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_H) { // Next 4 are for changing light origin
+                    //lightOrigin = new float[]{1000.0f, 0.0f, 0.0f , 0.0f};
+                    if (lightOriginAngleY > -180) {
+                        lightOriginAngleY -= 10;
+                        lightOrigin[1] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleY)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleY)));
+                    }
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_N) {                    
+                    if (lightOriginAngleY < 0) {
+                        lightOriginAngleY += 10;
+                        lightOrigin[1] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleY)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleY)));
+                    }
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_B) {
+                    if (lightOriginAngleX < 0) {
+                        lightOriginAngleX += 10;
+                        lightOrigin[0] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleX)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleX)));
+                    }
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_M) {                    
+                    if (lightOriginAngleX > -180) {
+                        lightOriginAngleX -= 10;
+                        lightOrigin[0] = (float) (lightDistance * Math.cos(Math.toRadians(lightOriginAngleX)));
+                        lightOrigin[2] = (float) (lightDistance * Math.sin(Math.toRadians(lightOriginAngleX)));
+                    }
+                    
+                    
+
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_LCONTROL) {
+                    ctrlPressed = true;
+                }else if(Keyboard.getEventKey()==Keyboard.KEY_RCONTROL) {
+                    ctrlPressed = true;
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_LMETA) {
                     ctrlPressed = true;
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_RMETA) {
@@ -1870,25 +2050,31 @@ public class MainFrame extends Widget{
                 }else {
                     ctrlPressed = false;
                 }
-			}
-			else {
-			    ctrlPressed = false;
-			}
-		}
-		if(dialogOpened || menuOpened )return;
-		
-		//TODO: add CTRL + 1
-		if(Mouse.hasWheel() && Mouse.isButtonDown(2) || ctrlPressed) {
-		    int evnt = Mouse.getEventButton();
-		    if(evnt == MWB || ctrlPressed && evnt == LMB) {
-		        // mouse wheel clicked
-		        if(editMode) gameUI.editPinNote();
-		        else gameUI.showPinNote();
-		        ctrlPressed = false;
-		    }
-		}
+            }
+            else {
+                ctrlPressed = false;
+            }
+        }
+        
+        // Go out if dialog Opened of menu opened
+        if(dialogOpened || menuOpened )return;
+        
+        // Note edit 
+        if(Mouse.hasWheel() && Mouse.isButtonDown(2) || ctrlPressed) {
+            int evnt = Mouse.getEventButton();
+            if(evnt == MWB || ctrlPressed && evnt == LMB) {
+                // mouse wheel clicked
+                if(editMode) gameUI.editPinNote();
+                else gameUI.showPinNote();
+                ctrlPressed = false;
+            }
+        }
+        
+        
 
-		int z=Mouse.getDWheel();
+        // Model pan, zoom and rotation
+//      //int z=Mouse.getDWheel();
+
         if(z>0){
             cameraX*=0.8;
             cameraY*=0.8;
@@ -1900,107 +2086,99 @@ public class MainFrame extends Widget{
             cameraZ*=1.25;
             zoom*=1/1.25;
         }
+        //moving the camera
+        if(Keyboard.isKeyDown(Keyboard.KEY_W)){
+          //create a vector representing the rotation axis
+            Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{1,0,0});
+            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_S)){
+            Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{-1,0,0});
+            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_A)){
+            Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,1,0});
+            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_D)){
+            Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,-1,0});
+            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_Q)){
+            Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,1});
+            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_E)){
+            Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,-1});
+            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_UP)){
+            double v[]= new double[]{0, 0, -1};
+            v=cameraOrientation.rotateVector3d(v);
+            cameraX+=(float)v[0];
+            cameraY+=(float)v[1];
+            cameraZ+=(float)v[2];
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)){
+            double v[]= new double[]{0, 0, 1};
+            v=cameraOrientation.rotateVector3d(v);
+            cameraX+=(float)v[0];
+            cameraY+=(float)v[1];
+            cameraZ+=(float)v[2];
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)){
+            double v[]= new double[]{1, 0, 0};
+            v=cameraOrientation.rotateVector3d(v);
+            cameraX+=(float)v[0];
+            cameraY+=(float)v[1];
+            cameraZ+=(float)v[2];
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)){
+            double v[]= new double[]{-1, 0, 0};
+            v=cameraOrientation.rotateVector3d(v);
+            cameraX+=(float)v[0];
+            cameraY+=(float)v[1];
+            cameraZ+=(float)v[2];
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_R)){
+            double v[]= new double[]{0, 1, 0};
+            v=cameraOrientation.rotateVector3d(v);
+            cameraX+=(float)v[0];
+            cameraY+=(float)v[1];
+            cameraZ+=(float)v[2];
+        }
+        if(Keyboard.isKeyDown(Keyboard.KEY_F)){
+            double v[]= new double[]{0, -1, 0};
+            v=cameraOrientation.rotateVector3d(v);
+            cameraX+=(float)v[0];
+            cameraY+=(float)v[1];
+            cameraZ+=(float)v[2];
+        }
         
-		//moving the camera
-		if(Keyboard.isKeyDown(Keyboard.KEY_W)){
-		  //create a vector representing the rotation axis
-		    Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{1,0,0});
-		    cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_S)){
-		    Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{-1,0,0});
-            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_A)){
-		    Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,1,0});
-            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_D)){
-		    Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,-1,0});
-            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_Q)){
-		    Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,1});
-            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_E)){
-		    Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,-1});
-            cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_UP)){
-		    double v[]= new double[]{0, 0, -1};
-		    v=cameraOrientation.rotateVector3d(v);
-            cameraX+=(float)v[0];
-            cameraY+=(float)v[1];
-            cameraZ+=(float)v[2];
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)){
-		    double v[]= new double[]{0, 0, 1};
-            v=cameraOrientation.rotateVector3d(v);
-            cameraX+=(float)v[0];
-            cameraY+=(float)v[1];
-            cameraZ+=(float)v[2];
-		}
-		if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)){
-		    double v[]= new double[]{1, 0, 0};
-            v=cameraOrientation.rotateVector3d(v);
-            cameraX+=(float)v[0];
-            cameraY+=(float)v[1];
-            cameraZ+=(float)v[2];
-        }
-		if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)){
-		    double v[]= new double[]{-1, 0, 0};
-            v=cameraOrientation.rotateVector3d(v);
-            cameraX+=(float)v[0];
-            cameraY+=(float)v[1];
-            cameraZ+=(float)v[2];
-        }
-		if(Keyboard.isKeyDown(Keyboard.KEY_R)){
-		    double v[]= new double[]{0, 1, 0};
-            v=cameraOrientation.rotateVector3d(v);
-            cameraX+=(float)v[0];
-            cameraY+=(float)v[1];
-            cameraZ+=(float)v[2];
-        }
-		if(Keyboard.isKeyDown(Keyboard.KEY_F)){
-		    double v[]= new double[]{0, -1, 0};
-            v=cameraOrientation.rotateVector3d(v);
-            cameraX+=(float)v[0];
-            cameraY+=(float)v[1];
-            cameraZ+=(float)v[2];
-        }
-		if(Keyboard.isKeyDown(Keyboard.KEY_RETURN)){
-            cameraOrientation=new Quaternion();
-            cameraX=0;
-            cameraY=0;
-            cameraZ=0;
-            addedModelOrientation=new Quaternion();
-            currentModelOrientation=new Quaternion();
-        }
-		
-		if(openedModel!=null){
-		    if(Mouse.isButtonDown(0)){
-		        //figure out if clicked on the HUD first
-		        float w=settings.resWidth;
-		        float h=settings.resHeight;
-		        float r=w/18;
-		        float offset=r*2/3;
-		        float x=w-offset-r;
-		        float y=h-h/18-offset-r;
-		        float x2=w-offset-r;
-		        float y2=h-h/18-2*offset-3*r;
-		        float f=ellipsef*r;
-		        
-		        if(clickedOn==CLICKED_ON_NOTHING){
-		            float distanceToRotationCircle=(x-Mouse.getX())*(x-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY());
-		            float distanceToMoveCircle=(x2-Mouse.getX())*(x2-Mouse.getX())+(y2-Mouse.getY())*(y2-Mouse.getY());
-		            float distanceToRotationFoci=(float)(Math.sqrt((x-f-Mouse.getX())*(x-f-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY()))+
-		                    Math.sqrt((x+f-Mouse.getX())*(x+f-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY())));
-		            float distanceToMoveFoci=(float)(Math.sqrt((x2-f-Mouse.getX())*(x2-f-Mouse.getX())+(y2-Mouse.getY())*(y2-Mouse.getY()))+
+        if(openedModel!=null){
+            
+            if(Mouse.isButtonDown(0)){
+                //figure out if clicked on the HUD first
+                float w=settings.resWidth;
+                float h=settings.resHeight;
+                float r=w/18;
+                float offset=r*2/3;
+                float x=w-offset-r;
+                float y=h-h/18-offset-r;
+                float x2=w-offset-r;
+                float y2=h-h/18-2*offset-3*r;
+                float f=ellipsef*r;
+                
+                if(clickedOn==CLICKED_ON_NOTHING){
+                    float distanceToRotationCircle=(x-Mouse.getX())*(x-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY());
+                    float distanceToMoveCircle=(x2-Mouse.getX())*(x2-Mouse.getX())+(y2-Mouse.getY())*(y2-Mouse.getY());
+                    float distanceToRotationFoci=(float)(Math.sqrt((x-f-Mouse.getX())*(x-f-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY()))+
+                            Math.sqrt((x+f-Mouse.getX())*(x+f-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY())));
+                    float distanceToMoveFoci=(float)(Math.sqrt((x2-f-Mouse.getX())*(x2-f-Mouse.getX())+(y2-Mouse.getY())*(y2-Mouse.getY()))+
                             Math.sqrt((x2+f-Mouse.getX())*(x2+f-Mouse.getX())+(y2-Mouse.getY())*(y2-Mouse.getY())));
-		            if(settings.resHeight-Mouse.getY()<settings.resHeight/18){
-		                clickedOn=CLICKED_ON_BUTTONS;
-		            }else if(distanceToRotationCircle<=r*r){
+                    if(settings.resHeight-Mouse.getY()<settings.resHeight/18){
+                        clickedOn=CLICKED_ON_BUTTONS;
+                    }else if(distanceToRotationCircle<=r*r){
                         clickedOn=CLICKED_ON_ROTATION_CIRCLE;
                     }else if(distanceToMoveCircle<=r*r){
                         clickedOn=CLICKED_ON_MOVE_CIRCLE;
@@ -2021,10 +2199,10 @@ public class MainFrame extends Widget{
                         addedModelOrientation=new Quaternion();
                         if(veinsGrabbedAt!=null)clickedOn=CLICKED_ON_VEINS_MODEL;
                     }
-		        }
-		        
-		        if(clickedOn==CLICKED_ON_VEINS_MODEL){
-		            double[] veinsHeldAt=getRaySphereIntersection(Mouse.getX(), Mouse.getY());
+                }
+                
+                if(clickedOn==CLICKED_ON_VEINS_MODEL){
+                    double[] veinsHeldAt=getRaySphereIntersection(Mouse.getX(), Mouse.getY());
                     if(veinsHeldAt!=null){
                         double[] rotationAxis=Vector.crossProduct(veinsGrabbedAt, veinsHeldAt);
                         if(Vector.length(rotationAxis)>0){
@@ -2034,115 +2212,93 @@ public class MainFrame extends Widget{
                             addedModelOrientation= Quaternion.quaternionFromAngleAndRotationAxis(angle, rotationAxis);
                         }
                     }
-		        }
-		        if(clickedOn==CLICKED_ON_ROTATION_CIRCLE || clickedOn==CLICKED_ON_MOVE_CIRCLE){
-		            if(clickedOn==CLICKED_ON_MOVE_CIRCLE){x=x2;y=y2;}
-		            rotationCircleDistance=(x-Mouse.getX())*(x-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY());
-		            rotationCircleAngle=(float)Math.atan2(Mouse.getY()-y, Mouse.getX()-x);
-		            rotationCircleDistance=(float)Math.sqrt(rotationCircleDistance);
-		            float upRotation=(Mouse.getY()-y);
-		            float rightRotation=(Mouse.getX()-x);
-		            if(rotationCircleDistance>r){
-		                upRotation/=rotationCircleDistance;
-		                rightRotation/=rotationCircleDistance;
-		            }else{
-		                upRotation/=r;
+                }
+                if(clickedOn==CLICKED_ON_ROTATION_CIRCLE || clickedOn==CLICKED_ON_MOVE_CIRCLE){
+                    if(clickedOn==CLICKED_ON_MOVE_CIRCLE){x=x2;y=y2;}
+                    rotationCircleDistance=(x-Mouse.getX())*(x-Mouse.getX())+(y-Mouse.getY())*(y-Mouse.getY());
+                    rotationCircleAngle=(float)Math.atan2(Mouse.getY()-y, Mouse.getX()-x);
+                    rotationCircleDistance=(float)Math.sqrt(rotationCircleDistance);
+                    float upRotation=(Mouse.getY()-y);
+                    float rightRotation=(Mouse.getX()-x);
+                    if(rotationCircleDistance>r){
+                        upRotation/=rotationCircleDistance;
+                        rightRotation/=rotationCircleDistance;
+                    }else{
+                        upRotation/=r;
                         rightRotation/=r;
-		            }
-		            rotationCircleDistance=Math.min(rotationCircleDistance, r)/r;
-		            if(clickedOn==CLICKED_ON_ROTATION_CIRCLE){
-		                Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed*upRotation, new double[]{1,0,0});
-		                cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		                addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed*rightRotation, new double[]{0,-1,0});
-		                cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		            }else{
-		                double up[]= new double[]{0, 0, -upRotation};
-		                up=cameraOrientation.rotateVector3d(up);
-		                double right[]= new double[]{rightRotation, 0, 0};
-		                right=cameraOrientation.rotateVector3d(right);
-		                cameraX+=(float)(up[0]+right[0]);
-		                cameraY+=(float)(up[1]+right[1]);
-		                cameraZ+=(float)(up[2]+right[2]);
-		            }
-		        }
-		        if(clickedOn==CLICKED_ON_ROTATION_ELLIPSE){
-		            if(x-Mouse.getX()<=0){
-		                ellipseSide=0;
-		                Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,-1});
+                    }
+                    rotationCircleDistance=Math.min(rotationCircleDistance, r)/r;
+                    if(clickedOn==CLICKED_ON_ROTATION_CIRCLE){
+                        Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed*upRotation, new double[]{1,0,0});
                         cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		            }else{
-		                ellipseSide=1;
-		                Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,1});
-		                cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
-		            }
-		        }
-		        if(clickedOn==CLICKED_ON_MOVE_ELLIPSE){
-		            double v[];
-		            if(x2-Mouse.getX()<=0){
-		                ellipseSide=0;
-		                v= new double[]{0, 1, 0};
-		            }else{
-		                ellipseSide=1;
-		                v= new double[]{0, -1, 0};
-		            }
-		            v=cameraOrientation.rotateVector3d(v);
-		            cameraX+=(float)v[0];
-		            cameraY+=(float)v[1];
-		            cameraZ+=(float)v[2];
+                        addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed*rightRotation, new double[]{0,-1,0});
+                        cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+                    }else{
+                        double up[]= new double[]{0, 0, -upRotation};
+                        up=cameraOrientation.rotateVector3d(up);
+                        double right[]= new double[]{rightRotation, 0, 0};
+                        right=cameraOrientation.rotateVector3d(right);
+                        cameraX+=(float)(up[0]+right[0]);
+                        cameraY+=(float)(up[1]+right[1]);
+                        cameraZ+=(float)(up[2]+right[2]);
+                    }
                 }
-		    }else if(Mouse.isButtonDown(1)){ // When user clicks and moves right mouse button
-		        
-                // Moving mouse left
-                if (Mouse.getX() < mouse_x) {
-                    double v[]= new double[]{-0.1 / zoom, 0, 0};
-                    v=cameraOrientation.rotateVector3d(v);
-                    cameraX+=(float)v[0];
-                    cameraY+=(float)v[1];
-                    cameraZ+=(float)v[2];   
+                if(clickedOn==CLICKED_ON_ROTATION_ELLIPSE){
+                    if(x-Mouse.getX()<=0){
+                        ellipseSide=0;
+                        Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,-1});
+                        cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+                    }else{
+                        ellipseSide=1;
+                        Quaternion addRotation = Quaternion.quaternionFromAngleAndRotationAxis(cameraRotationSpeed, new double[]{0,0,1});
+                        cameraOrientation=Quaternion.quaternionMultiplication(cameraOrientation, addRotation);
+                    }
                 }
-                
-                // Moving mouse right
-                if (Mouse.getX() > mouse_x) {
-                    double v[]= new double[]{0.1 / zoom, 0, 0};
+                if(clickedOn==CLICKED_ON_MOVE_ELLIPSE){
+                    double v[];
+                    if(x2-Mouse.getX()<=0){
+                        ellipseSide=0;
+                        v= new double[]{0, 1, 0};
+                    }else{
+                        ellipseSide=1;
+                        v= new double[]{0, -1, 0};
+                    }
                     v=cameraOrientation.rotateVector3d(v);
                     cameraX+=(float)v[0];
                     cameraY+=(float)v[1];
                     cameraZ+=(float)v[2];
                 }
+            }else if(Mouse.isButtonDown(1)){ // When user clicks and moves right mouse button
                 
-                // Moving mouse up
-                if (Mouse.getY() < mouse_y) {
-                 double v[]= new double[]{0, -0.1 / zoom, 0};
-                 v=cameraOrientation.rotateVector3d(v);
-                 cameraX+=(float)v[0];
-                 cameraY+=(float)v[1];
-                 cameraZ+=(float)v[2];   
+                int mouse_diff_x = Mouse.getX() - mouse_x;
+                int mouse_diff_y = Mouse.getY() - mouse_y;
+                double model_size_ratio = veinsRadius/425;
+                
+                // Moving mouse left - move object left - camera right (and vice versa)             
+                // Moving mouse up   - move object up -   camera down (and vice versa)
+                if (mouse_diff_x != 0 || mouse_diff_y != 0) {
+                    double v[]= new double[]{-mouse_diff_x * model_size_ratio / zoom, -mouse_diff_y * model_size_ratio / zoom, 0};
+                    v=cameraOrientation.rotateVector3d(v);
+                    cameraX+=(float)v[0];
+                    cameraY+=(float)v[1];
+                    cameraZ+=(float)v[2];   
                 }
-                
-                // Moving mouse down
-                if (Mouse.getY() > mouse_y) {
-                 double v[]= new double[]{0, 0.1 / zoom, 0};
-                 v=cameraOrientation.rotateVector3d(v);
-                 cameraX+=(float)v[0];
-                 cameraY+=(float)v[1];
-                 cameraZ+=(float)v[2];
-                }
-                
-                mouse_x = Mouse.getX();
-                mouse_y = Mouse.getY();
-
-		    }else{
-		        clickedOn=CLICKED_ON_NOTHING;
-		        veinsGrabbedAt=null;
-		        currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
-		        addedModelOrientation=new Quaternion();
-		    }
-		}
-		
-	}
-	
-	public static float[] getClickedPointOnLoadedModel(){
-	    Quaternion compositeOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
+   
+            }else{
+                clickedOn=CLICKED_ON_NOTHING;
+                veinsGrabbedAt=null;
+                currentModelOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
+                addedModelOrientation=new Quaternion();
+            }
+            
+            // Remember last mouse position
+            mouse_x = Mouse.getX();
+            mouse_y = Mouse.getY();
+        }
+    }
+    
+    public static float[] getClickedPointOnLoadedModel(){
+        Quaternion compositeOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
         Quaternion q = Quaternion.quaternionReciprocal(compositeOrientation);
         double[] d = new double[]{0,0,-1};
         double angleY = Math.atan(   ((2*Mouse.getY()-settings.resHeight)/(double)settings.resHeight)*Math.tan(fovy*Math.PI/360d)  );
@@ -2158,36 +2314,51 @@ public class MainFrame extends Widget{
         double[] c=new double[]{-(float)openedModel.centerx,-(float)openedModel.centery,-(float)openedModel.centerz};
         double[] eSc=Vector.subtraction(e, c);
         return openedModel.rtreeOfTriangles_forPlyFiles.findAllIntersectedPoints(new float[]{(float)eSc[0], (float)eSc[1], (float)eSc[2]}, new float[]{(float)d[0], (float)d[1], (float)d[2]});
-	}
-	
-	private void editPinNote() {
-	    if(pinPanel == null) return;
-	    note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
-	    
-	    if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
-	        note = null;
-	    }
-	    
-	    dialogOpened = true; 
-	    inputTextMode = true;
+    }
+    
+    private static void generatePlaneIntersectionImage(LinkedList<float[]> planeIntersection) {
+        // TODO Auto-generated method stub
+        
+    }
+    private void editPinNote() {
+        if(pinPanel == null) return;
+        note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); // TODO: get nearest
+        
+        if (note != null && note.distanceTo(lastRay[0], lastRay[1], lastRay[2]) > MAX_RAY_DISTANCE) {
+            note = null;
+        }
+        
+        dialogOpened = true; 
+        inputTextMode = true;
 
         int cw = settings.resWidth/2;
         int ch = settings.resHeight/2;
-	    // TODO: determine if note OK
-	    EditFieldModel efm;
-	    switch (note == null ? pinNoteType : note.getType()) {
-	        case PinNote.ABSOLUTE_TYPE:
-	            pinItrBg = new TextArea();
-	            pinItrBg.setTheme("msgbox-content");
-	            pinItrBg.adjustSize();
-	            pinItrBg.setSize(150, 100);
-	            pinItrBg.setPosition(cw - 75, ch - 60);
-	            add(pinItrBg);
-	            
-	            // Init
-	            efm = new DefaultEditFieldModel();
+        // TODO: determine if note OK
+        EditFieldModel efm;
+        SimpleTextAreaModel stmTit;
+        switch (note == null ? pinNoteType : note.getType()) {
+            case PinNote.ABSOLUTE_TYPE:
+                pinItrBg = new TextArea();
+                pinItrBg.setTheme("msgbox-content");
+                pinItrBg.adjustSize();
+                pinItrBg.setSize(150, 100);
+                pinItrBg.setPosition(cw - 75, ch - 60);
+                add(pinItrBg);
+                
+                msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(150, 20);
+                msgBoxTitle.setPosition(cw - 75, ch - 80);
+                add(msgBoxTitle);
+                
+                // Init
+                efm = new DefaultEditFieldModel();
                 xPinField = new EditField(null, efm);
-                xPinField.setText(note != null ? (note.getAbsXVal()+"") : "");
+                xPinField.setText(note != null ? (note.getAbsXVal()+"") : ""); //TODO: read from pinNote
                 xPinField.setMultiLine(true);
                 xPinField.adjustSize();
                 xPinField.setSize(95, 15);
@@ -2286,6 +2457,11 @@ public class MainFrame extends Widget{
                        dialogOpened = false;
                        inputTextMode = false;
                        
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        initPinButtonsEnabled();
                    }
                 });
@@ -2320,6 +2496,11 @@ public class MainFrame extends Widget{
                        pinItrDelButton.destroy();
                        removeChild(pinItrBg);
                        pinItrBg.destroy();
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                        
                        dialogOpened = false;
                        inputTextMode = false;
@@ -2358,6 +2539,11 @@ public class MainFrame extends Widget{
                        removeChild(pinItrBg);
                        pinItrBg.destroy();
                        
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        confirmBox("Delete note", "Are you sure you wish to delete the note?", new Runnable() {
                             @Override
                             public void run() {
@@ -2378,62 +2564,78 @@ public class MainFrame extends Widget{
                 
                 add(pinItrDelButton);
                 
-	            break;
-	        case PinNote.IMAGE_TYPE:
-	            if (note == null) {
-	                loadingImage = true;
-	                fileSelector.setVisible(true);
-	            }
-	            else {
-	                showImage(note, true, false);
-	            }
-	            
-	            break;
-	            
-	        case PinNote.TEXT_TYPE:
-	            efm = new DefaultEditFieldModel();
-	            textPinField = new EditField(null, efm);
-	            textPinField.setText(note != null ? note.getTextValue() : ""); //TODO: read from pinNote
-	            textPinField.setMultiLine(true);
-	            textPinField.adjustSize();
-	            
-	            textPinField.setCanAcceptKeyboardFocus(true);
-	            
-	            pinItrPane = new ScrollPane(textPinField);
-	            pinItrPane.setFixed(ScrollPane.Fixed.VERTICAL);
-	            pinItrPane.setExpandContentSize(true);
-	            pinItrPane.setTheme("scrollpane");
-	            pinItrPane.setVisible(true);
-	            textPinField.adjustSize();
-	            
-	            pinItrPane.setSize(400, 400);
-	            pinItrPane.setPosition(cw - 200, ch - 200);
-	            
-	            add(pinItrPane);
-	            
-	            pinItrOkButton = new Button("OK");
-	            pinItrOkButton.setTheme("button");
-	            //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
-	            pinItrOkButton.addCallback(new Runnable(){
-	               @Override
-	            public void run(){
-	                   String text = textPinField.getText();
-	                   // TODO: get coordinates
-	                   if(note == null) {
-	                       note = PinNote.newTextNote(lastRay[0], lastRay[1], lastRay[2], text); 
+                break;
+            case PinNote.IMAGE_TYPE:
+                if (note == null) {
+                    loadingImage = true;
+                    fileSelector.setVisible(true);
+                }
+                else {
+                    showImage(note, true, false);
+                }
+                
+                break;
+                
+            case PinNote.TEXT_TYPE:
+                efm = new DefaultEditFieldModel();
+                textPinField = new EditField(null, efm);
+                textPinField.setText(note != null ? note.getTextValue() : ""); //TODO: read from pinNote
+                textPinField.setMultiLine(true);
+                textPinField.adjustSize();
+                
+                textPinField.setCanAcceptKeyboardFocus(true);
+                
+                pinItrPane = new ScrollPane(textPinField);
+                pinItrPane.setFixed(ScrollPane.Fixed.VERTICAL);
+                pinItrPane.setExpandContentSize(true);
+                pinItrPane.setTheme("scrollpane");
+                pinItrPane.setVisible(true);
+                textPinField.adjustSize();
+                
+                pinItrPane.setSize(400, 400);
+                pinItrPane.setPosition(cw - 200, ch - 200);
+                
+                msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(400, 20);
+                msgBoxTitle.setPosition(cw - 200, ch - 220);
+                add(msgBoxTitle);
+                
+                add(pinItrPane);
+                
+                pinItrOkButton = new Button("OK");
+                pinItrOkButton.setTheme("button");
+                //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+                pinItrOkButton.addCallback(new Runnable(){
+                   @Override
+                public void run(){
+                       String text = textPinField.getText();
+                       // TODO: get coordinates
+                       if(note == null) {
+                           note = PinNote.newTextNote(lastRay[0], lastRay[1], lastRay[2], text); 
                            try {
                                pinPanel.addNew(note);
                            } catch(Exception e) {
                                // TODO Auto-generated catch block
                                e.printStackTrace();
                            }
-	                   }
-	                   else {
-	                       note.setTextValue(text);
-	                       note.markUnsynced();
-	                   }
-	                   
-	                   removeChild(pinItrPane);
+                       }
+                       else {
+                           note.setTextValue(text);
+                           note.markUnsynced();
+                           try {
+                               pinPanel.sync();
+                           } catch(IOException e) {
+                               // TODO Auto-generated catch block
+                               e.printStackTrace();
+                           }
+                       }
+                       
+                       removeChild(pinItrPane);
                        pinItrPane.destroy();
                        removeChild(pinItrOkButton);
                        pinItrOkButton.destroy();
@@ -2444,15 +2646,20 @@ public class MainFrame extends Widget{
                        dialogOpened = false;
                        inputTextMode = false;
                        
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        initPinButtonsEnabled();
-	               }
-	            });
-	            pinItrOkButton.adjustSize();
-	            pinItrOkButton.setSize(50, 25);
-	            pinItrOkButton.setPosition(cw + 50, ch + 200);
-	            add(pinItrOkButton);
-	            
-	            pinItrCancelButton = new Button("Cancel");
+                   }
+                });
+                pinItrOkButton.adjustSize();
+                pinItrOkButton.setSize(50, 25);
+                pinItrOkButton.setPosition(cw + 50, ch + 200);
+                add(pinItrOkButton);
+                
+                pinItrCancelButton = new Button("Cancel");
                 pinItrCancelButton.setTheme("button");
                 //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
                 pinItrCancelButton.addCallback(new Runnable(){
@@ -2468,6 +2675,11 @@ public class MainFrame extends Widget{
                        pinItrDelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2491,6 +2703,15 @@ public class MainFrame extends Widget{
                        removeChild(pinItrDelButton);
                        pinItrDelButton.destroy();
                        
+
+                       dialogOpened = false;
+                       inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        confirmBox("Delete note", "Are you sure you wish to delete the note?", new Runnable() {
                             @Override
                             public void run() {
@@ -2498,8 +2719,6 @@ public class MainFrame extends Widget{
                                 initPinButtonsEnabled();
                             }
                        }, null);
-                       dialogOpened = false;
-                       inputTextMode = false;
                    }
                 });
                 pinItrDelButton.adjustSize();
@@ -2510,21 +2729,23 @@ public class MainFrame extends Widget{
                 pinItrDelButton.setPosition(cw, ch + 200);
                 
                 add(pinItrDelButton);
-	            
-	            break;
-	            
-	        case PinNote.DEFAULT_TYPE:
-	        default:
-	            
-	            break;
-	    }
-	    
-	    initPinButtonsEnabled();
+                
+                break;
+                
+            case PinNote.DEFAULT_TYPE:
+            default:
+                
+                break;
+        }
+        
+        initPinButtonsEnabled();
     }
-	
-	private void showImage(PinNote n, boolean edit, boolean isNew) {
+    
+    
+    private void showImage(PinNote n, boolean edit, boolean isNew) {
         imageWidget = new ImageWidget();
         BufferedImage img;
+        
         int cw = settings.resWidth/2;
         int ch = settings.resHeight/2;
         try {
@@ -2534,24 +2755,33 @@ public class MainFrame extends Widget{
             
             di.update(bb, DynamicImage.Format.RGBA);
             
-            int left = img.getWidth() / 2;
-            int up = img.getHeight() / 2;
+            int left = 400 / 2;
+            int up = 400 / 2;
             
-            imageWidget.setImage(di);
+            imageWidget.setImage(di, img);            
             n.clearImage();
             note = n;
             
             //add(imageWidget);
             
+            msgBoxTitle = new TextArea();
+            draggableWidget = msgBoxTitle;
+            SimpleTextAreaModel stmTit = new SimpleTextAreaModel("Note");
+            msgBoxTitle.setModel(stmTit);
+            msgBoxTitle.adjustSize();
+            msgBoxTitle.setTheme("msgbox-title");
+            msgBoxTitle.setSize(150, 20);
+            msgBoxTitle.setPosition(cw - left, ch - up - 40);
+            add(msgBoxTitle);
+            
             pinItrPane = new ScrollPane(imageWidget);
-            pinItrPane.setFixed(ScrollPane.Fixed.VERTICAL);
+            pinItrPane.setFixed(ScrollPane.Fixed.NONE);
             pinItrPane.setExpandContentSize(true);
             pinItrPane.setTheme("scrollpane");
             pinItrPane.setVisible(true);
             //textPinField.adjustSize();
-            
             pinItrPane.adjustSize();
-            pinItrPane.setSize(img.getWidth(), img.getHeight());
+            pinItrPane.setSize(400, 400);
             pinItrPane.setPosition(cw - left, ch - up - 20);
             
             add(pinItrPane);
@@ -2582,6 +2812,11 @@ public class MainFrame extends Widget{
                        dialogOpened = false;
                        inputTextMode = false;
                        
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
+                       
                        initPinButtonsEnabled();
                    }
                 });
@@ -2607,6 +2842,11 @@ public class MainFrame extends Widget{
                        pinItrDelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2686,7 +2926,7 @@ public class MainFrame extends Widget{
         
         int cw = settings.resWidth/2;
         int ch = settings.resHeight/2;
-        
+        SimpleTextAreaModel stmTit;
         switch (note.getType()) {
             case PinNote.ABSOLUTE_TYPE:
                 pinItrBg = new TextArea();
@@ -2695,6 +2935,16 @@ public class MainFrame extends Widget{
                 pinItrBg.setSize(150, 100);
                 pinItrBg.setPosition(cw - 75, ch - 60);
                 add(pinItrBg);
+                
+                msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(150, 20);
+                msgBoxTitle.setPosition(cw - 75, ch - 80);
+                add(msgBoxTitle);
                 
                 // Init
                 
@@ -2741,6 +2991,11 @@ public class MainFrame extends Widget{
                        
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2763,6 +3018,16 @@ public class MainFrame extends Widget{
                 textPinField.adjustSize();
                 textPinField.setReadOnly(true);
                 textPinField.setCanAcceptKeyboardFocus(true);
+                
+                msgBoxTitle = new TextArea();
+                draggableWidget = msgBoxTitle;
+                stmTit = new SimpleTextAreaModel("Note");
+                msgBoxTitle.setModel(stmTit);
+                msgBoxTitle.adjustSize();
+                msgBoxTitle.setTheme("msgbox-title");
+                msgBoxTitle.setSize(400, 20);
+                msgBoxTitle.setPosition(cw - 200, ch - 220);
+                add(msgBoxTitle);
                 
                 pinItrPane = new ScrollPane(textPinField);
                 pinItrPane.setFixed(ScrollPane.Fixed.VERTICAL);
@@ -2788,6 +3053,11 @@ public class MainFrame extends Widget{
                        pinItrCancelButton.destroy();
                        dialogOpened = false;
                        inputTextMode = false;
+                       
+                       removeChild(msgBoxTitle);
+                       msgBoxTitle.destroy();
+                       msgBoxTitle = null;
+                       draggableWidget = null;
                    }
                 });
                 pinItrCancelButton.adjustSize();
@@ -2805,105 +3075,105 @@ public class MainFrame extends Widget{
         }
         
     }
-	
+    
     /**
      * @since 0.1
      * @version 0.1
      */
-	private static void logic(){
-		//update framerate and calculate time that passed since last frame
-		long time=(Sys.getTime()*1000)/Sys.getTimerResolution();
-		fps++;
-		if(time-timePastFps>=1000){
-			fpsToDisplay=fps;
-			fps=0;
-			timePastFps=time;
-			cameraOrientation=Quaternion.quaternionNormalization(cameraOrientation);
-			if(openedModel!=null){
-			    addedModelOrientation=Quaternion.quaternionNormalization(addedModelOrientation);
-			    currentModelOrientation=Quaternion.quaternionNormalization(currentModelOrientation);
-			}
-		}
-		timePastFrame=time;
-		
-	}
-	public static void exitProgram(int n){
-	    saveSettings();
-	    for(int i=0;i<NUMBER_OF_SHADER_PROGRAMS;i++){
-	        glDetachShader(shaderPrograms[i], vertexShaders[i]);
-	        glDeleteShader(vertexShaders[i]);
-	        glDetachShader(shaderPrograms[i], fragmentShaders[i]);
-	        glDeleteShader(fragmentShaders[i]);
-	        glDeleteProgram(shaderPrograms[i]);
-	    }
-	    gui.destroy();
-	    if(themeManager!=null)themeManager.destroy();
-	    Display.destroy();
-	    System.exit(n);
-	}
-	public static void prepareShaders(){
-	    shaderPrograms= new int[NUMBER_OF_SHADER_PROGRAMS];
-	    vertexShaders= new int[NUMBER_OF_SHADER_PROGRAMS];
-	    fragmentShaders= new int[NUMBER_OF_SHADER_PROGRAMS];
-	    String path="/main/";
-	    for(int i=1;i<=NUMBER_OF_SHADER_PROGRAMS;i++){
-	        shaderPrograms[i-1] = GL20.glCreateProgram();
-	        vertexShaders[i-1] = glCreateShader(GL_VERTEX_SHADER);
-	        fragmentShaders[i-1] = glCreateShader(GL_FRAGMENT_SHADER);
-	        StringBuilder vertexShaderSource = new StringBuilder();
-	        StringBuilder fragmentShaderSource= new StringBuilder();
-	        try{
-	            BufferedReader reader = new BufferedReader(new InputStreamReader(InputStreamReader.class.getResourceAsStream(path+"shader"+i+".vert")));
-	            String line;
-	            while( (line=reader.readLine())!=null){
-	                vertexShaderSource.append(line).append("\n");
-	            }
-	            reader.close();
-	        }catch(IOException e){
-	            System.err.println("Vertex shader"+i+" wasn't loaded properly.");
-	            exitProgram(1);
-	        }
-	        try{
-	            BufferedReader reader = new BufferedReader(new InputStreamReader(InputStreamReader.class.getResourceAsStream(path+"shader"+i+".frag")));
-	            String line;
-	            while( (line=reader.readLine())!=null){
-	                fragmentShaderSource.append(line).append("\n");
-	            }
-	            reader.close();
-	        }catch(IOException e){
-	            System.err.println("Fragment shader"+i+" wasn't loaded properly.");
-	            exitProgram(1);
-	        }
-	        glShaderSource(vertexShaders[i-1], vertexShaderSource);
-	        glCompileShader(vertexShaders[i-1]);
-	        if(glGetShader(vertexShaders[i-1], GL_COMPILE_STATUS)==GL_FALSE){
-	            System.err.println("Vertex shader"+i+" not compiled correctly");
-	        }
-	        
-	        glShaderSource(fragmentShaders[i-1], fragmentShaderSource);
-	        glCompileShader(fragmentShaders[i-1]);
-	        if(glGetShader(fragmentShaders[i-1], GL_COMPILE_STATUS)==GL_FALSE){
-	            System.err.println("Fragment shader"+i+" not compiled correctly");
-	        }
-	        
-	        glAttachShader(shaderPrograms[i-1], vertexShaders[i-1]);
-	        glAttachShader(shaderPrograms[i-1], fragmentShaders[i-1]);
-	        glLinkProgram(shaderPrograms[i-1]);
-	        glValidateProgram(shaderPrograms[i-1]);
-	        
-	        System.out.println("Vertex shader"+i+" info: "+glGetShaderInfoLog(vertexShaders[i-1], 999));
-	        System.out.println("Fragment shader"+i+" info: "+glGetShaderInfoLog(fragmentShaders[i-1], 999));
-	        System.out.println("Shader program"+i+" info: "+glGetShaderInfoLog(shaderPrograms[i-1], 999));
-	    }
-	}
-	
-	/**
-	 * @param args - has no function
-	 * @since 0.1
-	 * @version 0.4
-	 */
-	public static void main(String[] args) {
-	    cameraOrientation=new Quaternion();
+    private static void logic(){
+        //update framerate and calculate time that passed since last frame
+        long time=(Sys.getTime()*1000)/Sys.getTimerResolution();
+        fps++;
+        if(time-timePastFps>=1000){
+            fpsToDisplay=fps;
+            fps=0;
+            timePastFps=time;
+            cameraOrientation=Quaternion.quaternionNormalization(cameraOrientation);
+            if(openedModel!=null){
+                addedModelOrientation=Quaternion.quaternionNormalization(addedModelOrientation);
+                currentModelOrientation=Quaternion.quaternionNormalization(currentModelOrientation);
+            }
+        }
+        timePastFrame=time;
+        
+    }
+    public static void exitProgram(int n){
+        saveSettings();
+        for(int i=0;i<NUMBER_OF_SHADER_PROGRAMS;i++){
+            glDetachShader(shaderPrograms[i], vertexShaders[i]);
+            glDeleteShader(vertexShaders[i]);
+            glDetachShader(shaderPrograms[i], fragmentShaders[i]);
+            glDeleteShader(fragmentShaders[i]);
+            glDeleteProgram(shaderPrograms[i]);
+        }
+        gui.destroy();
+        if(themeManager!=null)themeManager.destroy();
+        Display.destroy();
+        System.exit(n);
+    }
+    public static void prepareShaders(){
+        shaderPrograms= new int[NUMBER_OF_SHADER_PROGRAMS];
+        vertexShaders= new int[NUMBER_OF_SHADER_PROGRAMS];
+        fragmentShaders= new int[NUMBER_OF_SHADER_PROGRAMS];
+        String path="/main/";
+        for(int i=1;i<=NUMBER_OF_SHADER_PROGRAMS;i++){
+            shaderPrograms[i-1] = GL20.glCreateProgram();
+            vertexShaders[i-1] = glCreateShader(GL_VERTEX_SHADER);
+            fragmentShaders[i-1] = glCreateShader(GL_FRAGMENT_SHADER);
+            StringBuilder vertexShaderSource = new StringBuilder();
+            StringBuilder fragmentShaderSource= new StringBuilder();
+            try{
+                BufferedReader reader = new BufferedReader(new InputStreamReader(InputStreamReader.class.getResourceAsStream(path+"shader"+i+".vert")));
+                String line;
+                while( (line=reader.readLine())!=null){
+                    vertexShaderSource.append(line).append("\n");
+                }
+                reader.close();
+            }catch(IOException e){
+                System.err.println("Vertex shader"+i+" wasn't loaded properly.");
+                exitProgram(1);
+            }
+            try{
+                BufferedReader reader = new BufferedReader(new InputStreamReader(InputStreamReader.class.getResourceAsStream(path+"shader"+i+".frag")));
+                String line;
+                while( (line=reader.readLine())!=null){
+                    fragmentShaderSource.append(line).append("\n");
+                }
+                reader.close();
+            }catch(IOException e){
+                System.err.println("Fragment shader"+i+" wasn't loaded properly.");
+                exitProgram(1);
+            }
+            glShaderSource(vertexShaders[i-1], vertexShaderSource);
+            glCompileShader(vertexShaders[i-1]);
+            if(glGetShader(vertexShaders[i-1], GL_COMPILE_STATUS)==GL_FALSE){
+                System.err.println("Vertex shader"+i+" not compiled correctly");
+            }
+            
+            glShaderSource(fragmentShaders[i-1], fragmentShaderSource);
+            glCompileShader(fragmentShaders[i-1]);
+            if(glGetShader(fragmentShaders[i-1], GL_COMPILE_STATUS)==GL_FALSE){
+                System.err.println("Fragment shader"+i+" not compiled correctly");
+            }
+            
+            glAttachShader(shaderPrograms[i-1], vertexShaders[i-1]);
+            glAttachShader(shaderPrograms[i-1], fragmentShaders[i-1]);
+            glLinkProgram(shaderPrograms[i-1]);
+            glValidateProgram(shaderPrograms[i-1]);
+            
+            System.out.println("Vertex shader"+i+" info: "+glGetShaderInfoLog(vertexShaders[i-1], 999));
+            System.out.println("Fragment shader"+i+" info: "+glGetShaderInfoLog(fragmentShaders[i-1], 999));
+            System.out.println("Shader program"+i+" info: "+glGetShaderInfoLog(shaderPrograms[i-1], 999));
+        }
+    }
+    
+    /**
+     * @param args - has no function
+     * @since 0.1
+     * @version 0.4
+     */
+    public static void main(String[] args) {
+        cameraOrientation=new Quaternion();
         themeManager=null;
         boolean loadSuccessful;
         try{
@@ -2957,61 +3227,63 @@ public class MainFrame extends Widget{
         System.out.println("OPENGL VERSION: "+GL11.glGetString(GL11.GL_VERSION)+"\n");
         prepareShaders();
         
-		isRunning=true;
-		mainLoop();
-		exitProgram(0);
-	}
-	
-	// User messaging section
-	
-	public void infoBox(String title, String message) {
-	    dialogOpened = true;
-	    
-	    msgBoxContent = new TextArea();
-	    msgBoxTitle = new TextArea();
-	    
-	    SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
-	    SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
-	    
-	    
-	    msgBoxContent.setModel(stmMsg);
-	    msgBoxTitle.setModel(stmTit);
-	    
-	    StyleSheet css = new StyleSheet();
-	    try {
+        isRunning=true;
+        mainLoop();
+        exitProgram(0);
+    }
+    
+    // User messaging section
+    
+    public void infoBox(String title, String message) {
+        dialogOpened = true;
+        
+        msgBoxContent = new TextArea();
+        msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
+        
+        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+        SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
+        
+        
+        msgBoxContent.setModel(stmMsg);
+        msgBoxTitle.setModel(stmTit);
+        
+        StyleSheet css = new StyleSheet();
+        try {
             css.parse("p,div { text-align: center; }");
             msgBoxTitle.setStyleClassResolver(css);
         } catch(IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-	    
-	    
-	    msgBoxContent.adjustSize();
-	    msgBoxTitle.adjustSize();
-	    
-	    msgBoxTitle.setTheme("msgbox-title");
-	    msgBoxContent.setTheme("msgbox-content");
-	    
-	    msgBoxTitle.setSize(200, 20);
-	    msgBoxContent.setSize(200, 20);
         
-	    msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
-	    msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
         
-	    
-	    add(msgBoxTitle);
-	    add(msgBoxContent);
-	    
-	    //inputTextMode = false;
-	}
-	
+        msgBoxContent.adjustSize();
+        msgBoxTitle.adjustSize();
+        
+        msgBoxTitle.setTheme("msgbox-title");
+        msgBoxContent.setTheme("msgbox-content");
+        
+        msgBoxTitle.setSize(200, 20);
+        msgBoxContent.setSize(200, 20);
+        
+        msgBoxTitle.setPosition(settings.resWidth/2 - 100, settings.resHeight/2 - 20);
+        msgBoxContent.setPosition(settings.resWidth/2 - 100, settings.resHeight/2);
+        
+        
+        add(msgBoxTitle);
+        add(msgBoxContent);
+        
+        //inputTextMode = false;
+    }
+    
 
-	public void alertBox(String title, String message) {
-	    dialogOpened = true;
-	    
-	    msgBoxContent = new TextArea();
+    public void alertBox(String title, String message) {
+        dialogOpened = true;
+        
+        msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
         
         SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
@@ -3057,13 +3329,14 @@ public class MainFrame extends Widget{
         add(msgBoxContent);
         
         //inputTextMode = false;
-	}
-	
-	public void confirmBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
-	    dialogOpened = true;
-	    
-	    msgBoxContent = new TextArea();
+    }
+    
+    public void confirmBox(String title, String message, Runnable okFunction, Runnable cancelFunction) {
+        dialogOpened = true;
+        
+        msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
         
         SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
@@ -3118,17 +3391,18 @@ public class MainFrame extends Widget{
         add(msgBoxOkButton);
         add(msgBoxTitle);
         add(msgBoxContent);
-	}
-	
-	public void inputBox(String title, String message, String inInput, Runnable okFunction, Runnable cancelFunction) {
-	    dialogOpened = true;
-	    
-	    SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
+    }
+    
+    public void inputBox(String title, String message, String inInput, Runnable okFunction, Runnable cancelFunction) {
+        dialogOpened = true;
+        
+        SimpleTextAreaModel stmMsg = new SimpleTextAreaModel(message);
         SimpleTextAreaModel stmTit = new SimpleTextAreaModel(title);
         
         EditFieldModel stmInput = new DefaultEditFieldModel();
         msgBoxContent = new TextArea();
         msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
         msgBoxInput = new EditField(null, stmInput);
         msgBoxInput.setText(inInput == null ? "" : inInput);
         msgBoxContent.setModel(stmMsg);
@@ -3197,10 +3471,10 @@ public class MainFrame extends Widget{
         
         inputTextMode = true;
     }
-	
-	public void msgBoxDestroy() {
-	    dialogOpened = false;
-	    inputTextMode = false;
+    
+    public void msgBoxDestroy() {
+        dialogOpened = false;
+        inputTextMode = false;
         if (msgBoxContent != null) {
             removeChild(msgBoxContent);
             msgBoxContent.destroy();
@@ -3231,8 +3505,54 @@ public class MainFrame extends Widget{
             msgBoxCancelButton.destroy();
             msgBoxCancelButton = null;
         }
+        draggableWidget = null;
     }
-	
+    
+    public void moveDialogs(int dX, int dY) {
+        draggableWidget.setPosition(draggableWidget.getX() + dX, draggableWidget.getY() + dY);
+        
+        if (pinItrPane != null) 
+            pinItrPane.setPosition(pinItrPane.getX() + dX, pinItrPane.getY() + dY);
+        if (msgBoxContent != null) 
+            msgBoxContent.setPosition(msgBoxContent.getX() + dX, msgBoxContent.getY() + dY);
+        if (msgBoxInput != null) 
+            msgBoxInput.setPosition(msgBoxInput.getX() + dX, msgBoxInput.getY() + dY);
+        if (msgBoxOkButton != null) 
+            msgBoxOkButton.setPosition(msgBoxOkButton.getX() + dX, msgBoxOkButton.getY() + dY);
+        if (msgBoxCloseButton != null) 
+            msgBoxCloseButton.setPosition(msgBoxCloseButton.getX() + dX, msgBoxCloseButton.getY() + dY);
+        if (msgBoxCancelButton != null) 
+            msgBoxCancelButton.setPosition(msgBoxCancelButton.getX() + dX, msgBoxCancelButton.getY() + dY);
+        if (textPinField != null && false) 
+            textPinField.setPosition(textPinField.getX() + dX, textPinField.getY() + dY);
+        if (xLabelField != null) 
+            xLabelField.setPosition(xLabelField.getX() + dX, xLabelField.getY() + dY);
+        if (xPinField != null) 
+            xPinField.setPosition(xPinField.getX() + dX, xPinField.getY() + dY);
+        if (yLabelField != null) 
+            yLabelField.setPosition(yLabelField.getX() + dX, yLabelField.getY() + dY);
+        if (yPinField != null) 
+            yPinField.setPosition(yPinField.getX() + dX, yPinField.getY() + dY);
+        if (zLabelField != null) 
+            zLabelField.setPosition(zLabelField.getX() + dX, zLabelField.getY() + dY);
+        if (zPinField != null) 
+            zPinField.setPosition(zPinField.getX() + dX, zPinField.getY() + dY);
+        if (pinItrOkButton != null) 
+            pinItrOkButton.setPosition(pinItrOkButton.getX() + dX, pinItrOkButton.getY() + dY);
+        if (pinItrDelButton != null) 
+            pinItrDelButton.setPosition(pinItrDelButton.getX() + dX, pinItrDelButton.getY() + dY);
+        if (pinItrCancelButton != null) 
+            pinItrCancelButton.setPosition(pinItrCancelButton.getX() + dX, pinItrCancelButton.getY() + dY);
+        if (pinItrBg != null) 
+            pinItrBg.setPosition(pinItrBg.getX() + dX, pinItrBg.getY() + dY);
+        
+        
+        if (msgBoxTitle != null && msgBoxTitle != draggableWidget) {
+            msgBoxTitle.setPosition(msgBoxTitle.getX() + dX, msgBoxTitle.getY() + dY);
+        }
+        
+    }
+    
 public void displayImage(String title, String message) {
         
         msgBoxContent = new TextArea();
