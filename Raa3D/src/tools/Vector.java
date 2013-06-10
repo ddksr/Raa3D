@@ -1,4 +1,4 @@
-/* Author of this file: Simon Žagar, 2012, Ljubljana
+/* Author of this file: Simon ï¿½agar, 2012, Ljubljana
  * This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/
  * or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.
@@ -6,7 +6,7 @@
 package tools;
 
 /**
- * @author Simon Žagar, 63090355
+ * @author Simon ï¿½agar, 63090355
  *
  */
 public class Vector {
@@ -104,6 +104,15 @@ public class Vector {
             sum+=a[i]*a[i];
         }
         return Math.sqrt(sum);
+    }
+    
+    public static String toString(double[] a) {
+        String out = new String();
+        for(int i = 0; i < a.length; i++) {
+            if(i > 0) out += " ";
+            out += a[i];
+        }
+        return out;
     }
     
 }

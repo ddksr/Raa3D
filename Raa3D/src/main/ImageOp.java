@@ -1,6 +1,8 @@
 package main;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorConvertOp;
@@ -11,6 +13,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
@@ -128,26 +131,27 @@ public class ImageOp {
         return byteBuffer;
     }
     
-    public static BufferedImage createImageFromLines(double[][] lines3D, double[] normal) {
-        int width, height;
-        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, 
+    public static BufferedImage createImageFromLines(LinkedList<float[]> lines3D, double[] normal, int w, int h) {
+        float minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE, 
                 minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
-        int[][] lines = new int[lines3D.length][4];
+        float[][] lines = new float[lines3D.size()][4];
         
         float factor = 1F;
-        
-        for(int i = 0; i < lines.length; i++) {
+        int i = 0;
+        for(float[] line : lines3D) {
+            //System.out.println(line[0] + " " + line[1] + " " + line[2] + " " + line[3] + " " + line[4] + " " + line[5]);
+            
             
             // generate two base vectors for the plane
             double[] a = {2., 3., -(2.*normal[1] + 2.*normal[1])/normal[2]}; // generate perpendicular vector
             double[] b = Vector.crossProduct(a, normal); // get another perpendicular vector
 
             // generate 2d lines from 3d lines (project on plane)
-            lines[i] = new int[] {
-                    (int)(factor * Vector.dotProduct(a, new double[]{lines3D[i][0], lines3D[i][1], lines3D[i][2]})),
-                    (int)(factor * Vector.dotProduct(b, new double[]{lines3D[i][0], lines3D[i][1], lines3D[i][2]})),
-                    (int)(factor * Vector.dotProduct(a, new double[]{lines3D[i][3], lines3D[i][4], lines3D[i][5]})),
-                    (int)(factor * Vector.dotProduct(b, new double[]{lines3D[i][3], lines3D[i][4], lines3D[i][5]}))
+            lines[i] = new float[] {
+                    factor*(float)(Vector.dotProduct(a, new double[]{line[0], line[1], line[2]})),
+                    factor*(float)(Vector.dotProduct(b, new double[]{line[0], line[1], line[2]})),
+                    factor*(float)(Vector.dotProduct(a, new double[]{line[3], line[4], line[5]})),
+                    factor*(float)(Vector.dotProduct(b, new double[]{line[3], line[4], line[5]}))
             };
             
             // reset bounds
@@ -155,23 +159,44 @@ public class ImageOp {
             maxX = Math.max(Math.max(lines[i][0], lines[i][2]), maxX);
             minY = Math.min(Math.min(lines[i][1], lines[i][3]), minY);
             maxY = Math.max(Math.max(lines[i][1], lines[i][3]), maxY);
+            i++;
         }
         lines3D = null; // remove from RAM
         
         // get width and height
-        width = maxX - minX;
-        height = maxY - minY;
+        
         // generate image
-        BufferedImage out = new BufferedImage(width, height, BufferedImage.TYPE_INT_BGR);
+        BufferedImage out = new BufferedImage(w, h, BufferedImage.TYPE_INT_BGR);
         
         // prepare canvas
         Graphics2D canvas = out.createGraphics();
         
         // draw on canvas
-        for(int i = 0; i < lines.length; i++) {
-            canvas.drawLine(minX + lines[i][0], minY + lines[i][1], minX + lines[i][2], minY + lines[i][3]);
+        //canvas.setColor(new Color(0));
+        System.out.println(minX + " " + maxX + " - " + minY + " " + maxY);
+        for(i = 0; i < lines.length; i++) {
+            //System.out.println(lines[i][0] + " "+ lines[i][1] + " " + lines[i][2] + " " + lines[i][3] + " ");
+            canvas.drawLine(
+                    (int)mapper(lines[i][0], minX, maxX, 0, w),
+                    (int)mapper(lines[i][1], minY, maxY, 0, h),
+                    (int)mapper(lines[i][2], minX, maxX, 0, w),
+                    (int)mapper(lines[i][3], minY, maxY, 0, h)
+            );
+            System.out.println((int)mapper(lines[i][0], minX, maxX, 0, w) +
+                    " " + (int)mapper(lines[i][1], minY, maxY, 0, h) + 
+                    " " + (int)mapper(lines[i][2], minX, maxX, 0, w) +
+                    " " + (int)mapper(lines[i][3], minY, maxY, 0, h));
+    
+            /*canvas.drawLine(minX + lines[i][0], 
+                    minY + lines[i][1], 
+                    minX + lines[i][2], 
+                    minY + lines[i][3]);*/
         }
         return out;
+    }
+    
+    public static float mapper(float x, float fromMin, float fromMax, float toMin, float toMax) {
+        return ((x-fromMin)/(fromMax - fromMin)) * (toMax - toMin) + toMin;
     }
     
 }

@@ -1,7 +1,7 @@
 package models;
 
 /**
- * @author Simon Žagar, 63090355
+ * @author Simon ï¿½agar, 63090355
  * April, 23, 2013
  */
 public class Box {
@@ -135,7 +135,7 @@ public class Box {
 	        }
 	        else return true; // point lies on the plain
 	    }
-	    return positive ^ negative; // xor, all must be positive or all negative, othervise no intersection
+	    return positive && negative; 
 	}
 	
 }

@@ -384,8 +384,7 @@ public class MainFrame extends Widget{
         File tmp = new File("tmp");
         if(! tmp.exists()) {
             tmp.mkdir();
-        }
-        
+        }        
         
         lastRay = new float[] {0f, 0f ,0f};
         
@@ -1110,6 +1109,7 @@ public class MainFrame extends Widget{
      * @version 0.4
      */
     public void openAFile(){ 
+        dialogOpened = false;
         fileSelector.setVisible(true);
         setButtonsEnabled(false);
     }
@@ -1412,6 +1412,7 @@ public class MainFrame extends Widget{
                     else pinPanel = null; // set to null!
                     restart = false;
                     loadAsyncModel = false;
+                    MAX_RAY_DISTANCE = 40.*(veinsRadius/425) / zoom;
                 }
                 else {
                     restart = true;
@@ -1987,7 +1988,7 @@ public class MainFrame extends Widget{
                     //bubbles_text.add(pointOnModelClickedUpon);
                 }
                 
-                MAX_RAY_DISTANCE = 40.*(veinsRadius/425) / zoom;
+                pinBubbleSize();
                 if(editMode) gameUI.editPinNote();
                 else gameUI.showPinNote();
                 ctrlPressed = false;
@@ -2020,7 +2021,7 @@ public class MainFrame extends Widget{
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_P) {
                     openedModel.changePlainState();    
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_Z) {
-                    //generatePlaneIntersectionImage(openedModel.planeIntersection());
+                    generatePlaneIntersectionImage(openedModel.planeIntersection());
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_O) {
                     openedModel.incPlain(0, (float)0.2);
                 }else if(Keyboard.getEventKey()==Keyboard.KEY_L) {
@@ -2335,6 +2336,9 @@ public class MainFrame extends Widget{
         }
     }
     
+    private static void pinBubbleSize() {
+        MAX_RAY_DISTANCE = 30.*(veinsRadius/425);
+    }
     public static float[] getClickedPointOnLoadedModel(){
         Quaternion compositeOrientation=Quaternion.quaternionMultiplication(currentModelOrientation, addedModelOrientation);
         Quaternion q = Quaternion.quaternionReciprocal(compositeOrientation);
@@ -2354,8 +2358,12 @@ public class MainFrame extends Widget{
         return openedModel.rtreeOfTriangles_forPlyFiles.findAllIntersectedPoints(new float[]{(float)eSc[0], (float)eSc[1], (float)eSc[2]}, new float[]{(float)d[0], (float)d[1], (float)d[2]});
     }
     
+    public static double[] normal;
+    
     private static void generatePlaneIntersectionImage(LinkedList<float[]> planeIntersection) {
-        // TODO Auto-generated method stub
+        if(planeIntersection.size() > 0) {
+            gameUI.showImage(ImageOp.createImageFromLines(planeIntersection, normal, 1200, 800)); //TODO: move in some settings
+        }
         
     }
     private void editPinNote() {
@@ -2956,6 +2964,102 @@ public class MainFrame extends Widget{
             e.printStackTrace();
         }
     }
+    
+    private void showImage(BufferedImage img) {
+        imageWidget = new ImageWidget();
+        
+        int cw = settings.resWidth/2;
+        int ch = settings.resHeight/2;
+        
+        ByteBuffer bb = ImageOp.getImageDataFromImage(img);
+        DynamicImage di = renderer.createDynamicImage(img.getWidth(), img.getHeight()); 
+        
+        di.update(bb, DynamicImage.Format.RGBA);
+        
+        int left = 400 / 2;
+        int up = 400 / 2;
+        
+        imageWidget.setImage(di, img);            
+        
+        msgBoxTitle = new TextArea();
+        draggableWidget = msgBoxTitle;
+        SimpleTextAreaModel stmTit = new SimpleTextAreaModel("Plane intersection");
+        msgBoxTitle.setModel(stmTit);
+        msgBoxTitle.adjustSize();
+        msgBoxTitle.setTheme("msgbox-title");
+        msgBoxTitle.setSize(150, 20);
+        msgBoxTitle.setPosition(cw - left, ch - up - 40);
+        add(msgBoxTitle);
+        
+        pinItrPane = new ScrollPane(imageWidget);
+        pinItrPane.setFixed(ScrollPane.Fixed.NONE);
+        pinItrPane.setExpandContentSize(true);
+        pinItrPane.setTheme("scrollpane");
+        pinItrPane.setVisible(true);
+        //textPinField.adjustSize();
+        pinItrPane.adjustSize();
+        pinItrPane.setSize(400, 400);
+        pinItrPane.setPosition(cw - left, ch - up - 20);
+        
+        add(pinItrPane);
+        pinItrOkButton = new Button("Save");
+        pinItrOkButton.setTheme("button");
+        //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+        pinItrOkButton.addCallback(new Runnable(){
+           @Override
+           public void run(){
+               // TODO: save image
+               removeChild(pinItrPane);
+               pinItrPane.destroy();
+               removeChild(pinItrOkButton);
+               pinItrOkButton.destroy();
+               removeChild(pinItrCancelButton);
+               pinItrCancelButton.destroy();
+               dialogOpened = false;
+               inputTextMode = false;
+               
+               removeChild(msgBoxTitle);
+               msgBoxTitle.destroy();
+               msgBoxTitle = null;
+               draggableWidget = null;
+           }
+        });
+        pinItrOkButton.adjustSize();
+        pinItrOkButton.setSize(50, 25);
+        pinItrOkButton.setPosition(cw + left - 110, ch + up);
+        pinItrOkButton.setEnabled(false);
+        add(pinItrOkButton);
+        
+        pinItrCancelButton = new Button("Cancel");
+        pinItrCancelButton.setTheme("button");
+        //pinItrOkButton.setTooltipContent("Open the dialog with the file chooser to select an .r3dp file.");
+        pinItrCancelButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               removeChild(pinItrPane);
+               pinItrPane.destroy();
+               removeChild(pinItrOkButton);
+               pinItrOkButton.destroy();
+               removeChild(pinItrCancelButton);
+               pinItrCancelButton.destroy();
+               dialogOpened = false;
+               inputTextMode = false;
+               
+               removeChild(msgBoxTitle);
+               msgBoxTitle.destroy();
+               msgBoxTitle = null;
+               draggableWidget = null;
+           }
+        });
+        pinItrCancelButton.adjustSize();
+        pinItrCancelButton.setSize(50, 25);
+        pinItrCancelButton.setPosition(cw + left - 50, ch + up);
+        
+        add(pinItrCancelButton);
+        
+    }
+    
+    
     private void showPinNote() {
         if(pinPanel == null) return;
         note = pinPanel.getNearest(lastRay[0], lastRay[1], lastRay[2]); 

@@ -12,7 +12,7 @@ import tools.Plane;
 
 
 /**
- * @author Simon Žagar, 63090355
+ * @author Simon ï¿½agar, 63090355
  * April, 23, 2013
  */
 
@@ -183,95 +183,110 @@ public class RTree {
 	}
 	
 	public LinkedList<float[]> getPlaneIntersection(float a, float b, float c, float d) {
-        return getPlaneIntersection(hanger, a, b, c, d);
+        System.out.println(a + " " + b + " " + c + " " + d);
+	    return getPlaneIntersection(hanger.children[0], a, b, c, d);
     }
 	
 	public LinkedList<float[]> getPlaneIntersection(Node node, float a, float b, float c, float d) {
 	    LinkedList<float[]> pts = new LinkedList<float[]>();
-	    for(Node child : node.children) {
-	        if(child == null) {
-	            System.out.println("AAAA");
-	        }
-	        else if(child.box.isIntersectingPlane(a, b, c, d)) {
-	            if(child.box.triangleIndices != null) {
-	                for (int ind : child.box.triangleIndices) {
-	                    // check if triangle intersects plane
-	                    boolean[] status = new boolean[3];
-	                    int up = 0;
-	                    int ptA = -1, ptB = -1, ptC = -1;
-	                    for (int i = ind, j = 0; i < ind + 9; i+=3) {
-	                        float res = a*triangleVertices[i] + b*triangleVertices[i+1] + c*triangleVertices[i+2] + d;
-	                        if (res < 0) {
-	                            status[j++]=false;
-	                            up++;
-	                        }
-	                        else if (res > 0) {
-	                            status[j++]=true;
-	                            up--;
-	                        }
-	                        else {
-	                            // the plane intersects a vertex
-	                            status = new boolean[] {false, false, false};// break next part
-	                            
-	                            // add point
-	                            //pts.add(new float[]{
-                                //        triangleVertices[i],
-                                //        triangleVertices[i+1],
-                                //        triangleVertices[i+2]
-	                            //});
-	                            break; // end for loop
-	                        }
-	                        
-	                    }
-	                    if (!(status[0]&&status[1]&&status[2]) && (status[0]||status[1]||status[2])) {
-	                        // is intersecting
-	                        
-	                        for (int i = 0; i < 3; i++) {
-	                            if (up > 0 && !status[i]) ptA=i;
-	                            else if (up < 0 && status[i]) ptA=i;
-	                            else {
-	                                if (ptB >= 0) ptC = i;
-	                                else ptB = i;
-	                            }
-	                        }
+	    if(node.children[0] == null) {
+	        if(node.box.triangleIndices != null) {
+                for (int ind : node.box.triangleIndices) {
+                    // check if triangle intersects plane
+                    boolean[] status = new boolean[3];
+                    int up = 0;
+                    int ptA = -1, ptB = -1, ptC = -1;
+                    for (int i = ind, j = 0; i < ind + 9; i+=3) {
+                        float res = a*triangleVertices[i] + b*triangleVertices[i+1] + c*triangleVertices[i+2] + d;
+                        if (res < 0) {
+                            status[j++]=false;
+                            up++;
+                        }
+                        else if (res > 0) {
+                            status[j++]=true;
+                            up--;
+                        }
+                        else {
+                            // the plane intersects a vertex
+                            status = new boolean[] {false, false, false};// break next part
                             
-	                        // get triangle plane definition
-                            
-                            double[] A = {
-                                    triangleVertices[ind + ptA*3],
-                                    triangleVertices[ind + ptA*3 + 1],
-                                    triangleVertices[ind + ptA*3 + 2],
-                            };
-                            double[] B = {
-                                    triangleVertices[ind + ptB*3],
-                                    triangleVertices[ind + ptB*3 + 1],
-                                    triangleVertices[ind + ptB*3 + 2],
-                            };
-                            double[] C = {
-                                    triangleVertices[ind + ptC*3],
-                                    triangleVertices[ind + ptC*3 + 1],
-                                    triangleVertices[ind + ptC*3 + 2],
-                            };
-                            double[] AB = Vector.subtraction(A, B);
-                            double[] AC = Vector.subtraction(A, C);
-                            
-                            double[] line1 = Plane.intersectPoint(new double[]{a, b, c, d}, B, AB);
-                            double[] line2 = Plane.intersectPoint(new double[]{a, b, c, d}, C, AC);
-                            
-                            pts.add(new float[]{
-                                    (float)line1[0],
-                                    (float)line1[1],
-                                    (float)line1[2],
-                                    (float)line2[0],
-                                    (float)line2[1],
-                                    (float)line2[2],
-                            });
-	                    }
-	                }
+                            // add point
+                            //pts.add(new float[]{
+                            //        triangleVertices[i],
+                            //        triangleVertices[i+1],
+                            //        triangleVertices[i+2]
+                            //});
+                            break; // end for loop
+                        }
+                        
+                    }
+                    if (!(status[0]&&status[1]&&status[2]) && (status[0]||status[1]||status[2])) {
+                        // is intersecting
+                        
+                        for (int i = 0; i < 3; i++) {
+                            if (up > 0 && !status[i]) ptA=i;
+                            else if (up < 0 && status[i]) ptA=i;
+                            else {
+                                if (ptB >= 0) ptC = i;
+                                else ptB = i;
+                            }
+                        }
+                        
+                        // get triangle plane definition
+                        
+                        double[] A = {
+                                triangleVertices[ind + ptA*3],
+                                triangleVertices[ind + ptA*3 + 1],
+                                triangleVertices[ind + ptA*3 + 2],
+                        };
+                        double[] B = {
+                                triangleVertices[ind + ptB*3],
+                                triangleVertices[ind + ptB*3 + 1],
+                                triangleVertices[ind + ptB*3 + 2],
+                        };
+                        double[] C = {
+                                triangleVertices[ind + ptC*3],
+                                triangleVertices[ind + ptC*3 + 1],
+                                triangleVertices[ind + ptC*3 + 2],
+                        };
+                        double[] AB = Vector.subtraction(A, B);
+                        double[] AC = Vector.subtraction(A, C);
+
+                        System.out.println(Vector.toString(AB));
+                        System.out.println(Vector.toString(AC));
+                        System.out.println(Vector.toString(B));
+                        System.out.println(Vector.toString(A));
+                        
+                        double[] line1 = Plane.intersectPoint(new double[]{a, b, c, d}, B, AB);
+                        double[] line2 = Plane.intersectPoint(new double[]{a, b, c, d}, C, AC);
+                        System.out.println(Vector.toString(line1));
+                        System.out.println(Vector.toString(line2));
+                        System.out.println("*****");
+                        
+                        
+                        float[] newLine = new float[]{
+                                (float)line1[0],
+                                (float)line1[1],
+                                (float)line1[2],
+                                (float)line2[0],
+                                (float)line2[1],
+                                (float)line2[2],
+                        };
+                        if(!Float.isNaN(newLine[5]) && !Float.isInfinite(newLine[4]) && !Float.isInfinite(newLine[3])){
+                            pts.add(newLine);
+                        }
+                    }
+                }
+            }
+	    }
+	    else {
+	        for (Node child : node.children) {
+	            if(child != null) {
+	                pts.addAll(getPlaneIntersection(child, a, b, c, d));
 	            }
-	            else pts.addAll(getPlaneIntersection(child, a, b, c, d));
 	        }
 	    }
+	    
 	    return pts;
 	}
 	
