@@ -182,12 +182,16 @@ public class ImageOp {
                     (int)mapper(lines[i][2], minX, maxX, 0, w),
                     (int)mapper(lines[i][3], minY, maxY, 0, h)
             );
-            System.out.println((int)mapper(lines[i][0], minX, maxX, 0, w) +
+            canvas.drawRect((int)mapper(lines[i][0], minX, maxX, 0, w), 
+                    (int)mapper(lines[i][1], minY, maxY, 0, h), 1, 1);
+            canvas.drawRect((int)mapper(lines[i][2], minX, maxX, 0, w), 
+                    (int)mapper(lines[i][3], minY, maxY, 0, h), 1, 1);
+            /*System.out.println((int)mapper(lines[i][0], minX, maxX, 0, w) +
                     " " + (int)mapper(lines[i][1], minY, maxY, 0, h) + 
                     " " + (int)mapper(lines[i][2], minX, maxX, 0, w) +
                     " " + (int)mapper(lines[i][3], minY, maxY, 0, h));
     
-            /*canvas.drawLine(minX + lines[i][0], 
+            canvas.drawLine(minX + lines[i][0], 
                     minY + lines[i][1], 
                     minX + lines[i][2], 
                     minY + lines[i][3]);*/

@@ -2361,8 +2361,9 @@ public class MainFrame extends Widget{
     public static double[] normal;
     
     private static void generatePlaneIntersectionImage(LinkedList<float[]> planeIntersection) {
+        // Poglej BFO
         if(planeIntersection.size() > 0) {
-            gameUI.showImage(ImageOp.createImageFromLines(planeIntersection, normal, 1200, 800)); //TODO: move in some settings
+            gameUI.showImage(ImageOp.createImageFromLines(planeIntersection, normal, 2000, 1600)); //TODO: move in some settings
         }
         
     }
@@ -2967,7 +2968,7 @@ public class MainFrame extends Widget{
     
     private void showImage(BufferedImage img) {
         imageWidget = new ImageWidget();
-        
+        dialogOpened = true;
         int cw = settings.resWidth/2;
         int ch = settings.resHeight/2;
         
