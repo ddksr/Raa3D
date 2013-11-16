@@ -129,50 +129,53 @@ public class ObjOrPlyModel {
 	                }
 	                line=scanner.nextLine();
 	                StringTokenizer strTokenizer= new StringTokenizer(line);
-	                type=strTokenizer.nextToken();
-	                if(type.equalsIgnoreCase("v")){
-	                    vertices.add(x=Float.parseFloat(strTokenizer.nextToken()));
-	                    vertices.add(y=Float.parseFloat(strTokenizer.nextToken()));
-	                    vertices.add(z=Float.parseFloat(strTokenizer.nextToken()));
-	                    centerx+=x;centery+=y;centerz+=z;
-	                    if(x<minX)minX=x;
-	                    if(y<minY)minY=y;
-	                    if(z<minZ)minZ=z;
-	                    if(x>maxX)maxX=x;
-	                    if(y>maxY)maxY=y;
-	                    if(z>maxZ)maxZ=z;
-	                }else if(type.equalsIgnoreCase("f")){
-	                    int a, b, c;
-	                    StringTokenizer tok=new StringTokenizer(strTokenizer.nextToken(),"//");
-	                    a=Integer.parseInt(tok.nextToken());
-	                    tok=new StringTokenizer(strTokenizer.nextToken(),"//");
-	                    b=Integer.parseInt(tok.nextToken());
-	                    tok=new StringTokenizer(strTokenizer.nextToken(),"//");
-	                    c=Integer.parseInt(tok.nextToken());
-	                            
-	                    tempFaces.add(c);
-	                    tempFaces.add(b);
-	                    tempFaces.add(a);
-	                    
-	                    tempFaceCount++;
-	                }else if(type.equalsIgnoreCase("g")){
-	                    if(tempFaceCount>0){
-	                        //It seems that since last starting a new group, there have been faces stored
-	                        //Here I create a new mesh
-	                        Mesh mesh=new Mesh(groups, tempFaces, vertices);
-	                        meshes.add(mesh);
-	                        //After the whole file will be read, each mesh object's faces will be stored as VBOs (Vertex Buffer Objects).
-	                        System.out.println("Created a new mesh java object that will have it's own VBO.");
-	                    }else if(newG)System.out.println("One \"g\" holding 0 elements discarted.");
-	                    //start a new group
-	                    newG=true;
-	                    groups = new ArrayList<String>();
-	                    tempFaces= new ArrayList<Integer>();
-	                    tempFaceCount=0;
-	                    while(strTokenizer.hasMoreTokens()){
-	                        groups.add(strTokenizer.nextToken());
-	                    }
-	                }
+	                if(line == null || line.isEmpty() || line.length() == 0 || line.trim().length() == 0) {}
+    	            else {
+    	                type=strTokenizer.nextToken();
+    	                if(type.equalsIgnoreCase("v")){
+    	                    vertices.add(x=Float.parseFloat(strTokenizer.nextToken()));
+    	                    vertices.add(y=Float.parseFloat(strTokenizer.nextToken()));
+    	                    vertices.add(z=Float.parseFloat(strTokenizer.nextToken()));
+    	                    centerx+=x;centery+=y;centerz+=z;
+    	                    if(x<minX)minX=x;
+    	                    if(y<minY)minY=y;
+    	                    if(z<minZ)minZ=z;
+    	                    if(x>maxX)maxX=x;
+    	                    if(y>maxY)maxY=y;
+    	                    if(z>maxZ)maxZ=z;
+    	                }else if(type.equalsIgnoreCase("f")){
+    	                    int a, b, c;
+    	                    StringTokenizer tok=new StringTokenizer(strTokenizer.nextToken(),"//");
+    	                    a=Integer.parseInt(tok.nextToken());
+    	                    tok=new StringTokenizer(strTokenizer.nextToken(),"//");
+    	                    b=Integer.parseInt(tok.nextToken());
+    	                    tok=new StringTokenizer(strTokenizer.nextToken(),"//");
+    	                    c=Integer.parseInt(tok.nextToken());
+    	                            
+    	                    tempFaces.add(c);
+    	                    tempFaces.add(b);
+    	                    tempFaces.add(a);
+    	                    
+    	                    tempFaceCount++;
+    	                }else if(type.equalsIgnoreCase("g")){
+    	                    if(tempFaceCount>0){
+    	                        //It seems that since last starting a new group, there have been faces stored
+    	                        //Here I create a new mesh
+    	                        Mesh mesh=new Mesh(groups, tempFaces, vertices);
+    	                        meshes.add(mesh);
+    	                        //After the whole file will be read, each mesh object's faces will be stored as VBOs (Vertex Buffer Objects).
+    	                        System.out.println("Created a new mesh java object that will have it's own VBO.");
+    	                    }else if(newG)System.out.println("One \"g\" holding 0 elements discarted.");
+    	                    //start a new group
+    	                    newG=true;
+    	                    groups = new ArrayList<String>();
+    	                    tempFaces= new ArrayList<Integer>();
+    	                    tempFaceCount=0;
+    	                    while(strTokenizer.hasMoreTokens()){
+    	                        groups.add(strTokenizer.nextToken());
+    	                    }
+    	                }
+    	            }
 	            }
 	            if(tempFaceCount>0){
 	              //It seems that since last starting a new group, there have been faces stored

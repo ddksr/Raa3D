@@ -3313,7 +3313,7 @@ public class MainFrame extends Widget{
             
             System.out.println("Vertex shader"+i+" info: "+glGetShaderInfoLog(vertexShaders[i-1], 999));
             System.out.println("Fragment shader"+i+" info: "+glGetShaderInfoLog(fragmentShaders[i-1], 999));
-            System.out.println("Shader program"+i+" info: "+glGetShaderInfoLog(shaderPrograms[i-1], 999));
+            //System.out.println("Shader program"+i+" info: "+glGetShaderInfoLog(shaderPrograms[i-1], 999));
         }
     }
     
