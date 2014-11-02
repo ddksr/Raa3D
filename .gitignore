@@ -5,7 +5,8 @@ Raa3D/bin/*
 # Conf #
 .metadata/*
 .directory
-
+Raa3D/.metadata
 
 # Package Files #
-*.jarRaa3D/.metadata
+*.jar
+
