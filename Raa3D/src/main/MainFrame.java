@@ -122,6 +122,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.ContextAttribs;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
@@ -245,7 +246,9 @@ public class MainFrame extends Widget{
     private ToggleButton additionalContentToggleButton;
     
     private Button displayModesButton, okayVideoSetting, cancelVideoSetting;
+    private ToggleButton toolsToggleButton;
     private Button prtscr;
+    private Button prtdepth;
     private Button exit;
     private ToggleButton help;
     private ToggleButton credits;
@@ -484,7 +487,20 @@ public class MainFrame extends Widget{
         });
         add(additionalContentToggleButton);
         
-        
+        toolsToggleButton = new ToggleButton("Tools");
+        toolsToggleButton.setTheme("togglebutton");
+        toolsToggleButton.setTooltipContent("Toggle additional tools");
+        toolsToggleButton.addCallback(new Runnable(){
+           @Override
+        public void run(){
+               boolean enabled = toolsToggleButton.isActive();
+               menuOpened = enabled;
+               setToolsButtonsVisible(enabled);
+               setButtonsEnabled(! enabled);
+               toolsToggleButton.setEnabled(true);
+           }
+        });
+        add(toolsToggleButton);
              
         prtscr = new Button("Screen shot ...");
         prtscr.setTheme("button");
@@ -520,13 +536,43 @@ public class MainFrame extends Widget{
                    alertBox("Image " + prtscr_filename + " was saved.", "Image saved.");
                } catch (IOException e) { 
                    e.printStackTrace(); 
-               }        
+               }
+               toolsToggleButton.setActive(false);
+               setToolsButtonsVisible(false);
            }
            
 
         });
         add(prtscr);
         
+        prtdepth = new Button("Depth shot ...");
+        prtdepth.setTheme("button");
+        prtdepth.setTooltipContent("Create depth screenshot.");
+        prtdepth.addCallback(new Runnable(){
+           /**
+            * Create screen shoot of current view
+            */
+           public void run(){
+               GL11.glReadBuffer(GL11.GL_FRONT);
+               int width = Display.getDisplayMode().getWidth();
+               int height= Display.getDisplayMode().getHeight();
+               float[] fBuff = new float[width * height];
+               FloatBuffer buffer = BufferUtils.createFloatBuffer(width * height);
+               GL11.glReadPixels(0, 0, width, height, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, buffer);                             
+              
+               buffer.get(fBuff);
+               for (int i = 0; i < fBuff.length; i++) {
+            	   if ((int)fBuff[i] != 1)
+            		   System.out.println(fBuff[i]);            	   
+               }
+               
+               toolsToggleButton.setActive(false);
+               setToolsButtonsVisible(false);
+           }
+           
+
+        });
+        add(prtdepth);
         
         pinInit();
         
@@ -1094,6 +1140,11 @@ public class MainFrame extends Widget{
         pinAbsToggleButton.setVisible(visible);
     }
     
+    protected void setToolsButtonsVisible(boolean visible) {
+    	prtscr.setVisible(visible);
+    	prtdepth.setVisible(visible);
+    }
+    
     public void setButtonsEnabled(boolean enabled){
         open.setEnabled(enabled);
         pinPanelToggleButton.setEnabled(enabled);
@@ -1101,7 +1152,7 @@ public class MainFrame extends Widget{
         displayModesButton.setEnabled(enabled);
         help.setEnabled(enabled);
         credits.setEnabled(enabled);
-        prtscr.setEnabled(enabled);
+        toolsToggleButton.setEnabled(enabled);
     }
     
     /**
@@ -1263,7 +1314,9 @@ public class MainFrame extends Widget{
         
         help.adjustSize();
         credits.adjustSize();
+        toolsToggleButton.adjustSize();
         prtscr.adjustSize();
+        prtdepth.adjustSize();
         exit.adjustSize();
         int openHeight=Math.max(25,settings.resHeight/18);
         
@@ -1332,8 +1385,17 @@ public class MainFrame extends Widget{
         help.setSize(buttonWidth, openHeight);
         credits.setPosition(buttonWidth*8, 0);
         credits.setSize(buttonWidth, openHeight);
-        prtscr.setPosition(buttonWidth*9, 0);
+        
+        toolsToggleButton.setPosition(buttonWidth*9, 0);
+        toolsToggleButton.setSize(buttonWidth, openHeight);
+        
+        prtscr.setPosition(buttonWidth*9, openHeight);
         prtscr.setSize(buttonWidth, openHeight);
+        prtscr.setVisible(false);
+        prtdepth.setPosition(buttonWidth*9, 2*openHeight);
+        prtdepth.setSize(buttonWidth, openHeight);
+        prtdepth.setVisible(false);
+        
         exit.setPosition(buttonWidth*10, 0);
         exit.setSize(settings.resWidth-buttonWidth*10, openHeight);
         
@@ -1388,10 +1450,17 @@ public class MainFrame extends Widget{
         timePastFps=timePastFrame;
         fpsToDisplay=0;
         
+        // This could've fixed new nvidia drivers bug but it doesn't
+        // why o why
+        //int vao = GL30.glGenVertexArrays();
+        //GL30.glBindVertexArray(vao);
+        
+        
         boolean restart = false;
         
         while(!Display.isCloseRequested() && isRunning){
             resetView();
+            
             //if (!inputTextMode) pollInput();
             pollInput();
             render();
@@ -3349,12 +3418,18 @@ public class MainFrame extends Widget{
             settings.resHeight=currentDisplayMode.getHeight();
             settings.bitsPerPixel=currentDisplayMode.getBitsPerPixel();
             settings.frequency=currentDisplayMode.getFrequency();
+            
+            
+            //ContextAttribs contextAttributes = new ContextAttribs(2, 1)
+            //	.withForwardCompatible(false);
+            
             Display.setDisplayMode(currentDisplayMode);
             Display.setTitle(title);
             Display.create(new PixelFormat().withStencilBits(1));
+            //Display.create(new PixelFormat().withStencilBits(1), contextAttributes);
             //Display.create();
             Display.setVSyncEnabled(true);
-            
+            System.out.println("OpenGL version: " + GL11.glGetString(GL11.GL_VERSION));
             GL11.glClearStencil(0);
             
             //The TWL part
